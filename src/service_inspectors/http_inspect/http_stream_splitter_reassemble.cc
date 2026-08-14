@@ -147,7 +147,6 @@ void HttpStreamSplitter::decompress_copy(const uint8_t* src, uint32_t src_size,
 const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     unsigned, const uint8_t* data, unsigned len, uint32_t flags, unsigned& copied)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     copied = len;

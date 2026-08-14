@@ -219,7 +219,8 @@ static int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
 {
     if ( state == 0 )   /* Full set of states  always */
     {
-        const bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
+        const bnfa_state_t* p =
+            reinterpret_cast<const bnfa_state_t*>(bnfa->bnfaTransTable[0]);
         if (!p)
         {
             return 0;

@@ -401,7 +401,6 @@ void TcpSession::init_session_on_synack(TcpSegmentDescriptor& tsd)
 void TcpSession::update_timestamp_tracking(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
-    // cppcheck-suppress constVariablePointer
     TcpStreamTracker* talker = tsd.get_talker();
 
     talker->set_tf_flags(listener->normalizer.get_timestamp_flags());
@@ -1189,7 +1188,7 @@ int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd, const Packet* p)
 
 int TcpSession::process(Packet* p)
 {
-    Profile profile(s5TcpPerfStats);    // cppcheck-suppress unreadVariable
+    Profile profile(s5TcpPerfStats);
     assert(flow->ssn_server && flow->pkt_type == PktType::TCP);
 
     if ( ignore_this_packet(p) )

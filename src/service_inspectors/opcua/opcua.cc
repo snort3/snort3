@@ -95,7 +95,6 @@ public:
 
 void Opcua::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(opcua_prof);
 
     assert(p->has_tcp_data());

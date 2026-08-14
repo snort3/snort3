@@ -2066,7 +2066,6 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     cot->ctx_id = ctx_id;
     cot->call_id = DceRpcCoCallId(co_hdr);
 
-    // cppcheck-suppress constVariablePointer
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return;
@@ -2427,7 +2426,6 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 static Packet* DCE2_CoGetSegRpkt(const DCE2_SsnData* sd,
     const uint8_t* data_ptr, uint32_t data_len)
 {
-    // cppcheck-suppress constVariablePointer
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;

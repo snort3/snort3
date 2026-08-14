@@ -79,7 +79,6 @@ struct dce2TcpStats
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_main;
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline bool DCE2_TcpAutodetect(snort::Packet* p)
 {
     if (p->dsize >= sizeof(DceRpcCoHdr))

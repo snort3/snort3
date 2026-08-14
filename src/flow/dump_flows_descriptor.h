@@ -113,7 +113,6 @@ public:
             if ( ip_addr.find(':') != std::string::npos )
             {
                 // filter is IPV6
-                // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied IPv6 address
                 if ( filter_ip.pton(AF_INET6, ip_addr.c_str()) != SFIP_SUCCESS )
                     return false;
 
@@ -126,11 +125,9 @@ public:
                         return false;
 
                     cidr2mask(cidr, mask_v6);
-                    // cppcheck-suppress knownConditionTrueFalse ; setup validates the supplied IPv6 mask
                     if ( filter_subnet.set(&mask_v6, AF_INET6) != SFIP_SUCCESS )
                         return false;
                 }
-                // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied IPv6 subnet
                 else if ( ip_subnet.empty() || (filter_subnet.pton(AF_INET6, ip_subnet.c_str()) != SFIP_SUCCESS) )
                     return false;
 
@@ -139,7 +136,6 @@ public:
             else if ( ip_addr.find('.') != std::string::npos )
             {
                 // filter is  IPV4
-                // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied IPv4 address
                 if ( filter_ip.pton(AF_INET, ip_addr.c_str()) != SFIP_SUCCESS )
                     return false;
 
@@ -152,7 +148,6 @@ public:
                         return false;
 
                     cidr2mask(cidr, mask_v4);
-                    // cppcheck-suppress knownConditionTrueFalse ; setup validates the supplied IPv4 mask
                     if ( filter_subnet.set(&mask_v4, AF_INET) != SFIP_SUCCESS )
                         return false;
                 }
@@ -161,7 +156,6 @@ public:
                 else
                 {
                     // IPV4 netmask
-                    // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied IPv4 subnet
                     if ( filter_subnet.pton(AF_INET, ip_subnet.c_str()) != SFIP_SUCCESS )
                         return false;
                 }
@@ -175,10 +169,8 @@ public:
         {
             // No mask
             if ( ip.find(':') != std::string::npos )
-                // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied IPv6 address
                 return filter_ip.pton(AF_INET6, ip.c_str()) == SFIP_SUCCESS;
             else if ( ip.find('.') != std::string::npos )
-                // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied IPv4 address
                 return filter_ip.pton(AF_INET, ip.c_str()) == SFIP_SUCCESS;
         }
 

@@ -117,7 +117,6 @@ void AddressSpaceSelector::show() const
 
 bool AddressSpaceSelector::select_default_policies(uint32_t key, const SnortConfig* sc)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(address_space_selectPerfStats);
 
     address_space_select_stats.packets++;

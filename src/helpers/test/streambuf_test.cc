@@ -138,7 +138,6 @@ using namespace std;
               (std::streamsize)(b).last_chunk_offset())            \
      - (b).last_chunk_offset())
 
-// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("input buffer - basic one source", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";

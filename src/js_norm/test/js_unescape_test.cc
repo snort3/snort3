@@ -1302,7 +1302,6 @@ TEST_CASE("Split", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Mixed input", "[JSNormalizer]")
 {
     SECTION("string")

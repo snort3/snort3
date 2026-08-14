@@ -31,7 +31,6 @@ using namespace snort;
 
 void RnaAppidEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.appid_change;
     update_rna_pkt_stats(event);
@@ -40,7 +39,6 @@ void RnaAppidEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaIcmpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.icmp_bidirectional;
     update_rna_pkt_stats(event);
@@ -49,7 +47,6 @@ void RnaIcmpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaIcmpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.icmp_new;
     update_rna_pkt_stats(event);
@@ -58,7 +55,6 @@ void RnaIcmpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaIpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.ip_bidirectional;
     update_rna_pkt_stats(event);
@@ -67,7 +63,6 @@ void RnaIpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaIpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.ip_new;
     update_rna_pkt_stats(event);
@@ -76,7 +71,6 @@ void RnaIpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaTcpSynEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_syn;
     update_rna_pkt_stats(event);
@@ -85,7 +79,6 @@ void RnaTcpSynEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaTcpSynAckEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_syn_ack;
     update_rna_pkt_stats(event);
@@ -94,7 +87,6 @@ void RnaTcpSynAckEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaTcpMidstreamEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.tcp_midstream;
     update_rna_pkt_stats(event);
@@ -103,7 +95,6 @@ void RnaTcpMidstreamEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaUdpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.udp_bidirectional;
     update_rna_pkt_stats(event);
@@ -112,7 +103,6 @@ void RnaUdpBidirectionalEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaUdpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.udp_new;
     update_rna_pkt_stats(event);
@@ -121,7 +111,6 @@ void RnaUdpNewFlowEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaIdleEventHandler::handle(DataEvent&, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.change_host_update;
     pnd.generate_change_host_update();
@@ -129,7 +118,6 @@ void RnaIdleEventHandler::handle(DataEvent&, Flow*)
 
 void RnaDHCPInfoEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.dhcp_info;
     update_rna_pkt_stats(event);
@@ -138,7 +126,6 @@ void RnaDHCPInfoEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaDHCPDataEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.dhcp_data;
     update_rna_pkt_stats(event);
@@ -147,7 +134,6 @@ void RnaDHCPDataEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaFpSMBEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.smb;
     update_rna_pkt_stats(event);
@@ -156,7 +142,6 @@ void RnaFpSMBEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaCPEOSInfoEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.cpe_os;
     update_rna_pkt_stats(event);
@@ -165,7 +150,6 @@ void RnaCPEOSInfoEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaNetFlowEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.netflow_record;
     update_rna_pkt_stats(event);
@@ -174,7 +158,6 @@ void RnaNetFlowEventHandler::handle(DataEvent& event, Flow*)
 
 void RnaDeviceInfoEventHandler::handle(DataEvent& event, Flow*)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.deviceinfo;
     update_rna_pkt_stats(event);

@@ -825,7 +825,6 @@ void FileContext::reset()
 bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     FilePosition position, FilePolicyBase* policy)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(file_perf_stats);
     Flow* flow = p->flow;
 
@@ -1237,9 +1236,9 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
     {
         char c = (char)data[i];
         if (isprint(c) and (c == ' ' or !isspace(c)))
-            str[pos] = c; // cppcheck-suppress unreadVariable
+            str[pos] = c;
         else
-            str[pos] = '.'; // cppcheck-suppress unreadVariable
+            str[pos] = '.';
         pos++;
         fprintf(fp, "%02X ", data[i]);
 
@@ -1251,7 +1250,7 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
         }
         else if (pos == 8)
         {
-            str[pos] = ' '; // cppcheck-suppress unreadVariable
+            str[pos] = ' ';
             pos++;
             fprintf(fp, "%s", " ");
         }

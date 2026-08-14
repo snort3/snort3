@@ -956,7 +956,6 @@ static bool just_validate(const SnortConfig* sc)
     if ( sc->test_mode() )
         return true;
 
-    // cppcheck-suppress knownConditionTrueFalse ; shell use depends on runtime configuration
     if ( use_shell(sc) )
         return false;
 

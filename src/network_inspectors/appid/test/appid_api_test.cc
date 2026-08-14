@@ -263,13 +263,13 @@ TEST_GROUP(appid_api)
 
 TEST_GROUP(appid_api_no_session)
 {
-    void setup()
+    void setup() override
     {
         mock_init_appid_pegs();
         flow_no_session = new Flow;
     }
 
-    void teardown()
+    void teardown() override
     {
         mock_cleanup_appid_pegs();
         delete flow_no_session;

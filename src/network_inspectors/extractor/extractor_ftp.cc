@@ -102,7 +102,6 @@ void FtpRequestExtractor::internal_tinit(const snort::Connector::ID* service_id)
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))
@@ -270,7 +269,6 @@ void ExtractorEvent::log<vector<FtpResponseExtractor::SubField>, DataEvent*, Flo
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void FtpResponseExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))
@@ -541,7 +539,6 @@ static const string commands_to_log = "RETR, STOR, PASV, PORT, DELE, APPE, EPRT,
 
 void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!owner.filter(flow))
@@ -597,7 +594,6 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
 
 void FtpExtractor::Resp::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!owner.filter(flow))
@@ -643,7 +639,6 @@ void FtpExtractor::Resp::handle(DataEvent& event, Flow* flow)
 
 void FtpExtractor::dump(const FtpExtractorFlowData& fd)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!logger)

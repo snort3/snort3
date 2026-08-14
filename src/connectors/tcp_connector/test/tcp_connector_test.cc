@@ -256,7 +256,7 @@ TEST_GROUP(tcp_connector_call_error)
 
 TEST_GROUP(tcp_connector_call_other)
 {
-    void teardown()
+    void teardown() override
     { connector_config.ports = std::move(std::vector<std::string>()); }
 };
 

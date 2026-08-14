@@ -421,7 +421,6 @@ void log(ExtractorLogger* logger, const T& fields, const SshExtractorFlowData* f
 
 void SshExtractor::Version::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     const SshEvent& ssh_event = *((SshEvent*)&event);
@@ -474,7 +473,6 @@ void SshExtractor::Version::handle(DataEvent& event, Flow* flow)
 
 void SshExtractor::Validation::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!owner.filter(flow))
@@ -537,7 +535,6 @@ void SshExtractor::Validation::handle(DataEvent& event, Flow* flow)
 
 void SshExtractor::dump(const SshExtractorFlowData& fd)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!logger)

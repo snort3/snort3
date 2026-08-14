@@ -573,9 +573,8 @@ TEST(appid_discovery_tests, change_bits_to_string)
         " tls-host, url, user-agent, response, referrer, dns-host, dns-response-host, service-info, client-info,"
         " user-info, netbios-name, netbios-domain, finished, tls-version, protocol-id");
 
-    // Failure of this test is a reminder that enum is changed, hence translator needs update
-    // cppcheck-suppress knownConditionTrueFalse ; compile-time enum-layout assertion
-    CHECK_EQUAL(APPID_MAX_BIT, 23);
+    static_assert(APPID_MAX_BIT == 23,
+        "update change_bits_to_string when AppidChangeBit changes");
 }
 
 int main(int argc, char** argv)

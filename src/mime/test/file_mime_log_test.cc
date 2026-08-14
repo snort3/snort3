@@ -531,7 +531,6 @@ TEST(mail_log_limit_preset, name_fit)
     uint32_t filename_len = LEN_UNSET;
 
     state->get_file_name(&filename, &filename_len);
-    // cppcheck-suppress syntaxError
     CHECK_COMPARE(SIZE_LIMIT - 1, ==, filename_len);
 
     std::string written((const char*)data, data_len);

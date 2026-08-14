@@ -208,7 +208,6 @@ public:
     void reset();
     void set_config(FileConfig* fc) { config = fc; }
     FileConfig* get_config() { return config; }
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_inspector(FileInspect* ins) { inspector = ins; }
     FileInspect* get_inspector() { return inspector; }
     double get_duration() const { return duration; }  // Duration in seconds (fractional)
@@ -217,7 +216,6 @@ public:
     const std::string& get_source() const { return source; }
     void set_source(Flow *flow);
     bool get_timedout() const { return timedout; }
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_timedout() { timedout = true; }
 
 private:

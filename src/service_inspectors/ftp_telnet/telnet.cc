@@ -70,7 +70,6 @@ static int TelnetCheckConfigs(SnortConfig*, void* pData)
 static int SnortTelnet(const TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnetsession,
     Packet* p, int iInspectMode)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(telnetPerfStats);
 
     if ( !Telnetsession )

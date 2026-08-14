@@ -108,7 +108,6 @@ void DetectionEngine::thread_term()
 }
 
 // Not sure why cppcheck doesn't think context is initialized
-// cppcheck-suppress uninitMemberVar
 DetectionEngine::DetectionEngine()
 {
     context = Analyzer::get_switcher()->interrupt();
@@ -282,7 +281,6 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 
 void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 {
-    // cppcheck-suppress constVariablePointer
     ContextSwitcher* sw = Analyzer::get_switcher();
 
     log_events(p);
@@ -465,7 +463,6 @@ bool DetectionEngine::offload(Packet* p)
 
     if ( p->flow ? p->flow->context_chain.front() : sw->non_flow_chain.front() )
     {
-        // cppcheck-suppress unreadVariable
         Profile profile(mpsePerfStats);
         p->context->searches.search_sync();
         sw->suspend();
@@ -516,7 +513,6 @@ void DetectionEngine::onload(Flow* flow)
 
 void DetectionEngine::onload()
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
     Packet* p;
 
@@ -770,7 +766,6 @@ static int log_events(void* event, void* user)
 */
 int DetectionEngine::log_events(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(eventqPerfStats);
     SF_EVENTQ* pq = p->context->equeue;
     sfeventq_action(pq, ::log_events, (void*)p);

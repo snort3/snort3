@@ -258,7 +258,7 @@ const PubKey pub_key2 { "mp_ut2", DbUtIds::num_ids };
 
 TEST_GROUP(mp_data_bus_pub)
 {
-    unsigned pub_id1 = 0;  // cppcheck-suppress variableScope
+    unsigned pub_id1 = 0;
     MPDataBus* mp_dbus = nullptr;
     void setup() override
     {
@@ -329,7 +329,7 @@ TEST(mp_data_bus_pub, publish_fail_to_send)
 
 TEST_GROUP(mp_data_bus)
 {
-    unsigned pub_id1 = 0, pub_id2 = 0;  // cppcheck-suppress variableScope
+    unsigned pub_id1 = 0, pub_id2 = 0;
 
     void setup() override
     {
@@ -376,15 +376,12 @@ TEST(mp_data_bus, register_event_helpers)
 {
     MPSerializeFunc serialize_func = serialize_mock;
     MPDeserializeFunc deserialize_func = deserialize_mock;
-    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the mock call count
     CHECK(0 == MockMPTransport::get_test_register_helpers_calls());
 
     MPDataBus::register_event_helpers(pub_key1, DbUtIds::EVENT1, serialize_func, deserialize_func);
-    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the mock call count
     CHECK(1 == MockMPTransport::get_test_register_helpers_calls());
 
     MPDataBus::register_event_helpers(pub_key1, DbUtIds::EVENT1, serialize_func, deserialize_func);
-    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the mock call count
     CHECK(2 == MockMPTransport::get_test_register_helpers_calls());
 }
 
@@ -491,7 +488,7 @@ TEST(mp_data_bus, unsubscribe_nonexistent_handler)
 
 TEST_GROUP(mp_data_bus_clone)
 {
-    unsigned pub_id1 = 0, pub_id2 = 0;  // cppcheck-suppress variableScope
+    unsigned pub_id1 = 0, pub_id2 = 0;
     void setup() override
     {
         unsigned max_procs_val = 2;

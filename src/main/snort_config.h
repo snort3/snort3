@@ -541,13 +541,11 @@ public:
 
     bool ips_inline_mode() const
     {
-        // cppcheck-suppress nullPointer ; policy accessors are populated after configuration
         return get_ips_policy()->policy_mode == POLICY_MODE__INLINE; 
     }
 
     bool ips_inline_test_mode() const
     {
-        // cppcheck-suppress nullPointer ; policy accessors are populated after configuration
         return get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST;
     }
 
@@ -614,14 +612,12 @@ public:
     { return output_flags & OUTPUT_FLAG__ALERT_REFS; }
 
     // run flags
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool no_lock_pid_file() const
     { return run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
 
     bool create_pid_file() const
     { return run_flags & RUN_FLAG__CREATE_PID_FILE; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool pcap_show() const
     { return run_flags & RUN_FLAG__PCAP_SHOW; }
 
@@ -634,7 +630,6 @@ public:
     bool conf_error_out() const
     { return run_flags & RUN_FLAG__CONF_ERROR_OUT; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool test_features() const
     { return run_flags & RUN_FLAG__TEST_FEATURES; }
 
@@ -663,11 +658,9 @@ public:
     long int get_tagged_packet_limit() const
     { return tagged_packet_limit; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_max_attribute_hosts() const
     { return max_attribute_hosts; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_segment_count_host() const
     { return segment_count_host; }
 
@@ -698,7 +691,6 @@ public:
     bool ip_frags_only() const
     { return (run_flags & RUN_FLAG__IP_FRAGS_ONLY) != 0; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool drop_stale_packets() const
     { return (run_flags & RUN_FLAG__DROP_STALE_PACKETS) != 0; }
     
@@ -708,7 +700,6 @@ public:
     void set_run_flags(RunFlag flag)
     { run_flags |= flag; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const std::list<ReloadResourceTuner*>& get_reload_resource_tuners() const
     { return reload_tuners; }
 
@@ -725,7 +716,6 @@ public:
     // FIXIT-L snort_conf needed for static hash before initialized
     static bool static_hash()
     {
-        // cppcheck-suppress knownConditionTrueFalse ; active configuration and run flags vary at runtime
         return get_conf() && get_conf()->run_flags & RUN_FLAG__STATIC_HASH;
     }
 

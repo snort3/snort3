@@ -137,11 +137,7 @@ TEST_GROUP(http_transaction_test)
     Flow* const flow = new Flow;
     HttpParaList params;
     HttpFlowData* flow_data = new HttpFlowData(flow, &params);
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress unreadVariable ; shared test state is consumed by test bodies
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress unreadVariable ; shared test state is consumed by test bodies
     SectionType* const type_expected = HttpUnitTestSetup::get_type_expected(flow_data);
 
     HttpTransaction* attach_transaction()

@@ -44,7 +44,6 @@ using namespace snort;
 
 bool HttpStreamSplitter::finish(Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
@@ -240,7 +239,6 @@ bool HttpStreamSplitter::finish(Flow* flow)
 void HttpStreamSplitter::prep_partial_flush(const Flow* flow, uint32_t num_flush,
     uint32_t num_excess, uint32_t num_head_lines, PartialFlushType partial_flush_type)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);

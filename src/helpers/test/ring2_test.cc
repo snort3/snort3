@@ -57,7 +57,6 @@ static void read(T& reader, Args&& ... args)
     }
 }
 
-// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("Basic", "[Ring2]")
 {
     Ring2 buffer(1024);
@@ -781,13 +780,11 @@ TEST_CASE("Empty buffer", "[Ring2]")
 
         auto writer = buffer.writer();
 
-        // cppcheck-suppress knownConditionTrueFalse ; test verifies writes fail for a zero-capacity ring
         CHECK(false == writer.write("", 0));
         CHECK(false == writer.write("a", 1));
         CHECK(false == writer.write("foo", 3));
         writer.push();
 
-        // cppcheck-suppress knownConditionTrueFalse ; test verifies writes still fail after push
         CHECK(false == writer.write("", 0));
         CHECK(false == writer.write("a", 1));
         CHECK(false == writer.write("foo", 3));
@@ -795,7 +792,6 @@ TEST_CASE("Empty buffer", "[Ring2]")
 
         writer.retry();
 
-        // cppcheck-suppress knownConditionTrueFalse ; test verifies retry preserves zero-capacity behavior
         CHECK(false == writer.write("", 0));
         CHECK(false == writer.write("a", 1));
         CHECK(false == writer.write("foo", 3));

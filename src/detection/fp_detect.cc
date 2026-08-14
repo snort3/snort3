@@ -752,7 +752,6 @@ bool MpseStash::push(void* user, void* tree, int index, void* context, void* lis
 
     if ( !checker and qmax == queue.size() and is_packet_thread() )
     {
-        // cppcheck-suppress unreadVariable
         Profile rule_profile(rulePerfStats);
         process((IpsContext*)context, queue);
     }
@@ -1258,7 +1257,6 @@ static void fpEvalPacket(Packet* p, FPTask task)
 
 void fp_partial(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile mpse_profile(mpsePerfStats);
     IpsContext* c = p->context;
     init_match_info(c);
@@ -1276,12 +1274,10 @@ void fp_complete(Packet* p, bool search)
 
     if ( search )
     {
-        // cppcheck-suppress unreadVariable
         Profile mpse_profile(mpsePerfStats);
         c->searches.search_sync();
     }
     {
-        // cppcheck-suppress unreadVariable
         Profile rule_profile(rulePerfStats);
 
         if (p->flow && p->flow->ips_cont)
@@ -1314,12 +1310,10 @@ static void fp_immediate(Packet* p)
     IpsContext* c = p->context;
     MpseStash* stash = c->stash;
     {
-        // cppcheck-suppress unreadVariable
         Profile mpse_profile(mpsePerfStats);
         c->searches.search_sync();
     }
     {
-        // cppcheck-suppress unreadVariable
         Profile rule_profile(rulePerfStats);
         stash->process(c);
         c->searches.items.clear();
@@ -1330,13 +1324,11 @@ static void fp_immediate(const MpseGroup* mpg, Packet* p, const uint8_t* buf, un
 {
     MpseStash* stash = p->context->stash;
     {
-        // cppcheck-suppress unreadVariable
         Profile mpse_profile(mpsePerfStats);
         int start_state = 0;
         mpg->get_normal_mpse()->search(buf, len, rule_tree_queue, p->context, &start_state);
     }
     {
-        // cppcheck-suppress unreadVariable
         Profile rule_profile(rulePerfStats);
         stash->process(p->context);
     }
@@ -1369,7 +1361,6 @@ static inline int fp_do_actions(OtnxMatchData* omd, Packet* p)
 
 void fp_eval_service_group(Packet* p, SnortProtocolId snort_protocol_id)
 {
-    // cppcheck-suppress unreadVariable
     Profile mpse_profile(mpsePerfStats);
     RuleGroup* svc = p->context->conf->sopgTable->get_port_group(true, snort_protocol_id);
 
@@ -1392,7 +1383,6 @@ void fp_eval_service_group(Packet* p, SnortProtocolId snort_protocol_id)
     MpseStash* stash = c->stash;
     c->searches.search_sync();
     {
-        // cppcheck-suppress unreadVariable
         Profile rule_profile(rulePerfStats);
         stash->process(c);
 

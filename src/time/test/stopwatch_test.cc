@@ -49,7 +49,6 @@ Clock::time_point Clock::time;
 } // namespace t_stopwatch
 
 // FIXIT-L we can use a customized template for Clock to create a more deterministic unit test
-// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE( "stopwatch", "[time][stopwatch]" )
 {
     using namespace t_stopwatch;
@@ -96,7 +95,6 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         {
             Clock::inc();
             auto val = sw.get();
-            // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies a stopped value is stable
             CHECK( val == sw.get() );
         }
 

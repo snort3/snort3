@@ -325,7 +325,6 @@ const Field& HttpInspect::http_get_param_buf(Cursor& c, const Packet* p,
     return current_section->get_param_buffer(c, param);
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int32_t HttpInspect::http_get_num_headers(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
@@ -337,7 +336,6 @@ int32_t HttpInspect::http_get_num_headers(const Packet* p,
     return current_section->get_num_headers(buffer_info);
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int32_t HttpInspect::http_get_max_header_line(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
@@ -349,7 +347,6 @@ int32_t HttpInspect::http_get_max_header_line(const Packet* p,
     return current_section->get_max_header_line(buffer_info);
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int32_t HttpInspect::http_get_num_cookies(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
@@ -528,7 +525,6 @@ void HttpInspect::eval(Packet* p)
 
 void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint16_t dsize)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
@@ -706,7 +702,6 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 
 void HttpInspect::clear(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* const session_data = http_get_flow_data(p->flow);

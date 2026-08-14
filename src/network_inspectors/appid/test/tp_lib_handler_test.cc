@@ -91,7 +91,6 @@ TEST(tp_lib_handler, load_unload)
     config.tp_appid_config="./tp.config";
 
     tph = TPLibHandler::get();
-    // cppcheck-suppress constVariablePointer
     ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(
         config, ctxt.get_odp_ctxt());
     CHECK_TRUE(tp_appid_ctxt != nullptr);

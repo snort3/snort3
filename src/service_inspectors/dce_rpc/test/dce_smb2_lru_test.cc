@@ -232,7 +232,6 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData*, const Smb2Hdr*, const uint8_t*, co
 {
 }
 
-// cppcheck-suppress syntaxError
 TEST_CASE("file trackers stay within the smb memcap", "[dce_smb2_lru]")
 {
     Fixture f(40);

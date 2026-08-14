@@ -112,7 +112,6 @@ MpseRegexOffload::MpseRegexOffload(unsigned max) : RegexOffload(max) { }
 
 void MpseRegexOffload::put(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
 
     assert(p);
@@ -133,7 +132,6 @@ void MpseRegexOffload::put(Packet* p)
 
 bool MpseRegexOffload::get(Packet*& p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
     assert(!busy.empty());
 
@@ -213,7 +211,6 @@ void ThreadRegexOffload::stop()
 
 void ThreadRegexOffload::put(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
 
     assert(p);

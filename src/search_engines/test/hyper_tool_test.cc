@@ -57,15 +57,13 @@ const MpseApi* get_test_api()
 
 TEST_GROUP(search_tool_full)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
-    SearchTool* stool;  // cppcheck-suppress variableScope
+    SearchTool* stool;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
-        mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
+        mod = mpse_api->base.mod_ctor();
         stool = new SearchTool;
         CHECK(stool->mpsegrp->normal_mpse);
 

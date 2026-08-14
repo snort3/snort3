@@ -47,12 +47,12 @@ SFDAQInstance* SFDAQ::get_local_instance() {
 
 TEST_GROUP(sfdaq_module_counters)
 {
-    void setup() {
+    void setup() override {
         mock_stats_ptr = new DAQ_Stats_t();
         local_instance = new SFDAQInstance(nullptr, 0, nullptr);
     }
 
-    void teardown() {
+    void teardown() override {
         mock().clear();
         delete mock_stats_ptr;
         delete local_instance;

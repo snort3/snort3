@@ -1308,7 +1308,6 @@ TEST_CASE("automatic semicolon insertion", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("endings", "[JSNormalizer]")
 {
     SECTION("script closing tag is present", "[JSNormalizer]")
@@ -1618,7 +1617,6 @@ static const char unexpected_tag_expected29[] =
 static const char unexpected_tag_expected29_ext[] =
     "var a=5</script>/";
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("nested script tags", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
@@ -1830,7 +1828,6 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("opening tag sequence", "[JSNormalizer]")
 {
     SECTION("incomplete")
@@ -1916,7 +1913,6 @@ TEST_CASE("opening tag sequence", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("nested script tags in an external script", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
@@ -6879,4 +6875,3 @@ TEST_CASE("keywords as identifiers", "[JSNormalizer]")
 }
 
 #endif
-

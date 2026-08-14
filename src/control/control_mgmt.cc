@@ -603,7 +603,6 @@ static void clear_controls()
 {
     for (const auto& p : controls)
     {
-        // cppcheck-suppress constVariablePointer
         ControlConn* ctrlcon = p.second;
 
         if (ctrlcon->is_registered())

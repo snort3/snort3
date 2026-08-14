@@ -117,7 +117,6 @@ void TenantSelector::show() const
 
 bool TenantSelector::select_default_policies(uint32_t key, const SnortConfig* sc)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(tenant_select_perf_stats);
 
     tenant_select_stats.packets++;

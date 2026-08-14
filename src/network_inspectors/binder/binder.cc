@@ -738,7 +738,6 @@ void Binder::show(const SnortConfig*) const
 
 void Binder::handle_packet(const Packet* pkt)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(bindPerfStats);
 
     Stuff stuff;
@@ -853,7 +852,6 @@ void Binder::handle_flow_service_change(Flow& flow)
 {
     bstats.service_changes++;
 
-    // cppcheck-suppress unreadVariable ; RAII lifetime records profiling data
     Profile profile(bindPerfStats);
     Stuff stuff;
 
@@ -933,7 +931,6 @@ void Binder::handle_flow_service_change(Flow& flow)
 
 void Binder::handle_assistant_gadget(const char* service, Flow& flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(bindPerfStats);
 
     Stuff stuff;

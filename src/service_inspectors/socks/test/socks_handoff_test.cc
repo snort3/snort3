@@ -55,14 +55,11 @@ THREAD_LOCAL SocksStats socks_stats = {};
 
 TEST_GROUP(socks_handoff_test)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer ; false positive - reassigned in setup()
     SocksFlowData* flow_data = nullptr;
 
     void setup() override
     {
         SocksFlowData::init();
-        // cppcheck-suppress unreadVariable ; false positive - used in tests
         flow_data = new SocksFlowData();
     }
 

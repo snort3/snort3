@@ -222,7 +222,6 @@ static void cip_current_data_process(CipSessionData* css, CipCurrentData& curren
 
 static void snort_cip(CipProtoConf* config, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(cip_perf_stats);
 
     if (p->has_tcp_data() && !p->is_full_pdu())

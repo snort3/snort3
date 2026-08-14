@@ -165,7 +165,6 @@ private:
 
 void ReactActiveAction::delayed_exec(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(reactPerfStats);
 
     if ( !p->active->is_reset_candidate(p) )
@@ -276,7 +275,6 @@ public:
     void set_trace(const Trace* trace) const override
     { react_trace = trace; }
 
-    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     const TraceOption* get_trace_options() const override
     {
 #ifndef DEBUG_MSGS

@@ -173,7 +173,6 @@ void ConnExtractor::internal_tinit(const snort::Connector::ID* service_id)
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void ConnExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (flow->pkt_type < PktType::IP or flow->pkt_type > PktType::ICMP or !filter(flow))

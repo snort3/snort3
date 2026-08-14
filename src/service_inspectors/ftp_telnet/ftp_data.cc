@@ -273,7 +273,6 @@ ProfileStats* FtpDataModule::get_profile() const
 
 void FtpData::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(ftpdataPerfStats);
 
     // precondition - what we registered for

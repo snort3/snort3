@@ -50,7 +50,6 @@ bool Rule::add_hdr_data(const std::string& data)
         return false;
     }
 }
-
 void Rule::set_rule_old_action(const std::string& action)
 {
     old_action = action;

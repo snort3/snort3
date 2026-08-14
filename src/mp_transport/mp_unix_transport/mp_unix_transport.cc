@@ -73,7 +73,6 @@ struct MPTransportMessage
 
 void MPUnixDomainTransport::side_channel_receive_handler(SCMessage* msg)
 {
-    // cppcheck-suppress unreadVariable ; RAII owner deletes the message on scope exit
     std::unique_ptr<SCMessage> msg_owner(msg);
 
     if (transport_receive_handler and msg)

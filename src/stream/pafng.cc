@@ -213,7 +213,7 @@ bool ProtocolAwareFlusher::paf_eval(PafAux& px, Packet* pkt, uint32_t flags,
 int32_t ProtocolAwareFlusher::paf_check (Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t total, uint32_t seq, uint32_t* flags)
 {
-    Profile profile(pafPerfStats);  // cppcheck-suppress unreadVariable
+    Profile profile(pafPerfStats);
     PafAux px;
 
     if ( !paf_initialized() )

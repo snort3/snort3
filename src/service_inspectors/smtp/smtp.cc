@@ -1610,7 +1610,7 @@ void Smtp::show(const SnortConfig*) const
 
 void Smtp::eval(Packet* p)
 {
-    Profile profile(smtpPerfStats); // cppcheck-suppress unreadVariable
+    Profile profile(smtpPerfStats);
 
     // precondition - what we registered for
     assert(p->has_tcp_data());

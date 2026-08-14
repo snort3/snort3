@@ -220,7 +220,6 @@ void DceExpSsnManager::create_expected_session(const SfIp*, uint16_t, const char
 {
 }
 
-// cppcheck-suppress syntaxError
 TEST_CASE("DCE CO detects complete packed PDUs with PDU-sized packet view", "[dce_co]")
 {
     std::array<uint8_t, co_hdr_len * pdu_count> data = {};

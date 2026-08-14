@@ -269,12 +269,9 @@ int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSes
 
 TEST_GROUP(detector_smtp_tests)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     SmtpClientDetector *test_detector = nullptr;
     void setup() override
     {
-        // cppcheck-suppress unreadVariable ; consumed by teardown through the test fixture
         test_detector = new SmtpClientDetector(&test_discovery);
     }
 

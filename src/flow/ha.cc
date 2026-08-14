@@ -951,7 +951,6 @@ bool HighAvailabilityManager::in_standby(Flow* flow)
 }
 
 // cppcheck-suppress constParameterReference
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 Flow* HighAvailabilityManager::import(Packet& p, FlowKey& key)
 {
     if (!ha)

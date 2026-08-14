@@ -58,7 +58,7 @@ TEST_GROUP(OpcuaSplitterTest)
 
     // Helper function to create OPC UA message headers
     // Constructs minimal valid OPC UA message with proper header structure
-    void create_opcua_message(const char* msg, uint8_t* data, uint32_t msg_size)
+    static void create_opcua_message(const char* msg, uint8_t* data, uint32_t msg_size)
     {
         // Message type (first 3 bytes) + is_final flag (4th byte)
         data[0] = msg[0]; data[1] = msg[1]; data[2] = msg[2];

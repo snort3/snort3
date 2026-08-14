@@ -169,8 +169,6 @@ TEST_GROUP(pub_sub_http_transaction_end_event_test)
     Flow* const flow = new Flow;
     HttpParaList params;
     HttpFlowData* flow_data = new HttpFlowData(flow, &params);
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress unreadVariable ; shared test state is consumed by test bodies
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
     void setup() override
     {
@@ -207,8 +205,8 @@ TEST(pub_sub_http_transaction_end_event_test, proxied_str_exists)
     const std::string result = "FORWARDED->odd X-FORWARDED-FOR->odd X-FORWARDED-FROM->odd "
         "CLIENT-IP->odd VIA->odd XROXY-CONNECTION->odd PROXY-CONNECTION->odd";
     test_number = 1;
-    std::string proxied = event.get_proxied();
-    CHECK(proxied == result);
+    const std::string proxied1 = event.get_proxied();
+    CHECK(proxied1 == result);
     test_number = 2;
     CHECK(event.get_proxied() == result);
 }

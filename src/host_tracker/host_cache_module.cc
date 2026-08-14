@@ -403,8 +403,8 @@ void host_cache_module_dump()
 
 void HostCacheModule::dump()
 {
-    HostCacheModule* hcm =
-        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
+    const HostCacheModule* hcm =
+        static_cast<const HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
     const char* df = hcm ? hcm->get_dump_file() : nullptr;
 
     if ( df and *df )

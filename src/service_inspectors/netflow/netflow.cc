@@ -821,7 +821,6 @@ public:
     bool is_control_channel() const override
     { return true; }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool supports_no_ips() const override
     { return true; }
 

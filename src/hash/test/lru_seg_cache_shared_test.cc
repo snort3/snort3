@@ -80,7 +80,6 @@ TEST(segmented_lru_cache, get_counts_test)
 {
     SegmentedLruCache<int, std::string> cache(5);
     // Assuming get_counts function returns a non-null pointer
-    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the counts object contract
     CHECK(nullptr != cache.get_counts());
 }
 

@@ -110,7 +110,6 @@ uint64_t cbuffer_used(CircularBuffer* cb)
 
 /* Returns total number of elements*/
 // cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint64_t cbuffer_size(CircularBuffer* cb)
 {
     return (cb->size - 1);

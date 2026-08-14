@@ -56,7 +56,7 @@ const MpseApi* get_test_api()
 
 TEST_GROUP(search_tool_full)
 {
-    SearchTool* stool;  // cppcheck-suppress variableScope
+    SearchTool* stool;
 
     void setup() override
     {

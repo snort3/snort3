@@ -37,14 +37,12 @@ public:
     DAQ_MsgType get_type() const
     { return daq_msg_get_type(msg); }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     size_t get_header_length() const
     { return daq_msg_get_hdr_len(msg); }
 
     const void* get_header() const
     { return daq_msg_get_hdr(msg); }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_data_length() const
     { return daq_msg_get_data_len(msg); }
 

@@ -150,7 +150,6 @@ bool SFDAQInstance::can_start_unprivileged() const
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_UNPRIV_START) != 0;
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool SFDAQInstance::can_whitelist() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_WHITELIST) != 0;

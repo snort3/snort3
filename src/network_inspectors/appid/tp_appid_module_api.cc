@@ -38,14 +38,12 @@
 
 static void* tp_appid_profiler_malloc(size_t size)
 {
-    // cppcheck-suppress unreadVariable
     snort::Profile profile(tp_appid_perf_stats);
     return operator new(size);
 }
 
 static void tp_appid_profiler_free(void* p)
 {
-    // cppcheck-suppress unreadVariable
     snort::Profile profile(tp_appid_perf_stats);
     if (p)
         operator delete(p);
@@ -56,7 +54,6 @@ static_assert(sizeof(size_t) <= ALLOCATION_TRACKER_HEADER_SIZE);
 
 static void* tp_appid_profiler_malloc_with_stats(size_t size)
 {
-    // cppcheck-suppress unreadVariable
     snort::Profile profile(tp_appid_perf_stats);
     if (size > std::numeric_limits<size_t>::max() - ALLOCATION_TRACKER_HEADER_SIZE)
         throw std::bad_alloc();
@@ -69,7 +66,6 @@ static void* tp_appid_profiler_malloc_with_stats(size_t size)
 
 static void tp_appid_profiler_free_with_stats(void* p)
 {
-    // cppcheck-suppress unreadVariable
     snort::Profile profile(tp_appid_perf_stats);
     if (p)
     {

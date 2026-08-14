@@ -469,7 +469,7 @@ StreamSplitter* UserSession::get_splitter(bool c2s)
 
 int UserSession::process(Packet* p)
 {
-    Profile profile(user_perf_stats);   // cppcheck-suppress unreadVariable
+    Profile profile(user_perf_stats);
 
     if ( Stream::expired_flow(flow, p) )
     {

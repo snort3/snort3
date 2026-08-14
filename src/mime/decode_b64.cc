@@ -161,8 +161,6 @@ int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32
             n++; /* Number of base64 bytes we've stored */
             if (!(n % 4))
             {
-                uint8_t tableval_a, tableval_b, tableval_c, tableval_d;
-
                 /* We have four databytes upon which to operate */
 
                 if ((base64data[0] == '=') || (base64data[1] == '='))
@@ -173,10 +171,10 @@ int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32
                 }
 
                 /* retrieve values from lookup table */
-                tableval_a = sf_decode64tab[base64data[0]];
-                tableval_b = sf_decode64tab[base64data[1]];
-                tableval_c = sf_decode64tab[base64data[2]];
-                tableval_d = sf_decode64tab[base64data[3]];
+                const uint8_t tableval_a = sf_decode64tab[base64data[0]];
+                const uint8_t tableval_b = sf_decode64tab[base64data[1]];
+                const uint8_t tableval_c = sf_decode64tab[base64data[2]];
+                const uint8_t tableval_d = sf_decode64tab[base64data[3]];
 
                 if (*bytes_written < outbuf_size)
                 {

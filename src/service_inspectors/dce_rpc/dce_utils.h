@@ -158,7 +158,6 @@ inline bool DCE2_IsConfigEndChar(const char c)
 // String must be 0 terminated.
 inline char* DCE2_PruneWhiteSpace(char* str)
 {
-    // cppcheck-suppress constVariablePointer
     char* end;
 
     if (str == nullptr)
@@ -342,7 +341,6 @@ inline uint32_t DCE2_BufferLength(const DCE2_Buffer* buf)
     return buf->len;
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint32_t DCE2_BufferSize(const DCE2_Buffer* buf)
 {
     if (buf == nullptr)

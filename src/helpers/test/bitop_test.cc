@@ -40,7 +40,6 @@ static unsigned num_set(const BitOp& bitop, size_t max)
 static bool is_clear(const BitOp& bitop, size_t max)
 { return num_set(bitop, max) == 0; }
 
-// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE( "bitop", "[bitop]" )
 {
     const size_t max = 16;

@@ -66,8 +66,10 @@ TEST(iec104_parse_apdu_invalid_packet_len, invalid_group_data)
     
     for(uint32_t i = 0; i < 128; i++)
     {
-        parseIec104GenericAsdu(i, (const Iec104ApciI*)test_data_1, sizeof(test_data_1));
-        parseIec104GenericAsdu(i, (const Iec104ApciI*)test_data_2, sizeof(test_data_2));
+        parseIec104GenericAsdu(i, reinterpret_cast<const Iec104ApciI*>(test_data_1),
+            sizeof(test_data_1));
+        parseIec104GenericAsdu(i, reinterpret_cast<const Iec104ApciI*>(test_data_2),
+            sizeof(test_data_2));
     }
     CHECK_EQUAL(true, result);
 }
@@ -85,7 +87,8 @@ TEST(iec104_parse_apdu_invalid_packet_len, m_me_nc_1_sq0_bounds_check)
     
     for(uint32_t i = 0; i < 128; i++)
     {
-        parseIec104GenericAsdu(i, (const Iec104ApciI*)test_data_m_me_nc_1_sq0, sizeof(test_data_m_me_nc_1_sq0));
+        parseIec104GenericAsdu(i, reinterpret_cast<const Iec104ApciI*>(test_data_m_me_nc_1_sq0),
+            sizeof(test_data_m_me_nc_1_sq0));
     }
     CHECK_EQUAL(true, result);
 }
@@ -103,7 +106,8 @@ TEST(iec104_parse_apdu_invalid_packet_len, m_me_tc_1_sq0_bounds_check)
     
     for(uint32_t i = 0; i < 128; i++)
     {
-        parseIec104GenericAsdu(i, (const Iec104ApciI*)test_data_m_me_tc_1_sq0, sizeof(test_data_m_me_tc_1_sq0));
+        parseIec104GenericAsdu(i, reinterpret_cast<const Iec104ApciI*>(test_data_m_me_tc_1_sq0),
+            sizeof(test_data_m_me_tc_1_sq0));
     }
     CHECK_EQUAL(true, result);
 }
@@ -121,7 +125,8 @@ TEST(iec104_parse_apdu_invalid_packet_len, m_me_tf_1_sq0_bounds_check)
     
     for(uint32_t i = 0; i < 128; i++)
     {
-        parseIec104GenericAsdu(i, (const Iec104ApciI*)test_data_m_me_tf_1_sq0, sizeof(test_data_m_me_tf_1_sq0));
+        parseIec104GenericAsdu(i, reinterpret_cast<const Iec104ApciI*>(test_data_m_me_tf_1_sq0),
+            sizeof(test_data_m_me_tf_1_sq0));
     }
     CHECK_EQUAL(true, result);
 }

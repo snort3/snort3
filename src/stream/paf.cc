@@ -252,7 +252,7 @@ int32_t paf_check (
     const uint8_t* data, uint32_t len, uint32_t total,
     uint32_t seq, uint32_t* flags)
 {
-    Profile profile(pafPerfStats);  // cppcheck-suppress unreadVariable
+    Profile profile(pafPerfStats);
     PafAux px;
 
     if ( !paf_initialized(ps) )

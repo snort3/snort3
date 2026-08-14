@@ -191,7 +191,7 @@ bool IpSession::setup(const Packet* p, bool is_restart)
 
 int IpSession::process(Packet* p)
 {
-    Profile profile(ip_perf_stats); // cppcheck-suppress unreadVariable
+    Profile profile(ip_perf_stats);
 
     if ( Stream::expired_flow(flow, p) )
     {
@@ -223,7 +223,6 @@ int IpSession::process(Packet* p)
 
 bool IpSession::add_alert(Packet*, uint32_t gid, uint32_t sid)
 {
-    // cppcheck-suppress constVariablePointer
     FragTracker* ft = &tracker;
 
     /* Only track a certain number of alerts per session */

@@ -66,13 +66,10 @@ THREAD_LOCAL SocksStats socks_stats = {};
 
 TEST_GROUP(socks_address_test)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer ; false positive - reassigned in setup()
     SocksAddress* addr = nullptr;
 
     void setup() override
     {
-        // cppcheck-suppress unreadVariable ; false positive - used in tests
         addr = new SocksAddress();
     }
 
@@ -251,14 +248,11 @@ TEST(socks_address_test, ipv4_mapped_ipv6)
 
 TEST_GROUP(socks_flow_data_test)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer ; false positive - reassigned in setup()
     SocksFlowData* flow_data = nullptr;
 
     void setup() override
     {
         SocksFlowData::init();
-        // cppcheck-suppress unreadVariable ; false positive - used in tests
         flow_data = new SocksFlowData();
     }
 

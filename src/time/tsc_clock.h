@@ -53,6 +53,7 @@ struct TscClock
         asm volatile("mrs %0, CNTVCT_EL0" : "=r" (ticks));
         return ticks;
 #else
+// cppcheck-suppress preprocessorErrorDirective ; build targets are restricted to supported CPUs
 #error "TscClock is not supported on this architecture!"
 #endif
     }

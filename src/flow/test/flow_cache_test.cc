@@ -771,7 +771,7 @@ TEST_GROUP(dump_flows)
     FlowCache* cache;
     DumpFlowsTest* df;
 
-    void setup()
+    void setup() override
     {
         fcg.max_flows = 500;
         cache = new FlowCache(fcg);
@@ -780,7 +780,7 @@ TEST_GROUP(dump_flows)
         df = new DumpFlowsTest(nullptr, dff);
     }
 
-    void teardown()
+    void teardown() override
     {
         delete cache;
         delete df;
@@ -916,10 +916,9 @@ TEST_GROUP(dump_flows_summary)
     FlowCacheConfig fcg;
     FlowCache* cache;
     DumpFlowsSummaryTest* dfs;
-    // cppcheck-suppress unreadVariable ; shared test data is consumed by test bodies
     std::vector<PktType> types = {PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP};
 
-    void setup()
+    void setup() override
     {
         fcg.max_flows = 500;
         cache = new FlowCache(fcg);
@@ -927,7 +926,7 @@ TEST_GROUP(dump_flows_summary)
         dfs = new DumpFlowsSummaryTest(nullptr, dff);
     }
 
-    void teardown()
+    void teardown() override
     {
         delete cache;
         delete dfs;
@@ -1248,13 +1247,13 @@ TEST_GROUP(flow_cache_lrus)
     FlowCacheConfig fcg;
     FlowCache* cache;
 
-    void setup()
+    void setup() override
     {
         fcg.max_flows = 20;
         cache = new FlowCache(fcg);
     }
 
-    void teardown()
+    void teardown() override
     {
         cache->purge();
         delete cache;

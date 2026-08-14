@@ -135,13 +135,13 @@ TEST_GROUP(SocksSplitterErrorCases)
 {
     SocksSplitter* splitter = nullptr;
     
-    void setup()
+    void setup() override
     {
         SocksFlowData::init();
         splitter = new SocksSplitter(true); // client-to-server
     }
     
-    void teardown()
+    void teardown() override
     {
         delete splitter;
     }

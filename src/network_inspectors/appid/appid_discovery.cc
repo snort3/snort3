@@ -869,7 +869,6 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         // cppcheck-suppress knownConditionTrueFalse ; tunnel state depends on HTTP session data
         (is_http_tunnel))
     {
-        // cppcheck-suppress knownConditionTrueFalse ; is_http_tunnel requires hsession
         if (is_http_tunnel and (hsession->scan_flags & SCAN_HTTP_URI_FLAG))
         {
             // cppcheck-suppress-begin nullPointer ; is_http_tunnel requires hsession

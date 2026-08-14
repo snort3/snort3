@@ -754,7 +754,7 @@ void Pop::show(const SnortConfig*) const
 
 void Pop::eval(Packet* p)
 {
-    Profile profile(popPerfStats);  // cppcheck-suppress unreadVariable
+    Profile profile(popPerfStats);
 
     // precondition - what we registered for
     assert(p->has_tcp_data());

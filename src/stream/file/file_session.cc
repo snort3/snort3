@@ -71,7 +71,7 @@ static FilePosition position(const Packet* p)
 
 int FileSession::process(Packet* p)
 {
-    Profile profile(file_ssn_stats);    // cppcheck-suppress unreadVariable
+    Profile profile(file_ssn_stats);
 
     p->flow->ssn_state.snort_protocol_id = SNORT_PROTO_FILE;
     const StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);

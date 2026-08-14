@@ -99,17 +99,14 @@ TEST(mpse_hs_base, mpse)
 
 TEST_GROUP(mpse_hs_match)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
         CHECK(se_hyperscan[0]);
-        mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
+        mod = mpse_api->base.mod_ctor();
         hs = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs);
         hits = 0;
@@ -247,12 +244,8 @@ TEST(mpse_hs_match, pcre)
 
 TEST_GROUP(mpse_hs_multi)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs1 = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs2 = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
@@ -260,7 +253,7 @@ TEST_GROUP(mpse_hs_multi)
     {
         CHECK(se_hyperscan[0]);
 
-        mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
+        mod = mpse_api->base.mod_ctor();
 
         hs1 = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs1);
@@ -312,19 +305,15 @@ TEST(mpse_hs_multi, single)
 
 TEST_GROUP(mpse_hs_scratch)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs1 = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs2 = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
         CHECK(se_hyperscan[0]);
-        mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
+        mod = mpse_api->base.mod_ctor();
         hs1 = mpse_api->ctor(snort_conf, nullptr, nullptr);
         hs2 = mpse_api->ctor(snort_conf, nullptr, nullptr);
         CHECK(hs1);

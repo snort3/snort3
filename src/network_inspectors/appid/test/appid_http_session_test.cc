@@ -188,7 +188,6 @@ THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
 TEST_GROUP(appid_http_session)
 {
-    // cppcheck-suppress constVariablePointer
     AppIdHttpSession* mock_hsession;
     AppIdSession* session;
 
@@ -201,7 +200,6 @@ TEST_GROUP(appid_http_session)
 #endif
         );
         session->flow = &flow;
-        // cppcheck-suppress unreadVariable ; fixture is consumed by test bodies and teardown
         mock_hsession = new AppIdHttpSession(*session, 0);
         appidDebug = new AppIdDebug();
         AppIdPegCounts::init_pegs();

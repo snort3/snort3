@@ -137,7 +137,6 @@ public:
 private:
     // FIXIT-L use custom struct instead of std::pair for better semantics
     // std::vector<std::pair<LatencyTimer<Clock>, bool>> contexts;
-    // cppcheck-suppress unusedStructMember ; used by conditionally compiled timer paths
     std::vector<PacketTimer<Clock>> timers;
     const ConfigWrapper& config;
     EventHandler& event_handler;

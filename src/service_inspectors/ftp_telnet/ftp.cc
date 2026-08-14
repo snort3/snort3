@@ -81,7 +81,6 @@ static void publish_ftp_response(const FTP_SESSION& session, Flow* flow)
 static int SnortFTP(
     FTP_SESSION* FTPsession, Packet* p, int iInspectMode)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(ftpPerfStats);
 
     if (!FTPsession || !FTPsession->server_conf || !FTPsession->client_conf)

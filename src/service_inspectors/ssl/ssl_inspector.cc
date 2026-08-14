@@ -354,7 +354,7 @@ static inline void SSLPP_process_other(const SSL_PROTO_CONF* config, SSLData* sd
 
 static void snort_ssl(const SSL_PROTO_CONF* config, Packet* p, Ssl* inspector)
 {
-    Profile profile(sslPerfStats);  // cppcheck-suppress unreadVariable
+    Profile profile(sslPerfStats);
 
     /* Attempt to get a previously allocated SSL block. */
     SslBaseFlowData* base_fd = static_cast<SslBaseFlowData*>(p->flow->get_flow_data(SslFlowData::get_ssl_inspector_id()));

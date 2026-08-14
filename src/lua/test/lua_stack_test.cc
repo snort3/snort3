@@ -380,7 +380,6 @@ static void test_bool()
     lua_pop(L, 1);
 }
 
-// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("lua_stack", "[lua_stack]")
 {
     l_reset_lua_state(L);

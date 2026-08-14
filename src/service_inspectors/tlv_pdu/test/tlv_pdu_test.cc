@@ -72,15 +72,13 @@ THREAD_LOCAL PduCounts pdu_counts;
 TEST_GROUP(relative_length_only)
 {
     // 4 byte length followed by 3 bytes data
-    const uint8_t data[7] = { 0, 1, 2, 3, 4, 5, 6 };  // cppcheck-suppress unreadVariable
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
+    const uint8_t data[7] = { 0, 1, 2, 3, 4, 5, 6 };
     StreamSplitter* ss = nullptr;
 
     void setup() override
     {
         TlvPduConfig c = { 4, 0, 0, true };
-        ss = new TlvPduSplitter(true, c);  // cppcheck-suppress unreadVariable
+        ss = new TlvPduSplitter(true, c);
     }
     void teardown() override
     { delete ss; }
@@ -155,15 +153,13 @@ TEST(relative_length_only, n5)
 
 TEST_GROUP(relative_offset_length)
 {
-    const uint8_t data[10] = { 9, 8, 7, 0, 1, 2, 3, 4, 5, 6 };  // cppcheck-suppress unreadVariable
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
+    const uint8_t data[10] = { 9, 8, 7, 0, 1, 2, 3, 4, 5, 6 };
     StreamSplitter* ss = nullptr;
 
     void setup() override
     {
         TlvPduConfig c = { 4, 3, 2, true };
-        ss = new TlvPduSplitter(true, c);  // cppcheck-suppress unreadVariable
+        ss = new TlvPduSplitter(true, c);
     }
     void teardown() override
     { delete ss; }
@@ -256,8 +252,7 @@ TEST(relative_offset_length, n8)
 
 TEST_GROUP(various)
 {
-    const uint8_t data[8] = { 9, 8, 0, 1, 2, 3, 4, 5 };  // cppcheck-suppress unreadVariable
-    // cppcheck-suppress constVariablePointer
+    const uint8_t data[8] = { 9, 8, 0, 1, 2, 3, 4, 5 };
     StreamSplitter* ss = nullptr;
 
     void teardown() override
@@ -329,17 +324,14 @@ TEST_GROUP(multi_flush)
 {
 // __STRDUMP_DISABLE__
     // 2 byte offset ('O'), 1 byte length, data ('D')
-    // cppcheck-suppress unreadVariable
     const uint8_t data[17] = { 'O', 'O', 3, 'D', 'D', 'D', 'O', 'O', 1, 'D', 'O', 'O', 4, 'D', 'D', 'D', 'D' };
 // __STRDUMP_ENABLE__
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     StreamSplitter* ss = nullptr;
 
     void setup() override
     {
         TlvPduConfig c = { 1, 2, 0, true };
-        ss = new TlvPduSplitter(true, c);  // cppcheck-suppress unreadVariable
+        ss = new TlvPduSplitter(true, c);
     }
     void teardown() override
     { delete ss; }

@@ -256,7 +256,6 @@ TEST_CASE("sslv2 detect", "[SslV2Curse]")
     SECTION("11 bytes v2_v3"){ test(11,ssl_v2_v3_ch); }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("sslv2 not found", "[SslV2Curse]")
 {
     uint32_t max_detect = static_cast<uint32_t>(SSL_STATE__BYTE_10_CHLNG_LEN_LSB);

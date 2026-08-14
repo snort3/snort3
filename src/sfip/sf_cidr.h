@@ -92,7 +92,6 @@ inline void SfCidr::set(const SfIp& src)
 inline SfIpRet SfCidr::set(const void* src, int fam)
 {
     SfIpRet ret = addr.set(src, fam);
-    // cppcheck-suppress knownConditionTrueFalse ; parse result depends on the supplied address
     if (ret != SFIP_SUCCESS)
         return ret;
     bits = 128;

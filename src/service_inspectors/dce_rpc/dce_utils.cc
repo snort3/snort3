@@ -279,4 +279,3 @@ void DCE2_BufferDestroy(DCE2_Buffer* buf)
 
     snort_free((void*)buf);
 }
-

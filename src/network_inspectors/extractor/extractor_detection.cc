@@ -109,7 +109,6 @@ void BuiltinExtractor::internal_tinit(const snort::Connector::ID* service_id)
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void BuiltinExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))
@@ -277,7 +276,6 @@ void IpsUserExtractor::internal_tinit(const snort::Connector::ID* service_id)
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void IpsUserExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))

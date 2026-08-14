@@ -82,7 +82,6 @@ bool CipConnpathclassOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus CipConnpathclassOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(cip_connpathclass_perf_stats);
 
     if ( !p->flow || !p->is_full_pdu() )

@@ -220,7 +220,6 @@ public:
     bool suspended() const;
 
 private:
-    // cppcheck-suppress unusedStructMember ; used by conditionally compiled timer paths
     std::vector<RuleTimer<Clock>> timers;
     const ConfigWrapper& config;
     EventHandler& event_handler;

@@ -37,8 +37,6 @@ static Counter make_counter(const char* name, const Value& value)
     return counter;
 }
 
-// cppcheck-suppress-begin syntaxError
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("json stats output renders an empty snapshot", "[stats_output_json]")
 {
     Snapshot snapshot;
@@ -50,9 +48,7 @@ TEST_CASE("json stats output renders an empty snapshot", "[stats_output_json]")
         "\n";
     CHECK(out.str() == expected);
 }
-// cppcheck-suppress-end syntaxError
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("json stats output skips groups without renderable content", "[stats_output_json]")
 {
     Snapshot snapshot;
@@ -86,7 +82,6 @@ TEST_CASE("json stats output skips groups without renderable content", "[stats_o
     CHECK(out.str() == expected);
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("json stats output filters each zero value type", "[stats_output_json]")
 {
     Snapshot snapshot;
@@ -242,7 +237,6 @@ TEST_CASE("json stats output preserves rendered empty strings", "[stats_output_j
     CHECK(out.str() == expected);
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("json stats output can include zeros by policy", "[stats_output_json]")
 {
     Snapshot snapshot;

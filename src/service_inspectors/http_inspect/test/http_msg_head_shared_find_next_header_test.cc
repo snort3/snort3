@@ -206,8 +206,6 @@ TEST_GROUP(find_next_header)
     Flow* flow = nullptr;
     HttpParaList params;
     HttpFlowData* flow_data = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     HttpMsgHeadTest* msg = nullptr;
     uint8_t dummy = 0;
 
@@ -216,7 +214,6 @@ TEST_GROUP(find_next_header)
         flow = new Flow;
         flow_data = new HttpFlowData(flow, &params);
         flow->gadget = new HttpInspect(&params);
-        // cppcheck-suppress unreadVariable ; fixture is consumed by test bodies and teardown
         msg = new HttpMsgHeadTest(&dummy, 0, flow_data, SRC_CLIENT, false, flow, &params);
     }
     void teardown() override

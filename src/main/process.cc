@@ -348,7 +348,6 @@ static void oops_handler(int signal)
     // cppcheck-suppress syntaxError ; VERSION and BUILD are build-system string macros
     ssp.printf("Version: " VERSION " Build " BUILD "\n\n");
 #else
-    // cppcheck-suppress unknownMacro ; VERSION is supplied by the build system
     ssp.printf("Version: " VERSION "\n\n");
 #endif
 

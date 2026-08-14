@@ -139,7 +139,6 @@ void Dce2Tcp::show(const SnortConfig*) const
 void Dce2Tcp::eval(Packet* p)
 {
     DCE2_TcpSsnData* dce2_tcp_sess;
-    // cppcheck-suppress unreadVariable
     Profile profile(dce2_tcp_pstat_main);
 
     assert(p->has_tcp_data());

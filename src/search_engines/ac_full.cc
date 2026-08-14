@@ -108,7 +108,7 @@ public:
 
 int AcfMpse::search(const uint8_t* T, int n, MpseMatch match, void* context, int* current_state)
 {
-    Profile profile(full_stats);  // cppcheck-suppress unreadVariable
+    Profile profile(full_stats);
 
     full_counts.searches++;
     full_counts.bytes += n;

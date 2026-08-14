@@ -293,7 +293,7 @@ TEST_GROUP(unixdomain_connector_call_error)
 
 TEST_GROUP(unixdomain_connector_call_other)
 {
-    void teardown()
+    void teardown() override
     { connector_config.paths = std::move(std::vector<std::string>()); }
 };
 
@@ -842,7 +842,7 @@ void reconnect_update_callback(UnixDomainConnector* updated_connector, bool is_r
 TEST_GROUP(unixdomain_connector_reconnect_helper)
 {
     UnixDomainConnectorConfig reconnect_config;
-    void setup()
+    void setup() override
     {
         reconnect_config.direction = Connector::CONN_DUPLEX;
         reconnect_config.connector_name = "unixdomain-reconnect";
@@ -853,7 +853,7 @@ TEST_GROUP(unixdomain_connector_reconnect_helper)
         reconnect_helper = new UnixDomainConnectorReconnectHelper(reconnect_config, reconnect_update_callback);
     }
 
-    void teardown()
+    void teardown() override
     {
         if (reconnect_helper)
         {

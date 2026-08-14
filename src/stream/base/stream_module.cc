@@ -612,7 +612,6 @@ bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
     if ( Snort::is_reloading() && strcmp(fqn, MOD_NAME) == 0 )
     {
         StreamReloadResourceManager* reload_resource_manager = new StreamReloadResourceManager;
-        // cppcheck-suppress knownConditionTrueFalse ; implementation may change across builds
         if (reload_resource_manager->initialize(config))
             sc->register_reload_handler(reload_resource_manager);
         else

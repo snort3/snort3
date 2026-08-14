@@ -156,7 +156,6 @@ public:
         delete_hash_table();
     }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void free_user_data(HashNode* hnode) override
     {
         TagFree(this, (TagNode*)hnode->data);

@@ -108,7 +108,6 @@ void SocksInspector::show(const SnortConfig*) const
 
 void SocksInspector::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(socksPerfStats);
 
     assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data() or p->has_paf_payload());

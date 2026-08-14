@@ -92,7 +92,6 @@ public:
     PegCount get_total_prunes() const
     { return prune_stats.get_total(); }
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     PegCount get_prunes(PruneReason reason) const
     { return prune_stats.get(reason); }
 

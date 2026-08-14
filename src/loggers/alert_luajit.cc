@@ -159,7 +159,6 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
 
 void LuaJitLogger::alert(Packet* p, const char*, const Event& e)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(luaLogPerfStats);
 
     packet = p;

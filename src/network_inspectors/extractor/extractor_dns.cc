@@ -193,7 +193,6 @@ void DnsResponseExtractor::internal_tinit(const snort::Connector::ID* id)
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void DnsResponseExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))

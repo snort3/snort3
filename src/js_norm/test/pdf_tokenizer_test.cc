@@ -115,7 +115,6 @@ static int test_pdf_proc(const vector<ChunkRet>& chunks)
     return state_len;
 }
 
-// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("basic", "[PDFTokenizer]")
 {
     SECTION("minimal PDF")
@@ -784,7 +783,6 @@ TEST_CASE("brackets balancing", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("JS location", "[PDFTokenizer]")
 {
     SECTION("wrong type")
@@ -839,7 +837,6 @@ TEST_CASE("JS location", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("JS processing", "[PDFTokenizer]")
 {
     SECTION("simple text")
@@ -1249,7 +1246,6 @@ TEST_CASE("split", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("stream object", "[PDFTokenizer]")
 {
     SECTION("zero length")
@@ -1404,7 +1400,6 @@ TEST_CASE("stream object", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("stream object malformed", "[PDFTokenizer]")
 {
     SECTION("no dictionary")

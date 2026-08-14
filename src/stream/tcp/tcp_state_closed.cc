@@ -42,7 +42,6 @@ bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    // cppcheck-suppress constVariablePointer
     Flow* flow = tsd.get_flow();
     flow->set_expire(tsd.get_pkt(), trk.session->tcp_config->session_timeout);
     return true;

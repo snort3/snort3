@@ -107,7 +107,7 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse, EncodeFlags, const 
 
 TEST_GROUP(active_packet_trace)
 {
-    void setup() {
+    void setup() override {
         direct_inject_failed = false;
         daq_inject_failed = false;
         encode_failed = false;
@@ -115,7 +115,7 @@ TEST_GROUP(active_packet_trace)
         max_payload = 0;
     }
 
-    void teardown() {
+    void teardown() override {
     }
 };
 

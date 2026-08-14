@@ -371,7 +371,6 @@ int PortObjectPortCount(const PortObject* po)
 */
 int PortObjectHasPort(const PortObject* po, int port)
 {
-    // cppcheck-suppress constVariablePointer
     PortObjectItem* poi;
     SF_LNODE* cursor;
 

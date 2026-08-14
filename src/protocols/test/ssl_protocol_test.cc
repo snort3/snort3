@@ -72,7 +72,6 @@ BIO *BIO_new(const BIO_METHOD *type) { return nullptr; }
 // cppcheck-suppress constParameterPointer ; must match the OpenSSL API
 int BIO_free(BIO *a) { return 0; }
 // cppcheck-suppress constParameterPointer ; must match the OpenSSL API
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg) { return 0; }
 const BIO_METHOD *BIO_s_mem(void) { return nullptr; }
 int ASN1_STRING_length(const ASN1_STRING *x) { return g_test_asn1_len; }

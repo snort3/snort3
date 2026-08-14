@@ -407,11 +407,7 @@ TEST_GROUP(high_availability_test)
 {
     Flow s_flow;
     Active active;
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress variableScope ; initialized in setup and consumed by test bodies
     StreamHAClient* s_ha_client;
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress variableScope ; initialized in setup and consumed by test bodies
     FlowHAClient* s_other_ha_client;
     uint8_t s_message[MSG_SIZE];
     SCMessage s_sc_message = SCMessage(nullptr, nullptr, ConnectorMsg());
@@ -442,7 +438,6 @@ TEST_GROUP(high_availability_test)
         memset(s_message, 0, sizeof(s_message));
         s_sc_message.content = s_message;
         mock().setDataObject("message_content", "SCMessage", &s_sc_message);
-        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         s_pkt.active = &active;
 
         memset(&ha_stats, 0, sizeof(ha_stats));
@@ -460,9 +455,7 @@ TEST_GROUP(high_availability_test)
         HighAvailabilityManager::register_ha_client("temp");
         HighAvailabilityManager::finalize_ha_client_indices();
         HighAvailabilityManager::thread_init();
-        // cppcheck-suppress unreadVariable ; fixture ownership is consumed by teardown
         s_ha_client = new StreamHAClient;
-        // cppcheck-suppress unreadVariable ; fixture ownership is consumed by teardown
         s_other_ha_client = new OtherHAClient;
     }
 
@@ -1112,7 +1105,6 @@ TEST(high_availability_test, process_update_other_client_produce)
 TEST(high_availability_test, receive_update_both_clients)
 {
     struct __attribute__((__packed__)) {
-        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         HAMessageHeader mhdr;
         // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         FlowKey key;
@@ -1186,7 +1178,6 @@ TEST(high_availability_test, process_update_null_flow)
 TEST(high_availability_test, consume_message_bad_key)
 {
     struct __attribute__((__packed__)) {
-        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         HAMessageHeader mhdr;
         // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         uint8_t partial_key[2];

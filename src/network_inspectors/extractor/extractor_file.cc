@@ -169,7 +169,6 @@ void FileExtractor::internal_tinit(const snort::Connector::ID* service_id)
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void FileExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))

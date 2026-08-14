@@ -112,7 +112,7 @@ TEST(s7commplus_stream_splitter_tests, splitter_abort_on_incorrect_cotp_length)
 
 TEST(s7commplus_stream_splitter_tests, splitter_abort_on_incorrect_cotp_pdu_type)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x10\x02\x00";
+    const auto* test_data = reinterpret_cast<const uint8_t*>("\x03\x00\x00\x10\x02\x00");
     uint32_t test_data_len = 6;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -137,7 +137,8 @@ TEST(s7commplus_stream_splitter_tests, splitter_abort_on_incorrect_cotp_pdu_type
 
 TEST(s7commplus_stream_splitter_tests, splitter_abort_on_cotp_cr_class_2_or_higher)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x10\x02\x0e\x00\x00\x01\x01\x20";
+    const auto* test_data = reinterpret_cast<const uint8_t*>(
+        "\x03\x00\x00\x10\x02\x0e\x00\x00\x01\x01\x20");
     uint32_t test_data_len = 11;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -152,7 +153,8 @@ TEST(s7commplus_stream_splitter_tests, splitter_abort_on_cotp_cr_class_2_or_high
 
 TEST(s7commplus_stream_splitter_tests, splitter_flush_on_cotp_cr_class_0_or_1)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x24\x06\xe0\x00\x00\x01\x01\x00";
+    const auto* test_data = reinterpret_cast<const uint8_t*>(
+        "\x03\x00\x00\x24\x06\xe0\x00\x00\x01\x01\x00");
     uint32_t test_data_len = 11;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -169,7 +171,8 @@ TEST(s7commplus_stream_splitter_tests, splitter_flush_on_cotp_cr_class_0_or_1)
 
 TEST(s7commplus_stream_splitter_tests, splitter_abort_on_abnormal_class_options)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x24\x06\xe0\x00\x00\x01\x01\x01";
+    const auto* test_data = reinterpret_cast<const uint8_t*>(
+        "\x03\x00\x00\x24\x06\xe0\x00\x00\x01\x01\x01");
     uint32_t test_data_len = 11;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -179,7 +182,8 @@ TEST(s7commplus_stream_splitter_tests, splitter_abort_on_abnormal_class_options)
 
 TEST(s7commplus_stream_splitter_tests, splitter_flush_on_data_transfer_correct_s7_protocol)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x24\x06\xf0\x80\x72";
+    const auto* test_data = reinterpret_cast<const uint8_t*>(
+        "\x03\x00\x00\x24\x06\xf0\x80\x72");
     uint32_t test_data_len = 8;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -190,7 +194,7 @@ TEST(s7commplus_stream_splitter_tests, splitter_flush_on_data_transfer_correct_s
 
 TEST(s7commplus_stream_splitter_tests, splitter_search_and_flush_correct_s7_protocol)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00";
+    const auto* test_data = reinterpret_cast<const uint8_t*>("\x03\x00");
     uint32_t test_data_len = 2;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -215,7 +219,8 @@ TEST(s7commplus_stream_splitter_tests, splitter_search_and_flush_correct_s7_prot
 
 TEST(s7commplus_stream_splitter_tests, splitter_flush_on_cotp_fragment)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x24\x06\xf0\x00";
+    const auto* test_data = reinterpret_cast<const uint8_t*>(
+        "\x03\x00\x00\x24\x06\xf0\x00");
     uint32_t test_data_len = 7;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);
@@ -226,7 +231,8 @@ TEST(s7commplus_stream_splitter_tests, splitter_flush_on_cotp_fragment)
 
 TEST(s7commplus_stream_splitter_tests, splitter_abort_on_data_transfer_incorrect_s7_protocol)
 {
-    uint8_t* test_data = (uint8_t*)"\x03\x00\x00\x24\x06\xf0\x80\x34";
+    const auto* test_data = reinterpret_cast<const uint8_t*>(
+        "\x03\x00\x00\x24\x06\xf0\x80\x34");
     uint32_t test_data_len = 8;
     uint32_t flush_point = 0;
     auto result = test_splitter->scan(&mock_packet, test_data, test_data_len, 0, &flush_point);

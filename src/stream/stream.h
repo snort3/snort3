@@ -228,7 +228,6 @@ public:
     // Handle session block pending state
     static void check_flow_closed(Packet*);
 
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     static bool require_3whs()
     { return get_network_policy()->hs_timeout >= 0; }
 

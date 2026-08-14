@@ -847,7 +847,6 @@ void Imap::show(const SnortConfig*) const
 
 void Imap::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(imapPerfStats);
 
     // precondition - what we registered for

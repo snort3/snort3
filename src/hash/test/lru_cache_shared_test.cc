@@ -92,7 +92,6 @@ TEST(lru_cache_shared, max_size)
         lru_cache[i]->assign(std::to_string(i));
 
     // Check that we can't set max size to 0
-    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies zero is rejected
     CHECK(lru_cache.set_max_size(0) == false);
     CHECK(lru_cache.get_max_size() == sz);
 

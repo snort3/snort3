@@ -150,7 +150,7 @@ TEST_GROUP(SocksSplitterTests)
     Flow* flow;
     SocksFlowData* flow_data;
 
-    void setup()
+    void setup() override
     {
         SocksFlowData::init();
 
@@ -164,7 +164,7 @@ TEST_GROUP(SocksSplitterTests)
         flow->set_flow_data(flow_data);
     }
 
-    void teardown()
+    void teardown() override
     {
         delete client_splitter;
         delete server_splitter;

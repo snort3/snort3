@@ -578,7 +578,6 @@ static void AddPatternStates(ACSM_STRUCT2* acsm, ACSM_PATTERN2* p)
 
 static void Build_NFA(ACSM_STRUCT2* acsm)
 {
-    // cppcheck-suppress constVariablePointer
     acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
     const ACSM_PATTERN2* mlist;

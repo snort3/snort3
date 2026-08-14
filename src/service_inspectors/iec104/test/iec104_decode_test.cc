@@ -48,18 +48,12 @@ void parseIec104ApciI(const Iec104ApciI*, const uint16_t&) { }
 
 TEST_GROUP(iec104_decode_type_i_min_len)
 {
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     snort::Packet* packet = nullptr;
-    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
-    // cppcheck-suppress constVariablePointer
     Iec104FlowData* flow_data = nullptr;
 
     void setup() override
     {
-        // cppcheck-suppress unreadVariable
         packet = new snort::Packet(false);
-        // cppcheck-suppress unreadVariable
         flow_data = new Iec104FlowData();
     }
 

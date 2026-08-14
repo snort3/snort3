@@ -82,7 +82,6 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         {
             OsiSessionSpduParameterHdr param_hdr;
             // Retain the field so this overlay matches the on-wire SPDU layout.
-            // cppcheck-suppress unusedStructMember
             uint16_t flags;
         };
 

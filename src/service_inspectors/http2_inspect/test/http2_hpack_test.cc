@@ -81,11 +81,9 @@ Http2FlowData::~Http2FlowData()
 
 TEST_GROUP(http2_hpack_cookie_header_buffer)
 {
-    // cppcheck-suppress unusedVariable ; fixture state is consumed by test bodies
     Http2CookieHeaderBuffer cookie_buffer;
     // constant arrays used in several tests
     const std::string cookie_key = "cookie";
-    // cppcheck-suppress unreadVariable ; shared test data is consumed by test bodies
     const uint32_t cookie_line_offset = std::string(cookie_key + ": \r\n").length();
 
     struct TestBuffer
@@ -254,19 +252,13 @@ TEST_GROUP(http2_hpack_decoder_decode_header_buffers)
 {
     Http2EventGen* const events[2] = { new Http2EventGen, new Http2EventGen };
     Http2Infractions* const infractions[2] = { new Http2Infractions, new Http2Infractions };
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress variableScope ; initialized in setup and consumed by test bodies
     Http2HpackDecoder* hpack_decoder;
-    // cppcheck-suppress constVariablePointer
-    // cppcheck-suppress variableScope ; initialized in setup and consumed by test bodies
     Http2StartLine* start_client_line;
     Http2FlowData* session_data = new Http2FlowData(nullptr);
 
     void setup() override
     {
-        // cppcheck-suppress unreadVariable ; fixture is consumed by test bodies and teardown
         hpack_decoder = new Http2HpackDecoder(session_data, HttpCommon::SRC_CLIENT, events[HttpCommon::SRC_CLIENT], infractions[HttpCommon::SRC_CLIENT]);
-        // cppcheck-suppress unreadVariable ; fixture is consumed by test bodies and teardown
         start_client_line = new Http2RequestLine(events[0], infractions[0]);
     }
     void teardown() override

@@ -566,7 +566,7 @@ namespace
 {
 struct IcmpHdr
 {
-    // cppcheck-suppress unusedStructMember
+    // These fields preserve the ICMP wire layout; icmp_cksum consumes the complete header bytes.
     uint8_t type;
     // cppcheck-suppress unusedStructMember
     uint8_t code;

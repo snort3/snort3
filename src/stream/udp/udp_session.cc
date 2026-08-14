@@ -189,7 +189,7 @@ int UdpSession::process_udp(Flow* lwssn, Packet* p)
 
 int UdpSession::process(Packet* p)
 {
-    Profile profile(udp_perf_stats);    // cppcheck-suppress unreadVariable
+    Profile profile(udp_perf_stats);
 
     // Check if the session is expired.
     // Should be done before we do something with the packet...
@@ -211,7 +211,6 @@ int UdpSession::process(Packet* p)
     return 0;
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void UdpSession::count_stale_packet()
 {
     udpStats.stale_packets++;

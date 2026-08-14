@@ -50,7 +50,6 @@ public:
     void reload();
 
     DAQ_RecvStatus receive_messages(unsigned max_recv);
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     DAQ_Msg_h next_message()
     {
         if (curr_batch_idx < curr_batch_size)

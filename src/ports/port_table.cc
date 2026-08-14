@@ -793,7 +793,6 @@ void PortTablePrintInput(PortTable* p)
    as specified by the user
 */
 // cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PortTablePrintUserRules(PortTable* p)
 {
     /* normalized user PortObjects and rule ids */

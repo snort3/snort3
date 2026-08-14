@@ -432,7 +432,6 @@ void PortScan::show(const SnortConfig*) const
 
 void PortScan::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(psPerfStats);
     assert(p->ptrs.ip_api.is_ip());
 

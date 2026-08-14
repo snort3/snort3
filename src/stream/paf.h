@@ -68,7 +68,6 @@ SO_PUBLIC inline void paf_initialize(PAF_State* ps, uint32_t seq)
     ps->paf = snort::StreamSplitter::SEARCH;
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint32_t paf_active (PAF_State* ps)
 {
     return ( ps->paf != snort::StreamSplitter::ABORT );

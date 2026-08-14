@@ -475,7 +475,7 @@ int HyperscanMpse::match(
 int HyperscanMpse::search(
     const uint8_t* buf, int n, MpseMatch mf, void* pv, int* current_state)
 {
-    Profile profile(hyper_stats);  // cppcheck-suppress unreadVariable
+    Profile profile(hyper_stats);
 
     *current_state = 0;
     ScanContext scan(this, mf, pv);

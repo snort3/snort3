@@ -178,7 +178,7 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
 
 static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
 {
-    Profile profile(sipPerfStats);  // cppcheck-suppress unreadVariable
+    Profile profile(sipPerfStats);
 
     /* Attempt to get a previously allocated SIP block. */
     SIPData* sessp = get_sip_session_data(p->flow);

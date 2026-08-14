@@ -737,7 +737,6 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-// cppcheck-suppress constParameterCallback
 static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
 {
     pcre_counts.pcre_rules++;

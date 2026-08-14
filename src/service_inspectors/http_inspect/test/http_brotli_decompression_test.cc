@@ -193,8 +193,8 @@ TEST_GROUP_BASE(brotli_decompression_test, HttpDecompressionFixture)
     HttpInfractions* infractions = nullptr;
     HttpEventGen events;
 
-    uint8_t dst[MAX_OCTETS]; // cppcheck-suppress unusedVariable ; fixture state is consumed by tests
-    uint32_t dst_size; // cppcheck-suppress unusedVariable ; fixture state is consumed by tests
+    uint8_t dst[MAX_OCTETS];
+    uint32_t dst_size;
 
     void setup() override
     {

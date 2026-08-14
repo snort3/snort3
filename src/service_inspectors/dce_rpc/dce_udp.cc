@@ -130,7 +130,6 @@ void Dce2Udp::show(const SnortConfig*) const
 void Dce2Udp::eval(Packet* p)
 {
     DCE2_UdpSsnData* dce2_udp_sess;
-    // cppcheck-suppress unreadVariable
     Profile profile(dce2_udp_pstat_main);
 
     assert(p->flow);

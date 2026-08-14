@@ -502,7 +502,7 @@ TEST_GROUP(inspector_manager_reload_tests)
         return std::unique_ptr<SnortConfig>(new SnortConfig);
     }
 
-    void reconcile_reload(SnortConfig* reload_sc)
+    static void reconcile_reload(SnortConfig* reload_sc)
     {
         InspectorManager::prepare_map();
         InspectorManager::reconcile_map(reload_sc);

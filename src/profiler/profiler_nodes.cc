@@ -68,7 +68,6 @@ struct GetProfileFunctor
 struct GetProfileFromModule : public GetProfileFunctor
 {
     // UNIT_TEST retains the mutable module for get_profile().
-    // cppcheck-suppress constParameterPointer
     GetProfileFromModule(const std::string& pn, Module* m) :
         GetProfileFunctor(pn), mod_name(m->get_name())
     {

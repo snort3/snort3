@@ -186,7 +186,6 @@ int SFRF_Alloc(unsigned int memcap)
 int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
 {
     GHash* genHash;
-    // cppcheck-suppress constVariablePointer
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };

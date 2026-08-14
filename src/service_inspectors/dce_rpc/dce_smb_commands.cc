@@ -777,7 +777,6 @@ DCE2_Ret DCE2_SmbRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
     if (DCE2_ComInfoIsRequest(com_info))
     {
-        // cppcheck-suppress constVariablePointer
         DCE2_SmbFileTracker* ftracker =
             DCE2_SmbGetFileTracker(ssd, SmbReadReqFid(reinterpret_cast<const SmbReadReq*>(nb_ptr)));
 

@@ -47,8 +47,7 @@ int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 TEST_GROUP(get_next_code)
 {
     enum Color { COLOR_OTHER=1, COLOR_GREEN, COLOR_BLUE, COLOR_RED, COLOR_YELLOW, COLOR_PURPLE };
-    int32_t offset = 0; // cppcheck-suppress unreadVariable
-    // cppcheck-suppress unreadVariable
+    int32_t offset = 0;
     const StrCode color_table[6] =
     {
         { COLOR_GREEN,  "green" },

@@ -211,7 +211,6 @@ void ExtractorEvent::log<vector<HttpExtractor::SubField>, DataEvent*, Flow*, boo
 // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void HttpExtractor::handle(DataEvent& event, Flow* flow)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
     if (!filter(flow))

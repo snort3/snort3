@@ -192,7 +192,6 @@ TEST_GROUP(ssh_kexinit_test)
     void setup() override
     {
         reset_captured_state();
-        // cppcheck-suppress unreadVariable
         p.flow = &f;
     }
 };

@@ -178,7 +178,6 @@ TEST(cl_cutter_decompression_test, long_body_deflate_overrun)
     CHECK_EQUAL(SCAN_FOUND_PIECE, result);
     CHECK_EQUAL(0, cutter.get_octets_seen());
     CHECK_EQUAL(7, cutter.get_num_flush());
-    // cppcheck-suppress syntaxError
     CHECK_COMPARE(flow_target, >, cutter.get_num_flush());
 }
 

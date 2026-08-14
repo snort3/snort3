@@ -227,7 +227,6 @@ bool Normalizer::configure(SnortConfig*)
 {
     // FIXIT-M move entire config to network policy? Leaving split loads the currently selected
     // network policy with whichever instantiation of an inspection policy this normalize is in
-    // cppcheck-suppress constVariablePointer
     NetworkPolicy* nap = get_network_policy();
 
     if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
@@ -285,7 +284,6 @@ void Normalizer::show(const SnortConfig*) const
 
 void Normalizer::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(norm_perf_stats);
 
     if ( !p->is_rebuilt() && !p->active->packet_was_dropped() )

@@ -427,7 +427,6 @@ public:
 
 void BackOrifice::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(boPerfStats);
 
     const char* const magic_cookie = "*!*QWTY?";

@@ -127,7 +127,6 @@ bool AppIdInspector::configure(SnortConfig* sc)
     HighAvailabilityManager::register_ha_client(MOD_NAME, APPID_HA_SUFFIX_TLS);
     sc->register_reload_handler(new AppIdHAReloadSwapper());
 
-    // cppcheck-suppress unreadVariable
     Profile profile(appid_perf_stats);
     struct rusage ru;
     long prev_maxrss = -1;
@@ -261,7 +260,6 @@ void AppIdInspector::tear_down(SnortConfig*, bool shutdown)
 
 void AppIdInspector::eval(Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(appid_perf_stats);
     appid_stats.packets++;
 

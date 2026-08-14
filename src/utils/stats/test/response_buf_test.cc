@@ -90,7 +90,6 @@ public:
     using StatsResponseBuf::overflow;
 };
 
-// cppcheck-suppress syntaxError
 TEST_CASE("stats response buffer logs when no control connection exists", "[stats_response_buf]")
 {
     reset_output();
