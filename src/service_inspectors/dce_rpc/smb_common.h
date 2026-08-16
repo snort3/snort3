@@ -411,6 +411,65 @@ inline uint8_t NbssType(const NbssHdr* nb)
     return nb->type;
 }
 
+// Returns true for NBSS session-service type codes recognised by the SMB
+// splitter.  Centralises the type list so NbssIsEmptyCtrl and the splitter's
+// validation function share exactly one switch statement.
+inline bool NbssIsKnownCtrlType(uint8_t type)
+{
+    switch ( type )
+    {
+    case NBSS_SESSION_TYPE__MESSAGE:
+    case NBSS_SESSION_TYPE__REQUEST:
+    case NBSS_SESSION_TYPE__POS_RESPONSE:
+    case NBSS_SESSION_TYPE__NEG_RESPONSE:
+    case NBSS_SESSION_TYPE__RETARGET_RESPONSE:
+    case NBSS_SESSION_TYPE__KEEP_ALIVE:
+        return true;
+    default:
+        return false;
+    }
+}
+
+// True for NBSS keep-alive frames (type 0x85 with zero flags and length).
+// Tests the bytes directly rather than via NbssLen()/NbssLen2(), which mask
+// nb->flags differently (0x01 vs 0xFF) and so disagree on inputs such as
+// 85 02 00 00.  The splitter's batching decision and the SMB2 skip must
+// cover exactly the same set of frames, so both call this and nothing else.
+inline bool NbssIsEmptyCtrl(const NbssHdr* nb)
+{
+    if ( nb->flags != 0 or nb->length != 0 )
+        return false;
+    return nb->type == NBSS_SESSION_TYPE__KEEP_ALIVE;
+}
+
+// The session-establishment types have fixed trailer sizes and reserved FLAGS
+// bits, so their degenerate forms cannot occur on the wire and must not be
+// given a flush point.
+//
+// SESSION MESSAGE is exempt: SMB2 direct TCP reuses the FLAGS byte as the high
+// byte of a 24-bit length (MS-SMB2 2.1), so non-zero flags are legal there.
+inline bool NbssIsValidCtrlLen(const NbssHdr* nb)
+{
+    if ( nb->type == NBSS_SESSION_TYPE__MESSAGE )
+        return true;
+
+    const uint16_t len = ntohs(nb->length);
+
+    switch ( nb->type )
+    {
+    case NBSS_SESSION_TYPE__POS_RESPONSE:       // 4.3.3: header only
+    case NBSS_SESSION_TYPE__KEEP_ALIVE:         // 4.3.7: header only
+        return len == 0;
+    case NBSS_SESSION_TYPE__NEG_RESPONSE:       // 4.3.4: one ERROR_CODE byte
+        return len == 1;
+    case NBSS_SESSION_TYPE__RETARGET_RESPONSE:  // 4.3.5: IP address and port
+        return len == 6;
+    case NBSS_SESSION_TYPE__REQUEST:            // 4.3.2: CALLED and CALLING NAME
+        return len != 0;
+    }
+    return false;
+}
+
 inline uint32_t SmbTransformId(const Smb2TransformHdr* hdr)
 {
     const uint8_t* id = (const uint8_t*)hdr->protocolid;

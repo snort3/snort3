@@ -192,6 +192,12 @@ static const PegInfo dce2_smb_pegs[] =
     { CountType::SUM, "v2_ioctl_err_resp", "total number of ioctl errors responses" },
     { CountType::SUM, "v2_ioctl_inv_str_sz", "total number of ioctl invalid structure size" },
     { CountType::SUM, "v2_ioctl_ignored", "total number of SMBv2 IOCTL packets ignored due to missing trackers or invalid share type" },
+    { CountType::SUM, "smb_empty_nbss_batches",
+      "total number of empty-NBSS-frame batches accumulated by the SMB PAF splitter" },
+    { CountType::SUM, "smb_nbss_hdr_rejected",
+      "total number of NBSS headers with a known type but an invalid flags or trailer length" },
+    { CountType::SUM, "v2_empty_nbss_frames_consumed",
+      "total number of empty NBSS frames consumed before the SMB2 header in rebuilt packets" },
     { CountType::SUM, "total_sessions", "total smb sessions" },/* not used */
     { CountType::END, nullptr, nullptr }
 };

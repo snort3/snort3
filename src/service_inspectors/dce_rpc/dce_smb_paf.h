@@ -43,6 +43,7 @@ struct DCE2_PafSmbData
 {
     DCE2_PafSmbStates paf_state;
     uint64_t nb_hdr;   // Enough for NetBIOS header and 4 bytes SMB header
+    uint32_t empty_nbss_bytes;
 };
 
 class Dce2SmbSplitter : public snort::StreamSplitter

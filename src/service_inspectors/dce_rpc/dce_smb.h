@@ -274,6 +274,9 @@ struct dce2SmbStats : public LruCacheLocalStats
     PegCount v2_ioctl_err_resp;
     PegCount v2_ioctl_inv_str_sz;
     PegCount v2_ioctl_ignored;
+    PegCount smb_empty_nbss_batches;
+    PegCount smb_nbss_hdr_rejected;
+    PegCount v2_empty_nbss_frames_consumed;
     PegCount total_sessions; // not used
 };
 

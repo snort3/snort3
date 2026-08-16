@@ -48,12 +48,12 @@ using namespace snort;
  *
  *********************************************************************/
 static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, const SmbNtHdr* nt_hdr,
-    uint32_t* nb_len)
+    uint32_t* nb_len, uint32_t* nbs_hdr_out = nullptr)
 {
     uint8_t type = (uint8_t)(nb_hdr >> 24);
     uint8_t bit = (uint8_t)((nb_hdr & 0x00ff0000) >> 16);
     uint32_t smb_id = nt_hdr ? SmbId(nt_hdr) : 0;
-    uint32_t nbs_hdr = 0;
+    uint32_t nbs_hdr = htonl(nb_hdr);
 
     if (junk)
     {
@@ -62,18 +62,8 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
     }
     else
     {
-        switch (type)
-        {
-        case NBSS_SESSION_TYPE__MESSAGE:
-        case NBSS_SESSION_TYPE__REQUEST:
-        case NBSS_SESSION_TYPE__POS_RESPONSE:
-        case NBSS_SESSION_TYPE__NEG_RESPONSE:
-        case NBSS_SESSION_TYPE__RETARGET_RESPONSE:
-        case NBSS_SESSION_TYPE__KEEP_ALIVE:
-            break;
-        default:
+        if ( !NbssIsKnownCtrlType(type) )
             return false;
-        }
     }
     //The bit should be checked only for SMB1, because the length in NetBIOS header should not
     // exceed 0x1FFFF.
@@ -83,14 +73,40 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
         if ((bit != 0x00) and (bit != 0x01))
             return false;
     }
-    nbs_hdr = htonl(nb_hdr);
+    NbssHdr nb_struct;
+    memcpy(&nb_struct, &nbs_hdr, sizeof(nb_struct));
+    const NbssHdr* nb = &nb_struct;
+
+    // Reject degenerate session-establishment frames before a flush point
+    // exists.  This has to happen here rather than in DCE2_NbssHdrChecks():
+    // the inspector only runs once the pseudo-packet has been built and the
+    // detection pass bound to it, so rejecting there saves nothing.
+    if ( !junk and !NbssIsValidCtrlLen(nb) )
+    {
+        dce2_smb_stats.smb_nbss_hdr_rejected++;
+        return false;
+    }
+
+    if ( nbs_hdr_out )
+        *nbs_hdr_out = nbs_hdr;
 
     if (smb_id == DCE2_SMB2_ID)
-        *nb_len = NbssLen2(reinterpret_cast<const NbssHdr*>(&nbs_hdr));
+        *nb_len = NbssLen2(nb);
     else
-        *nb_len = NbssLen(reinterpret_cast<const NbssHdr*>(&nbs_hdr));
+        *nb_len = NbssLen(nb);
 
     return true;
+}
+
+// A flush carries any accumulated empty frames out with it, from either the
+// state 3 or the state 7 path, so both sites must clear the accumulator.
+static inline void DCE2_PafSmbEndBatch(DCE2_PafSmbData* ss)
+{
+    if ( ss->empty_nbss_bytes )
+    {
+        dce2_smb_stats.smb_empty_nbss_batches++;
+        ss->empty_nbss_bytes = 0;
+    }
 }
 
 /*********************************************************************
@@ -109,7 +125,7 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
  *
  *********************************************************************/
 static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8_t* data,
-    uint32_t len, uint32_t, uint32_t* fp)
+    uint32_t len, uint32_t, uint32_t* fp, uint32_t batch_max)
 {
     uint32_t n = 0;
     StreamSplitter::Status ps = StreamSplitter::SEARCH;
@@ -132,13 +148,30 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
             ss->paf_state = (DCE2_PafSmbStates)(((int)ss->paf_state) + 1);
             break;
         case DCE2_PAF_SMB_STATES__3:
+        {
             DCE2_SMB_PAF_SHIFT(ss->nb_hdr, data[n]);
             //(data + n + 1) points to the SMB header protocol identifier
             //(0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
             if (len >= DCE2_SMB_ID_SIZE + n + 1) // NetBIOS header and 4 bytes SMB header
                 nt_hdr = reinterpret_cast<const SmbNtHdr*>(data + n + 1);
-            if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, nt_hdr, &nb_len))
+            else
+                nt_hdr = nullptr;   // nt_hdr is loop-scoped; don't reuse a prior frame's
+            uint32_t nbs_hdr_val = 0;
+            if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, nt_hdr, &nb_len, &nbs_hdr_val))
             {
+                // Frames with a zero length field carry no SMB message, so one
+                // rebuilt PDU per four wire bytes buys a pseudo-packet build and
+                // an inspection pass for nothing. Accumulate them and let the
+                // next real message -- or the cap -- carry them out.
+                if (NbssIsEmptyCtrl(reinterpret_cast<const NbssHdr*>(&nbs_hdr_val)) and
+                    ss->empty_nbss_bytes + sizeof(NbssHdr) < batch_max)
+                {
+                    ss->empty_nbss_bytes += sizeof(NbssHdr);
+                    ss->paf_state = DCE2_PAF_SMB_STATES__0;
+                    break;
+                }
+                DCE2_PafSmbEndBatch(ss);
+
                 *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
                 ss->paf_state = DCE2_PAF_SMB_STATES__0;
                 return StreamSplitter::FLUSH;
@@ -146,11 +179,15 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
 
             ss->paf_state = (DCE2_PafSmbStates)(((int)ss->paf_state) + 1);
             break;
+        }
         case DCE2_PAF_SMB_STATES__7:
             DCE2_SMB_PAF_SHIFT(ss->nb_hdr, data[n]);
 
             //(data + n - sizeof(DCE2_SMB_ID) + 1) points to the smb_idf field
             //in SmbNtHdr (0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
+            // Guard against reading before the buffer start when n is small.
+            if ( n + 1 < DCE2_SMB_ID_SIZE )
+                break;
             nt_hdr = reinterpret_cast<const SmbNtHdr*>(data + n - DCE2_SMB_ID_SIZE + 1);
             //ss->nb_hdr is the value to 4 bytes of NetBIOS header + 4 bytes of
             //SMB header protocol identifier . Right shift by 32 bits to get the value of NetBIOS
@@ -165,6 +202,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
                 break;
             }
 
+            DCE2_PafSmbEndBatch(ss);
             *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
             ss->paf_state = DCE2_PAF_SMB_STATES__0;
 
@@ -185,6 +223,7 @@ Dce2SmbSplitter::Dce2SmbSplitter(bool c2s) :   StreamSplitter(c2s)
 {
     state.paf_state = DCE2_PAF_SMB_STATES__0;
     state.nb_hdr = 0;
+    state.empty_nbss_bytes = 0;
 }
 
 StreamSplitter::Status Dce2SmbSplitter::scan(
@@ -192,7 +231,11 @@ StreamSplitter::Status Dce2SmbSplitter::scan(
     uint32_t flags, uint32_t* fp)
 {
     DCE2_PafSmbData* pfdata = &state;
-    StreamSplitter::Status ps = dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp);
+    // Cap the batch at max()/16 so a batch stays small relative to paf_max.
+    // Floor at 256 bytes (64 keep-alives) as minimum meaningful batch.
+    uint32_t paf_max = max(pkt->flow);
+    uint32_t batch_max = (paf_max / 16 > 256) ? paf_max / 16 : 256;
+    StreamSplitter::Status ps = dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp, batch_max);
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, pkt,
         "Dce2SmbSplitter scan with length %u, status %d and fp %u\n", len, ps, *fp);
     return ps;

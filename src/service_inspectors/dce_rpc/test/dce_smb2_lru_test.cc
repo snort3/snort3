@@ -162,6 +162,10 @@ int DetectionEngine::queue_event(unsigned, unsigned)
     return 0;
 }
 
+void DetectionEngine::disable_all(Packet*)
+{
+}
+
 int64_t FileService::get_max_file_depth(FileConfig*)
 {
     return 0;

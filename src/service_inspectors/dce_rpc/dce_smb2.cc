@@ -26,6 +26,7 @@
 #include <cstdint>
 #include "dce_smb2.h"
 
+#include "detection/detection_engine.h"
 #include "flow/flow_key.h"
 #include "stream/stream.h"
 
@@ -519,6 +520,25 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     // Process the header
     if (p->is_pdu_start())
     {
+        // Skip any leading NBSS frames that carry no SMB message.  Uses
+        // NbssIsEmptyCtrl, which checks flags+length directly rather than via
+        // NbssLen/NbssLen2 (those mask nb->flags differently and disagree on
+        // inputs such as 85 02 00 00, which NbssLen treats as zero-length).
+        while (data_len >= sizeof(NbssHdr) and
+            NbssIsEmptyCtrl(reinterpret_cast<const NbssHdr*>(data_ptr)))
+        {
+            data_ptr += sizeof(NbssHdr);
+            data_len -= sizeof(NbssHdr);
+            dce2_smb_stats.v2_empty_nbss_frames_consumed++;
+        }
+        if (data_len == 0)
+        {
+            // Batch of empty frames with no SMB message behind it: nothing to
+            // parse and nothing a rule can match on.
+            DetectionEngine::disable_all(p);
+            return;
+        }
+
         // Check header length
         if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
         {
@@ -613,13 +633,30 @@ DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
     if ( p->has_paf_payload() and
         (p->dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE) )     // DCE2_SMB_ID is u32
     {
-        const Smb2Hdr* smb_hdr = reinterpret_cast<const Smb2Hdr*>(p->data + sizeof(NbssHdr));
-        uint32_t smb_version_id = SmbId(reinterpret_cast<const SmbNtHdr*>(smb_hdr));
+        const uint8_t* data  = p->data;
+        uint16_t dsize = p->dsize;
 
-        if (smb_version_id == DCE2_SMB_ID)
-            return DCE2_SMB_VERSION_1;
-        else if (smb_version_id == DCE2_SMB2_ID)
-            return DCE2_SMB_VERSION_2;
+        // Skip any leading empty-ctrl frames batched by PAF so the magic
+        // comparison reads the first real NBSS message frame, not a
+        // keep-alive.  Failing to skip here causes the flow to be classified
+        // as DCE2_SMB_VERSION_NULL and permanently skipped.
+        while (dsize >= sizeof(NbssHdr) and
+            NbssIsEmptyCtrl(reinterpret_cast<const NbssHdr*>(data)))
+        {
+            data  += sizeof(NbssHdr);
+            dsize -= sizeof(NbssHdr);
+        }
+
+        if (dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE)
+        {
+            const Smb2Hdr* smb_hdr = reinterpret_cast<const Smb2Hdr*>(data + sizeof(NbssHdr));
+            uint32_t smb_version_id = SmbId(reinterpret_cast<const SmbNtHdr*>(smb_hdr));
+
+            if (smb_version_id == DCE2_SMB_ID)
+                return DCE2_SMB_VERSION_1;
+            else if (smb_version_id == DCE2_SMB2_ID)
+                return DCE2_SMB_VERSION_2;
+        }
     }
 
     return DCE2_SMB_VERSION_NULL;
