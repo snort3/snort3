@@ -887,6 +887,7 @@ bool HttpMsgBody::run_detection(snort::Packet* p)
 
             session_data->js_ctx[source_id] = js_ctx_tmp;
 
+            norm_js_data.reset();
             ole_data.reset();
             decompressed_vba_data.reset();
             decompressed_file_body.reset();
