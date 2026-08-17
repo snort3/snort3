@@ -157,6 +157,7 @@ public:
 Connector::Direction Connector::get_connector_direction() const
 { return config.direction; }
 
+// cppcheck-suppress unusedFunction ; installed connector API accessor
 const std::string& Connector::get_connector_name() const
 { return config.connector_name; }
 

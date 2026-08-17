@@ -408,6 +408,8 @@ void Flow::set_ttl(Packet* p, bool client)
     }
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the installed Flow API signature
+// cppcheck-suppress unusedFunction ; cppcheck 2.21 misses the FlowControl call
 void Flow::set_mpls_layer_per_dir(Packet* p)
 {
     const Layer* mpls_lyr = layer::get_mpls_layer(p);

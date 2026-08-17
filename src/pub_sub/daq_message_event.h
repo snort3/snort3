@@ -37,12 +37,14 @@ public:
     DAQ_MsgType get_type() const
     { return daq_msg_get_type(msg); }
 
+    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     size_t get_header_length() const
     { return daq_msg_get_hdr_len(msg); }
 
     const void* get_header() const
     { return daq_msg_get_hdr(msg); }
 
+    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     uint32_t get_data_length() const
     { return daq_msg_get_data_len(msg); }
 
@@ -52,6 +54,7 @@ public:
     DAQ_Verdict get_verdict()
     { return verdict; }
 
+    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     void set_verdict(DAQ_Verdict v)
     { verdict = v; }
 

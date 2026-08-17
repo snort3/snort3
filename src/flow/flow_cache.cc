@@ -889,16 +889,19 @@ void FlowCache::output_flow(StreamType& stream, const Flow& flow, const struct t
     stream << out.str() << proto.str() << allow_s << std::endl;
 }
 
+// cppcheck-suppress unusedFunction ; cppcheck 2.21 misses FlowControl forwarding calls
 size_t FlowCache::uni_flows_size() const
 {
     return uni_flows ? uni_flows->get_count() : 0;
 }
 
+// cppcheck-suppress unusedFunction ; cppcheck 2.21 misses FlowControl forwarding calls
 size_t FlowCache::uni_ip_flows_size() const
 {
     return uni_ip_flows ? uni_ip_flows->get_count() : 0;
 }
 
+// cppcheck-suppress unusedFunction ; cppcheck 2.21 misses FlowControl forwarding calls
 size_t FlowCache::flows_size() const
 {
     return hash_table->get_num_nodes();

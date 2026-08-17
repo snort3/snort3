@@ -193,10 +193,14 @@ public:
     char* get_UTF8_fname(size_t* converted_len);
     void set_not_cacheable() { cacheable = false; }
     bool is_cacheable() { return cacheable; }
+    // cppcheck-suppress unusedFunction ; installed file-cache API accessor
     void pin() { ++in_use; }
+    // cppcheck-suppress unusedFunction ; installed file-cache API accessor
     void unpin() { if ( in_use > 0 ) --in_use; }
+    // cppcheck-suppress unusedFunction ; installed file-cache API accessor
     bool is_in_use() const { return in_use > 0; }
     void set_cache_dup() { cache_dup = true; }
+    // cppcheck-suppress unusedFunction ; installed file-cache API accessor
     bool is_cache_dup() const { return cache_dup; }
     void set_limit_excluded() { limit_excluded = true; }
     bool is_limit_excluded() const { return limit_excluded; }
@@ -208,6 +212,7 @@ public:
     void reset();
     void set_config(FileConfig* fc) { config = fc; }
     FileConfig* get_config() { return config; }
+    // cppcheck-suppress unusedFunction ; installed file API accessor
     void set_inspector(FileInspect* ins) { inspector = ins; }
     FileInspect* get_inspector() { return inspector; }
     double get_duration() const { return duration; }  // Duration in seconds (fractional)
@@ -216,6 +221,7 @@ public:
     const std::string& get_source() const { return source; }
     void set_source(Flow *flow);
     bool get_timedout() const { return timedout; }
+    // cppcheck-suppress unusedFunction ; installed file API accessor
     void set_timedout() { timedout = true; }
 
 private:

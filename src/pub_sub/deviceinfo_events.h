@@ -96,6 +96,7 @@ public:
     // Retrieve device attributes for a specific device identified by service type and device name
     // Returns nullptr if the specified device is not found in this event
     // Used by subscribers to extract specific device information from the event
+    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     const KeyValueVector* get_key_value_pairs(const std::string& service_type,
                                              const std::string& device_name) const
     {
@@ -103,6 +104,7 @@ public:
         return (it != device_info_map.end()) ? &it->second : nullptr;
     }
 
+    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     size_t get_device_count() const
     { return device_info_map.size(); }
 

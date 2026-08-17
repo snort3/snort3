@@ -79,31 +79,6 @@ struct dce2TcpStats
 extern THREAD_LOCAL dce2TcpStats dce2_tcp_stats;
 extern THREAD_LOCAL snort::ProfileStats dce2_tcp_pstat_main;
 
-inline bool DCE2_TcpAutodetect(snort::Packet* p)
-{
-    if (p->dsize >= sizeof(DceRpcCoHdr))
-    {
-        const DceRpcCoHdr* co_hdr = reinterpret_cast<const DceRpcCoHdr*>(p->data);
-
-        if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
-            && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
-            && ((p->is_from_client()
-            && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND)
-            || (p->is_from_server()
-            && DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__BIND_ACK))
-            && (DceRpcCoFragLen(co_hdr) >= sizeof(DceRpcCoHdr)))
-        {
-            return true;
-        }
-    }
-    else if ((*p->data == DCERPC_PROTO_MAJOR_VERS__5) && p->is_from_client())
-    {
-        return true;
-    }
-
-    return false;
-}
-
 struct DCE2_TcpSsnData
 {
     DCE2_SsnData sd;  // This member must be first

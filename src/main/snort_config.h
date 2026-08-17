@@ -618,6 +618,7 @@ public:
     bool create_pid_file() const
     { return run_flags & RUN_FLAG__CREATE_PID_FILE; }
 
+    // cppcheck-suppress unusedFunction ; installed configuration API accessor
     bool pcap_show() const
     { return run_flags & RUN_FLAG__PCAP_SHOW; }
 
@@ -630,6 +631,7 @@ public:
     bool conf_error_out() const
     { return run_flags & RUN_FLAG__CONF_ERROR_OUT; }
 
+    // cppcheck-suppress unusedFunction ; installed configuration API accessor
     bool test_features() const
     { return run_flags & RUN_FLAG__TEST_FEATURES; }
 
@@ -658,9 +660,11 @@ public:
     long int get_tagged_packet_limit() const
     { return tagged_packet_limit; }
 
+    // cppcheck-suppress unusedFunction ; installed configuration API accessor
     uint32_t get_max_attribute_hosts() const
     { return max_attribute_hosts; }
 
+    // cppcheck-suppress unusedFunction ; installed configuration API accessor
     uint32_t get_segment_count_host() const
     { return segment_count_host; }
 
@@ -691,6 +695,7 @@ public:
     bool ip_frags_only() const
     { return (run_flags & RUN_FLAG__IP_FRAGS_ONLY) != 0; }
 
+    // cppcheck-suppress unusedFunction ; installed configuration API accessor
     bool drop_stale_packets() const
     { return (run_flags & RUN_FLAG__DROP_STALE_PACKETS) != 0; }
     
@@ -700,6 +705,7 @@ public:
     void set_run_flags(RunFlag flag)
     { run_flags |= flag; }
 
+    // cppcheck-suppress unusedFunction ; installed configuration API accessor
     const std::list<ReloadResourceTuner*>& get_reload_resource_tuners() const
     { return reload_tuners; }
 

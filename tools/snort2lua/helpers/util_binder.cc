@@ -161,30 +161,37 @@ void Binder::set_when_proto(const std::string& proto)
 void Binder::add_when_vlan(const std::string& vlan)
 { vlans.push_back(vlan); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::add_when_src_net(const std::string& net)
 { src_nets.push_back(net); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::add_when_dst_net(const std::string& net)
 { dst_nets.push_back(net); }
 
 void Binder::add_when_net(const std::string& net)
 { nets.push_back(net); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::add_when_src_port(const std::string& port)
 { src_ports.push_back(port); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::add_when_dst_port(const std::string& port)
 { dst_ports.push_back(port); }
 
 void Binder::add_when_port(const std::string& port)
 { ports.push_back(port); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::set_when_src_zone(const std::string& zone)
 { when_src_zone.push_back(zone); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::set_when_dst_zone(const std::string& zone)
 { when_dst_zone.push_back(zone); }
 
+// cppcheck-suppress unusedFunction ; used by the REG_TEST print_binder_priorities helper
 void Binder::add_when_zone(const std::string& zone)
 { zones.push_back(zone); }
 

@@ -166,6 +166,7 @@ public:
     void set_network_policy_user_id(uint64_t user_id)
     { network_policy_user_id = user_id; }
 
+    // cppcheck-suppress unusedFunction ; installed inspector API accessor
     bool get_network_policy_user_id(uint64_t& user_id) const
     { return (user_id = network_policy_user_id) != 0; }
 

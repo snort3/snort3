@@ -792,6 +792,7 @@ void PortTablePrintInput(PortTable* p)
    Prints the original (normalized) RuleGroups and
    as specified by the user
 */
+// cppcheck-suppress unusedFunction ; externally visible C-style API symbol
 // cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void PortTablePrintUserRules(PortTable* p)
 {

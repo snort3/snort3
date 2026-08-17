@@ -57,7 +57,6 @@ public:
     {
         data = static_cast<uint8_t*>(std::malloc(N));
         CHECK(data);
-        // cppcheck-suppress nullPointerOutOfMemory ; CHECK aborts fixture construction on failure
         std::memcpy(data, src, N);
     }
 

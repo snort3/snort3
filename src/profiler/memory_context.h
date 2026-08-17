@@ -26,9 +26,6 @@ struct MemoryStats;
 class MemoryProfiler
 {
 public:
-    // global accumulated stats
-    static const MemoryStats& get_fallthrough_stats();
-
     // thread local call
     static void consolidate_fallthrough_stats();
 };

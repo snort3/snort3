@@ -50,6 +50,7 @@ const uint8_t* HttpRequestBodyEvent::get_request_body_data(int32_t& length, int3
     return nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
 const uint8_t* HttpRequestBodyEvent::get_client_body(int32_t& length)
 {
     if (http_msg_body)
@@ -83,6 +84,7 @@ bool HttpRequestBodyEvent::is_mime() const
     return false;
 }
 
+// cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
 bool HttpRequestBodyEvent::is_urlencoded() const
 {
     if (http_msg_body)

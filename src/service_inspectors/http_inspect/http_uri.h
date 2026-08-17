@@ -44,6 +44,7 @@ public:
         { normalize(); }
     void fill_decoded_uri(Field& decoded_uri_out, Field& decoded_path_out);
     const Field& get_uri() const { return uri; }
+    // cppcheck-suppress unusedFunction ; called by HttpMsgRequest::print_uri
     HttpEnums::UriType get_uri_type() { return uri_type; }
     const Field& get_scheme() { return scheme; }
     const Field& get_authority() { return authority; }

@@ -126,6 +126,7 @@ public:
     bool validate_packet_established_session(TcpSegmentDescriptor&);
     void handle_late_synack(TcpSegmentDescriptor&);
 
+    // cppcheck-suppress unusedFunction ; cppcheck 2.21 misses virtual Session dispatch
     void count_stale_packet() override
     { tcpStats.stale_packets++; }
 

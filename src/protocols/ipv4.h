@@ -95,6 +95,7 @@ struct IP4Hdr
     inline uint8_t get_opt_len() const
     { return hlen() - IP4_HEADER_LEN; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint16_t csum() const
     { return ntohs(ip_csum); }
 
@@ -115,9 +116,11 @@ struct IP4Hdr
     inline uint16_t raw_id() const
     { return ip_id; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint16_t raw_off() const
     { return ip_off; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint16_t raw_csum() const
     { return ip_csum; }
 
@@ -138,6 +141,7 @@ struct IP4Hdr
     { ip_len = htons(new_len); }
 };
 
+// cppcheck-suppress unusedFunction ; installed packet-header API helper
 inline bool isPrivateIP(uint32_t addr)
 {
     addr = ntohl(addr);

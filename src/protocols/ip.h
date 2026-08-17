@@ -103,9 +103,11 @@ public:
     inline const uint8_t* get_ip_opt_data() const
     { return (type == IAT_4) ? reinterpret_cast<const uint8_t*>(iph) + IP4_HEADER_LEN : nullptr; }
 
+    // cppcheck-suppress unusedFunction ; installed packet API accessor
     inline const snort_in6_addr* get_ip6_src() const
     { return (type == IAT_6) ? ((const IP6Hdr*)iph)->get_src() : nullptr; }
 
+    // cppcheck-suppress unusedFunction ; installed packet API accessor
     inline const snort_in6_addr* get_ip6_dst() const
     { return (type == IAT_6) ? ((const IP6Hdr*)iph)->get_dst() : nullptr; }
 

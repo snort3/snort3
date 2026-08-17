@@ -112,12 +112,14 @@ public:
     void set_chp_hold_flow(bool chpHoldFlow = false)
     { chp_hold_flow = chpHoldFlow; }
 
+    // cppcheck-suppress unusedFunction ; installed AppId API accessor
     AppId get_chp_alt_candidate() const
     { return chp_alt_candidate; }
 
     void set_chp_alt_candidate(AppId chpAltCandidate = APP_ID_NONE)
     { chp_alt_candidate = chpAltCandidate; }
 
+    // cppcheck-suppress unusedFunction ; installed AppId API accessor
     bool is_skip_simple_detect() const
     { return skip_simple_detect; }
 
@@ -157,6 +159,7 @@ public:
     {
         rcvd_full_req_body = req_full_body;
     }
+    // cppcheck-suppress unusedFunction ; installed AppId API accessor
     bool get_rcvd_full_req_body()
     {
         return rcvd_full_req_body;

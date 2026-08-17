@@ -47,6 +47,7 @@ struct EtherHdr
     { return (ProtocolId)ntohs(ether_type); }
 
     /* return data in network order */
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint16_t raw_ethertype() const
     { return ether_type; }
 

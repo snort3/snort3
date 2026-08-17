@@ -243,6 +243,7 @@ public:
     TPAD_SET(tls_version)
     TPAD_SET(http_request_referer)
     TPAD_SET(ftp_command_user)
+    // cppcheck-suppress unusedFunction ; generated API setter consumed by the FTD AppId plugin
     TPAD_SET(quic_sni)
 };
 

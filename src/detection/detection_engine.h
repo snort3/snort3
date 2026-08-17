@@ -165,6 +165,7 @@ static inline void set_file_data(const uint8_t* p, unsigned n, uint64_t id, bool
     DetectionEngine::set_file_data(dp, id, is_accum, no_flow);
 }
 
+// cppcheck-suppress unusedFunction ; cppcheck 2.21 misses Analyzer's inline-helper call
 static inline void clear_file_data()
 { set_file_data(nullptr, 0); }
 

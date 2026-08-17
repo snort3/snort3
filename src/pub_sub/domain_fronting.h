@@ -39,7 +39,9 @@ public:
           const char* hostname)
      : cert_id(certificate_id ? certificate_id : ""), hostname(hostname ? hostname : "") {}
 
+     // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
      const std::string& get_cert_id() { return cert_id; }
+     // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
      const std::string& get_hostname () { return hostname; }
      void set_cert_lookup_verdict(DomainFrontingStatus status) { this->df_status = status; }
      DomainFrontingStatus get_cert_lookup_verdict() const { return df_status; }

@@ -63,6 +63,7 @@ public:
     void set_timestamp(bool flag)
     { timestamp = flag; }
 
+    // cppcheck-suppress unusedFunction ; installed trace API accessor
     bool get_ntuple() const
     { return ntuple; }
 

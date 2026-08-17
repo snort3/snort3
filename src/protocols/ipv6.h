@@ -113,6 +113,7 @@ struct IP6Hdr
     inline bool is_dst_multicast_scope_reserved() const
     { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::RESERVED; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline bool is_dst_multicast_scope_interface() const
     { return static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::INTERFACE; }
 
@@ -122,6 +123,7 @@ struct IP6Hdr
     inline bool is_dst_multicast_scope_site() const
     { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::SITE); }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline bool is_dst_multicast_scope_global() const
     { return (static_cast<MulticastScope>(ip6_dst.u6_addr8[1]) == MulticastScope::GLOBAL); }
 
@@ -155,6 +157,7 @@ struct IP6Hdr
     inline void set_proto(IpProtocol prot)
     { ip6_next = prot; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API mutator
     inline void set_raw_len(uint16_t new_len)
     { ip6_payload_len = new_len; }
 
@@ -219,12 +222,15 @@ struct IP6Frag
     inline uint32_t id() const
     { return ntohl(ip6f_ident); }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint8_t res() const
     { return ip6f_reserved; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint16_t raw_off_w_flags() const
     { return ip6f_offlg; }
 
+    // cppcheck-suppress unusedFunction ; installed packet-header API accessor
     inline uint32_t raw_id() const
     { return ip6f_ident; }
 };

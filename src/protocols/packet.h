@@ -303,6 +303,7 @@ struct SO_PUBLIC Packet
     bool is_from_client_originally() const
     { return (!flow || flow->flags.client_initiated) ? is_from_client() : is_from_server(); }
 
+    // cppcheck-suppress unusedFunction ; installed packet API accessor
     bool is_from_server_originally() const
     { return (!flow || flow->flags.client_initiated) ? is_from_server() : is_from_client(); }
 
@@ -337,6 +338,7 @@ struct SO_PUBLIC Packet
     void clear_offloaded()
     { ts_packet_flags &= (~TS_PKT_OFFLOADED); }
 
+    // cppcheck-suppress unusedFunction ; installed packet API accessor
     bool is_pkt_injected() const
     { return (ts_packet_flags & TS_PKT_INJECT) != 0; }
 

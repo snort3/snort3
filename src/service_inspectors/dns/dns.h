@@ -308,6 +308,7 @@ public:
     static unsigned get_pub_id()
     { return pub_id; }
 
+    // cppcheck-suppress unusedFunction ; virtual call through the Inspector interface
     bool supports_no_ips() const override
     { return true; }
 

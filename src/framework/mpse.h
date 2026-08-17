@@ -105,6 +105,7 @@ public:
     virtual void get_hash(std::string&) { }
 
     const char* get_method() { return method.c_str(); }
+    // cppcheck-suppress unusedFunction ; installed search-engine API mutator
     void set_verbose(bool b = true) { verbose = b; }
 
     void set_api(const MpseApi* p) { api = p; }

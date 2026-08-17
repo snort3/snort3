@@ -136,7 +136,7 @@ struct RpcStats
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL RpcStats rdstats;
 
-static int ConvertRPC(RpcSsnData*, Packet*);
+static int ConvertRPC(RpcSsnData*, const Packet*);
 
 static RpcSsnData* RpcSsnDataNew(Packet*);
 static inline void RpcSsnClean(RpcSsnData*);
@@ -148,8 +148,8 @@ static inline void RpcPreprocEvent(RpcSsnData*, int);
 static RpcStatus RpcChunkAppend(RpcSsnData*, const uint8_t*, uint32_t);
 static void RpcChunksClear(RpcSsnData*);
 static RpcStatus RpcFlushToAlt(RpcSsnData*, Packet*);
-static RpcStatus RpcPrepPartial(RpcSsnData*, Packet*);
-static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, Packet*);
+static RpcStatus RpcPrepPartial(RpcSsnData*, const Packet*);
+static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, const Packet*);
 
 static inline void RpcPreprocEvent(RpcSsnData* rsdata, int event)
 {
@@ -300,7 +300,7 @@ static RpcStatus RpcPrepChunkBuffer(RpcSsnData* rsdata, DataBuffer& buf, bool ma
         buf.data[0] |= 0x80;
 
     uint32_t offset = RPC_FRAG_HDR_SIZE;
-    for (RpcChunkNode* node = rsdata->chunks_head; node != nullptr; node = node->next)
+    for (const RpcChunkNode* node = rsdata->chunks_head; node != nullptr; node = node->next)
     {
         memcpy_s(buf.data + offset, buf.decode_blen - offset, node->data, node->len);
         offset += node->len;
@@ -321,7 +321,7 @@ static RpcStatus RpcFlushToAlt(RpcSsnData* rsdata, Packet* p)
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcPrepPartial(RpcSsnData* rsdata, Packet* p)
+static RpcStatus RpcPrepPartial(RpcSsnData* rsdata, const Packet* p)
 {
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
     return RpcPrepChunkBuffer(rsdata, buf, rsdata->record_complete);
@@ -550,7 +550,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet* p)
+static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, const Packet* p)
 {
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
@@ -656,7 +656,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
 
 #define MIN_CALL_BODY_SZ 32
 
-static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
+static int ConvertRPC(RpcSsnData* rsdata, const Packet* p)
 {
     const uint8_t* data = p->data;
     uint32_t psize = p->dsize;

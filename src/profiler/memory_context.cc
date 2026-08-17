@@ -45,12 +45,8 @@ static MemoryStats s_fallthrough_stats;
 // memory manager interface
 // -----------------------------------------------------------------------------
 
-// get thread local default stats
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-const MemoryStats& MemoryProfiler::get_fallthrough_stats()
-{ return s_fallthrough_stats; }
-
 // thread local call
+// cppcheck-suppress unusedFunction ; called by Profiler::consolidate_stats
 void MemoryProfiler::consolidate_fallthrough_stats()
 {
     static std::mutex stats_mutex;

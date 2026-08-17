@@ -228,6 +228,7 @@ public:
     // Handle session block pending state
     static void check_flow_closed(Packet*);
 
+    // cppcheck-suppress unusedFunction ; cppcheck 2.21 misses FlowControl call sites
     static bool require_3whs()
     { return get_network_policy()->hs_timeout >= 0; }
 

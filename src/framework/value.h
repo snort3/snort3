@@ -208,6 +208,7 @@ public:
     void lower()
     { std::transform(str.begin(), str.end(), str.begin(), ::tolower); }
 
+    // cppcheck-suppress unusedFunction ; installed configuration-value API
     void upper()
     { std::transform(str.begin(), str.end(), str.begin(), ::toupper); }
 

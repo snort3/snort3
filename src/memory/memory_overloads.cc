@@ -78,6 +78,7 @@ struct alignas(max_align_t) Metadata
     static Metadata* extract(void*);
 };
 
+// cppcheck-suppress unusedFunction ; called by allocation-accounting paths in this file
 inline size_t Metadata::total_size() const
 { return calculate_total_size(payload_size); }
 

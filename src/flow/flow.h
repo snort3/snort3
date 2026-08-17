@@ -254,6 +254,7 @@ public:
     void set_to_client_detection(bool enable);
     void set_to_server_detection(bool enable);
 
+    // cppcheck-suppress unusedFunction ; installed Flow API accessor
     int get_ignore_direction() const
     { return ssn_state.ignore_direction; }
 
@@ -418,6 +419,7 @@ public:
 
     void trust();
 
+    // cppcheck-suppress unusedFunction ; installed Flow API accessor
     bool trust_is_deferred() const
     { return deferred_trust.is_deferred(); }
 

@@ -50,6 +50,7 @@ public:
     void reload();
 
     DAQ_RecvStatus receive_messages(unsigned max_recv);
+    // cppcheck-suppress unusedFunction ; installed DAQ API used by configured acquisition paths
     DAQ_Msg_h next_message()
     {
         if (curr_batch_idx < curr_batch_size)

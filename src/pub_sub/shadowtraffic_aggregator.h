@@ -65,10 +65,12 @@ class SO_PUBLIC ShadowTrafficEvent : public snort::DataEvent {
                 shadowtraffictype(shadowtraffic_type), server_name(server_name), 
                     process_name(process_name), application_name(application_name), source(src) {}
 
+        // cppcheck-suppress unusedFunction ; consumed by the FTD shadow-traffic subscriber
         uint32_t get_shadowtraffic_type() { return shadowtraffictype; }
         std::string& get_server_name () { return server_name; }
         std::string& get_process_name () { return process_name; } 
         std::string& get_application_name () { return application_name; }
+        // cppcheck-suppress unusedFunction ; consumed by the FTD shadow-traffic subscriber
         ShadowTrafficDetectionSource get_detection_source() const { return source; }
         
     private:

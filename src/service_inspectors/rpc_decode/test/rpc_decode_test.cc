@@ -194,7 +194,7 @@ unsigned count_chunk_nodes(const RpcSsnData* rsdata)
 {
     unsigned count = 0;
 
-    for (RpcChunkNode* node = rsdata->chunks_head; node != nullptr; node = node->next)
+    for (const RpcChunkNode* node = rsdata->chunks_head; node != nullptr; node = node->next)
         ++count;
 
     return count;
@@ -205,17 +205,13 @@ TEST_GROUP(rpc_publish_alt_packet)
 {
     Packet packet;
     uint8_t original[8] = {};
-    // cppcheck-suppress unreadVariable ; shared fixture state is consumed by test bodies
     uint8_t record[32] = {};
 
     void setup() override
     {
         reset_publish_state();
-        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         packet.data = original;
-        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         packet.dsize = sizeof(original);
-        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         packet.packet_flags = PKT_REBUILT_STREAM;
     }
 };
@@ -261,7 +257,7 @@ TEST(rpc_publish_alt_packet, publishes_non_empty_record_and_restores_packet_view
 
 TEST_GROUP(rpc_prep_chunk)
 {
-    RpcSsnData session;
+    RpcSsnData session = {};
     DataBuffer alt_buffer;
     uint8_t frag_body[64] = {};
 
@@ -269,7 +265,6 @@ TEST_GROUP(rpc_prep_chunk)
     {
         if (!alt_buffer.data)
             alt_buffer.allocate_data();
-        // cppcheck-suppress unreadVariable ; buffer state is consumed by test bodies
         alt_buffer.len = 0;
         memset(const_cast<uint8_t*>(alt_buffer.data), 0, alt_buffer.decode_blen);
         memset(&session, 0, sizeof(session));
@@ -307,7 +302,7 @@ TEST(rpc_prep_chunk, advertises_header_plus_fragment_body)
 
 TEST_GROUP(rpc_chunks_clear)
 {
-    RpcSsnData session;
+    RpcSsnData session = {};
 
     void setup() override
     {
@@ -338,7 +333,7 @@ TEST(rpc_chunks_clear, resets_partial_serialized)
 
 TEST_GROUP(rpc_chunk_append)
 {
-    RpcSsnData session;
+    RpcSsnData session = {};
 
     void setup() override
     {
@@ -377,7 +372,7 @@ TEST_GROUP(rpc_stateful_post_loop)
 {
     Packet packet;
     IpsContext context;
-    RpcSsnData session;
+    RpcSsnData session = {};
     std::vector<uint8_t> payload;
 
     void setup() override
