@@ -165,48 +165,49 @@ static inline void fpLogOther(
 }
 
 /*
-**    This function takes the corresponding RTN and OTN for a snort rule
+**    This function takes OTN (and corresponding RTN) for a snort rule
 **    and logs the event and packet that was alerted upon.  This
 **    function was pulled out of fpEvalSomething, so now we can log an
 **    event no matter where we are.
 */
-int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
+int fpLogEvent(const OptTreeNode* otn, Packet* p)
 {
-    int action = -1, rateAction = -1;
-    int override, filterEvent = 0;
-
+    // for stream module
     if ( otn->stateless() )
-    {
-        /* Stateless rule, set the stateless bit */
         p->packet_flags |= PKT_STATELESS;
-    }
     else
-    {
-        /* Not stateless, clear the stateless bit if it was set
-         * from a previous rule.
-         */
         p->packet_flags &= ~PKT_STATELESS;
-    }
 
-    // perform rate filtering tests - impacts action taken
-    rateAction = RateFilter_Test(otn, p);
-    override = ( rateAction >= IpsAction::get_max_types() );
-    if ( override )
-        rateAction -= IpsAction::get_max_types();
+    // rate filtering tests (impacts action)
+    int action_rate = RateFilter_Test(otn, p);
+    bool action_override = action_rate >= IpsAction::get_max_types();
 
-    // internal events are no-ops
-    if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.gid) )
+    if ( action_override )
+        action_rate -= IpsAction::get_max_types();
+
+    if ( action_rate < 0 && EventIsInternal(otn->sigInfo.gid) )
+        return 1; // internal events are no-ops
+
+    int action = action_rate;
+    IpsPolicy::ActionSelector action_selector = 0;
+
+    if ( action_rate < 0 )
     {
-        return 1;
-    }
-    action = (rateAction < 0) ? (int)rtn->action : rateAction;
-    const IpsPolicy::ActionSelector action_selector = (rateAction < 0) ? rtn->action_selector : 0;
+        const RuleTreeNode* rtn = getRtnFromOtn(otn);
 
-    // When rate filters kick in, event filters are still processed.
-    // perform event filtering tests - impacts logging
+        if ( !rtn || !rtn->enabled() )
+            return 0;  // not enabled in the policy
+
+        action = (int)rtn->action;
+        action_selector = rtn->action_selector;
+    }
+
+    // event filtering tests (impacts logging)
+    int event_filter = 0;
+
     if ( p->ptrs.ip_api.is_valid() )
     {
-        filterEvent = sfthreshold_test(
+        event_filter = sfthreshold_test(
             otn->sigInfo.gid, otn->sigInfo.sid,
             p->ptrs.ip_api.get_src(), p->ptrs.ip_api.get_dst(),
             p->pkth->ts.tv_sec, get_network_policy()->policy_id);
@@ -216,12 +217,12 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         SfIp cleared;
         cleared.clear();
 
-        filterEvent = sfthreshold_test(
+        event_filter = sfthreshold_test(
             otn->sigInfo.gid, otn->sigInfo.sid,
             &cleared, &cleared, p->pkth->ts.tv_sec, get_network_policy()->policy_id);
     }
 
-    if ( (filterEvent < 0) || (filterEvent > 0 && !override) )
+    if ( (event_filter < 0) || (event_filter > 0 && !action_override) )
     {
         /*
         **  If InlineMode is on, then we still want to drop packets
@@ -255,9 +256,9 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     const SnortConfig* sc = p->context->conf;
 
     if ( (p->packet_flags & PKT_PASS_RULE) &&
-        (sc->get_eval_index(rtn->action) > sc->get_eval_index(IpsAction::get_type("pass"))) )
+        (sc->get_eval_index(action) > sc->get_eval_index(IpsAction::get_type("pass"))) )
     {
-        fpLogOther(p, otn, rtn->action, rtn->action_selector);
+        fpLogOther(p, otn, action, action_selector);
         return 1;
     }
 

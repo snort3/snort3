@@ -743,15 +743,7 @@ static int log_events(void* event, void* user)
 
     EventNode* en = (EventNode*)event;
 
-    if ( !en->rtn )
-    {
-        en->rtn = getRtnFromOtn(en->otn);
-
-        if ( !en->rtn || !en->rtn->enabled() )
-            return 0;  // not enabled
-    }
-
-    fpLogEvent(en->rtn, en->otn, (Packet*)user);
+    fpLogEvent(en->otn, (Packet*)user);
     sfthreshold_reset();
 
     return 0;
