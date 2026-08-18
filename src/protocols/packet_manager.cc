@@ -761,7 +761,7 @@ int PacketManager::encode_format(
     const DAQ_PktHdr_t* phdr, uint32_t opaque)
 {
     bool update_ip4_len = false;
-    uint8_t num_layers;
+    uint8_t num_layers = 0;
 
     if ( f & ENC_FLAG_DEF )
     {
@@ -771,15 +771,19 @@ int PacketManager::encode_format(
          * we ensure that the ip6_frag header is not copied too.
          */
 
+        int stop;
         if ( p->is_ip6() )
         {
-            num_layers = layer::get_inner_ip6_frag_index(p);
+            stop = layer::get_inner_ip6_frag_index(p);
         }
         else
         {
-            num_layers = layer::get_inner_ip_lyr_index(p) + 1;
+            stop = layer::get_inner_ip_lyr_index(p) + 1;
             update_ip4_len = true;
         }
+
+        if (stop > 0)
+            num_layers = stop;
     }
     else if ( f & ENC_FLAG_NET )
         num_layers = layer::get_inner_ip_lyr_index(p) + 1;

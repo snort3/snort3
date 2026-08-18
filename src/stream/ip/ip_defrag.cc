@@ -585,7 +585,15 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     }
 
     Packet* dpkt = DetectionEngine::set_next_packet(p);
-    PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP, nullptr, p->pkth->opaque);
+    int res = PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP, nullptr, p->pkth->opaque);
+    if (res < 0)
+    {
+        debug_logf(stream_ip_trace, p,
+            "[..] FragRebuild: encode_format failed; dropping reassembly\n");
+        ft->frag_flags |= FRAG_BAD;
+        ft->frag_flags |= FRAG_REBUILT;
+        return;
+    }
 
     // the encoder ensures enough space for a maximum datagram
     uint8_t* rebuild_ptr = const_cast<uint8_t*>(dpkt->data);

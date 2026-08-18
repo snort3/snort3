@@ -9,6 +9,13 @@ add_cpputest( encap_layer_test
         ../packet.cc
 )
 
+add_cpputest( encode_format_test
+    SOURCES
+        ../layer.cc
+        ../packet.cc
+        ../packet_manager.cc
+)
+
 add_cpputest( ssl_protocol_test )
 add_cpputest( ssl_parse_test
     LIBS
