@@ -26,6 +26,7 @@
 #include "service_inspectors/http_inspect/http_event.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
+#include "service_inspectors/http_inspect/http_msg_section.h"
 #include "service_inspectors/http_inspect/http_transaction.h"
 
 #include <CppUTest/TestHarness.h>
@@ -79,6 +80,30 @@ public:
         flow_data->partial_flush[source_id] = partial_flush ? HttpEnums::PF_DETECT :
             HttpEnums::PF_NONE;
         flow_data->num_excess[source_id] = num_excess;
+    }
+    static void archive_status_section(HttpTransaction* transaction, HttpMsgStatus* status)
+    {
+        assert(transaction != nullptr);
+        transaction->archive_status(status);
+    }
+    static unsigned archive_status_length(const HttpTransaction* transaction)
+    {
+        assert(transaction != nullptr);
+        return section_list_length(transaction->archive_status_list);
+    }
+    static const HttpMsgSection* archive_status_head(const HttpTransaction* transaction)
+    {
+        assert(transaction != nullptr);
+        return transaction->archive_status_list;
+    }
+
+private:
+    static unsigned section_list_length(const HttpMsgSection* list)
+    {
+        unsigned count = 0;
+        for (const HttpMsgSection* node = list; node != nullptr; node = node->next)
+            count++;
+        return count;
     }
 };
 

@@ -34,6 +34,7 @@ public:
     HttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
+    // cppcheck-suppress uselessOverride ; out-of-line body in http_msg_status.cc generates status-line events
     void gen_events() override;
     void update_flow() override;
 
@@ -42,6 +43,14 @@ public:
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;
+#endif
+
+#ifdef UNIT_TEST
+    void set_parsed_status(int32_t code, const uint8_t* phrase, int32_t phrase_len)
+    {
+        status_code_num = code;
+        reason_phrase.set(phrase_len, phrase);
+    }
 #endif
 
 private:

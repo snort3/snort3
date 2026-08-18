@@ -109,9 +109,7 @@ private:
 #endif
 
     HttpTransaction(HttpFlowData*, snort::Flow* const);
-    static void archive_section(HttpMsgSection*, HttpMsgSection**);
     void archive_status(HttpMsgStatus*);
-    void archive_header(HttpMsgHeader*);
     void publish_end_of_transaction();
 
     HttpFlowData* const session_data;
@@ -124,7 +122,6 @@ private:
     HttpMsgTrailer* trailer[2] = { nullptr, nullptr };
     HttpMsgBody* body_list = nullptr;
     HttpMsgSection* archive_status_list = nullptr;
-    HttpMsgSection* archive_hdr_list = nullptr;
     HttpInfractions* infractions[2];
 
     enum class TransactionFlag : uint16_t

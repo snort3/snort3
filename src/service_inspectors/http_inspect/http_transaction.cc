@@ -113,7 +113,6 @@ HttpTransaction::~HttpTransaction()
         delete infractions[k];
     }
     delete_section_list(body_list);
-    delete_section_list(archive_hdr_list);
     delete_section_list(archive_status_list);
 }
 
@@ -199,8 +198,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
         session_data->transaction[SRC_SERVER]->archive_status(
             session_data->transaction[SRC_SERVER]->status);
         session_data->transaction[SRC_SERVER]->status = nullptr;
-        session_data->transaction[SRC_SERVER]->archive_header(
-            session_data->transaction[SRC_SERVER]->header[SRC_SERVER]);
+        delete session_data->transaction[SRC_SERVER]->header[SRC_SERVER];
         session_data->transaction[SRC_SERVER]->header[SRC_SERVER] = nullptr;
     }
     // Status section: delete the current transaction and get a new one from the pipeline. If the
@@ -280,23 +278,13 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
     return session_data->transaction[source_id];
 }
 
-void HttpTransaction::archive_section(HttpMsgSection* section, HttpMsgSection** archive_list)
-{
-    if (section != nullptr)
-    {
-        section->next = *archive_list;
-        *archive_list = section;
-    }
-}
-
 void HttpTransaction::archive_status(HttpMsgStatus* status_section)
 {
-    archive_section(status_section, &archive_status_list);
-}
-
-void HttpTransaction::archive_header(HttpMsgHeader* hdr)
-{
-    archive_section(hdr, &archive_hdr_list); 
+    if (status_section == nullptr)
+        return;
+    delete_section_list(archive_status_list);
+    status_section->next = nullptr;
+    archive_status_list = status_section;
 }
 
 void HttpTransaction::clear_section()

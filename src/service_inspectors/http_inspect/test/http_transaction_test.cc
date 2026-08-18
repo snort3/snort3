@@ -23,6 +23,9 @@
 #include "config.h"
 #endif
 
+#include <string>
+#include <vector>
+
 #include "pub_sub/http_transaction_end_event.h"
 #include "pub_sub/http_form_data_event.h"
 #include "service_inspectors/http_inspect/http_common.h"
@@ -31,6 +34,8 @@
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_module.h"
 #include "service_inspectors/http_inspect/http_msg_section.h"
+#include "service_inspectors/http_inspect/http_msg_start.h"
+#include "service_inspectors/http_inspect/http_msg_status.h"
 #include "service_inspectors/http_inspect/http_transaction.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 
@@ -93,6 +98,33 @@ const std::string& HttpTransactionEndEvent::get_filename(SourceId) const
 
 const std::string& HttpTransactionEndEvent::get_content_type(SourceId) const
 { return empty; }
+
+HttpMsgSection::HttpMsgSection(const uint8_t*, const uint16_t, HttpFlowData* session_data_,
+    SourceId source_id_, bool, Flow* flow_, const HttpParaList* params_) :
+    session_data(session_data_), flow(flow_), params(params_), transaction(nullptr),
+    trans_num(0), status_code_num(0), source_id(source_id_), version_id(VERS__NOT_PRESENT),
+    method_id(METH__NOT_PRESENT), tcp_close(false)
+{ }
+bool HttpMsgSection::run_detection(snort::Packet*) { return false; }
+void HttpMsgSection::clear() { }
+
+HttpMsgStart::HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size,
+    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const HttpParaList* params_) : HttpMsgSection(buffer, buf_size, session_data_, source_id_,
+    buf_owner, flow_, params_), own_msg_buffer(buf_owner) { }
+HttpMsgStart::~HttpMsgStart() = default;
+void HttpMsgStart::analyze() { }
+
+HttpMsgStatus::HttpMsgStatus(const uint8_t* buffer, const uint16_t buf_size,
+    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const HttpParaList* params_) : HttpMsgStart(buffer, buf_size, session_data_, source_id_,
+    buf_owner, flow_, params_) { }
+void HttpMsgStatus::gen_events() { }
+void HttpMsgStatus::update_flow() { }
+void HttpMsgStatus::parse_start_line() { }
+#ifdef REG_TEST
+void HttpMsgStatus::print_section(FILE*) { }
+#endif
 
 unsigned Http2FlowData::inspector_id = 0;
 uint32_t Http2FlowData::get_processing_stream_id() const { return 0; }
@@ -787,6 +819,58 @@ TEST(http_transaction_test, attachment_multibyte_value_is_dropped_whole)
     CHECK_EQUAL(fname.size(), trans->get_filename(SRC_CLIENT).size());
     CHECK_EQUAL(fname, trans->get_filename(SRC_CLIENT));
     STRCMP_EQUAL("type1", trans->get_content_type(SRC_CLIENT).c_str());
+}
+
+TEST(http_transaction_test, interim_status_archive_limit)
+{
+    type_expected[SRC_CLIENT] = SEC_REQUEST;
+    section_type[SRC_CLIENT] = SEC_REQUEST;
+    HttpTransaction* const trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT,
+        flow);
+    CHECK(trans != nullptr);
+
+    static constexpr unsigned interim_count = 12;
+    // Field holds reason_phrase as a non-owning pointer; keep the phrases alive.
+    std::vector<std::string> phrases;
+    phrases.reserve(interim_count);
+    for (unsigned k = 1; k <= interim_count; k++)
+        phrases.emplace_back("interim " + std::to_string(k));
+
+    for (unsigned k = 0; k < interim_count; k++)
+    {
+        auto* const status = new HttpMsgStatus(nullptr, 0, flow_data, SRC_SERVER, false, flow,
+            &params);
+        status->set_parsed_status(100,
+            reinterpret_cast<const uint8_t*>(phrases[k].data()),
+            static_cast<int32_t>(phrases[k].size()));
+        HttpUnitTestSetup::archive_status_section(trans, status);
+    }
+
+    CHECK_EQUAL(1, HttpUnitTestSetup::archive_status_length(trans));
+
+    CHECK_EQUAL(100, trans->get_info_code());
+    const Field& info_msg = trans->get_info_msg();
+    STRNCMP_EQUAL(phrases.back().c_str(),
+        reinterpret_cast<const char*>(info_msg.start()), info_msg.length());
+    CHECK_EQUAL(static_cast<int32_t>(phrases.back().size()), info_msg.length());
+}
+
+TEST(http_transaction_test, interim_status_replacement_null_status_no_crash)
+{
+    // See dev_notes.txt "100-Continue interim status archiving" for the null-section path.
+    type_expected[SRC_CLIENT] = SEC_REQUEST;
+    section_type[SRC_CLIENT] = SEC_REQUEST;
+    HttpTransaction* const trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT,
+        flow);
+    CHECK(trans != nullptr);
+
+    section_type[SRC_SERVER] = SEC_STATUS;
+    CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
+    trans->set_one_hundred_response();
+
+    section_type[SRC_SERVER] = SEC_STATUS;
+    CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
+    CHECK_EQUAL(0, HttpUnitTestSetup::archive_status_length(trans));
 }
 
 int main(int argc, char** argv)

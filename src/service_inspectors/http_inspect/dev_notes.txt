@@ -48,6 +48,15 @@ parsing state. In particular, a later HTTP/0.9 request must not set zero_nine_ex
 The attach_my_transaction() factory method contains all the logic that makes this work. There are
 many corner cases. Don't mess with it until you fully understand it.
 
+100-Continue interim status archiving: when a response supplies an interim (1xx) status followed by
+a final status, the interim status section is archived so its info code and reason phrase remain
+available to detection on the final response. Only the most recent interim status is retained -
+archive_status_list is a single slot, not the former unbounded history list, and archive_status()
+frees any previously archived section before storing the new one. There is no separate header
+archive; the earlier archive_hdr_list was removed because nothing consumed it. archive_status()
+also tolerates a null section, which occurs when the parser has already released the interim status
+before the replacement arrives.
+
 HI implements flow depth using the request_depth and response_depth parameters. HI seeks to provide
 a consistent experience to detection by making flow depth independent of factors that a sender
 could easily manipulate, such as header length, chunking, compression, and encodings. The maximum
