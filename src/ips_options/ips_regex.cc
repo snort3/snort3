@@ -165,7 +165,6 @@ static int hs_match(
 
 IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(regex_perf_stats);
 
     unsigned pos = c.get_delta();

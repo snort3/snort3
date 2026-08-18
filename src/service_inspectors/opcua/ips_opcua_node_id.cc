@@ -81,7 +81,6 @@ bool OpcuaNodeIdOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus OpcuaNodeIdOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(opcua_node_id_prof);
 
     if ( !p->flow || !p->is_full_pdu() )

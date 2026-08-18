@@ -76,7 +76,6 @@ bool IcodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IcodeOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(icmpCodePerfStats);
 
     // return 0  if we don't have an icmp header

@@ -78,7 +78,6 @@ bool FileTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(fileTypePerfStats);
 
     if (!pkt->flow)

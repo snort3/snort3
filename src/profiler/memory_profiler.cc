@@ -156,7 +156,6 @@ struct s_print_table
 
 } // namespace memory_stats
 
-// cppcheck-suppress unusedFunction ; called when ENABLE_MEMORY_PROFILER is configured
 void show_memory_profiler_stats(ProfilerNodeMap& nodes, const MemoryProfilerConfig& config)
 {
     if ( !config.show )

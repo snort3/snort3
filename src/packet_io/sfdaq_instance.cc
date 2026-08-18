@@ -324,7 +324,6 @@ int SFDAQInstance::ioctl(DAQ_IoctlCmd cmd, void *arg, size_t arglen)
     return daq_instance_ioctl(instance, cmd, arg, arglen);
 }
 
-// cppcheck-suppress unusedFunction ; exported DAQ API consumed by FTD and test plugins
 int SFDAQInstance::modify_flow_opaque(DAQ_Msg_h msg, uint32_t opaque)
 {
     if ( !msg )

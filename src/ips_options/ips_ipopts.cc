@@ -95,7 +95,6 @@ bool IpOptOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(ipOptionPerfStats);
 
     if ( !p->is_ip4() )

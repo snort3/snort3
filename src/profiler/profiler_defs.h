@@ -153,6 +153,7 @@ class ProfileDisabled
 public:
     ProfileDisabled(ProfileStats&) { }
     ProfileDisabled(TimeProfilerStats&, MemoryTracker&) { }
+    ~ProfileDisabled() = default;
 };
 
 #ifdef NO_PROFILER

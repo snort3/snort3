@@ -76,7 +76,6 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TcpWinOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(tcpWinPerfStats);
 
     if (!p->ptrs.tcph)

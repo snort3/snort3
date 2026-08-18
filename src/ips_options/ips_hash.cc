@@ -193,7 +193,6 @@ int HashOption::match(Cursor& c)
 
 IpsOption::EvalStatus HashOption::eval(Cursor& c, Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(hash_ps[idx]);
 
     int found = match(c);

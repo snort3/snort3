@@ -46,7 +46,6 @@ static MemoryStats s_fallthrough_stats;
 // -----------------------------------------------------------------------------
 
 // thread local call
-// cppcheck-suppress unusedFunction ; called by Profiler::consolidate_stats
 void MemoryProfiler::consolidate_fallthrough_stats()
 {
     static std::mutex stats_mutex;

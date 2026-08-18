@@ -103,7 +103,7 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
 {
-    RuleProfile profile(streamReassembleRuleOptionPerfStats);   // cppcheck-suppress unreadVariable
+    RuleProfile profile(streamReassembleRuleOptionPerfStats);
 
     if (!pkt->flow || !pkt->ptrs.tcph)
         return NO_MATCH;

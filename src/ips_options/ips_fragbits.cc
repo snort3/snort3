@@ -315,7 +315,6 @@ bool FragBitsOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FragBitsOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(fragBitsPerfStats);
 
     if ( !p->has_ip() )

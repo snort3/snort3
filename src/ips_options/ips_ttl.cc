@@ -76,7 +76,6 @@ bool TtlOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TtlOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(ttlCheckPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())

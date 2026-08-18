@@ -54,7 +54,6 @@ public:
 
 IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(fileDataPerfStats);
 
     uint64_t sid;

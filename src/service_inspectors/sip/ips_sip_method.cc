@@ -100,7 +100,7 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(sipMethodRuleOptionPerfStats);  // cppcheck-suppress unreadVariable
+    RuleProfile profile(sipMethodRuleOptionPerfStats);
 
     if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;

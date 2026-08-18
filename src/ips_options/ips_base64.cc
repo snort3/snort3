@@ -115,7 +115,6 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(base64PerfStats);
     DataBuffer& base64_decode_buffer = DetectionEngine::acquire_alt_buffer(p);
     base64_decode_buffer.len = 0;
@@ -292,7 +291,6 @@ public:
 
 IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(base64PerfStats);
     const DataPointer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
 

@@ -191,7 +191,6 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteJumpPerfStats);
 
     const ByteJumpData* bjd = (ByteJumpData*)&config;

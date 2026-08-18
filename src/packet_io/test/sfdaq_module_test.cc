@@ -106,7 +106,7 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
     SECTION("validate sfdaq config")
     {
         /* Validate the configuration */
-        SFDAQConfig* cfg = sc.daq_config;
+        const SFDAQConfig* cfg = sc.daq_config;
         REQUIRE((2 == cfg->module_dirs.size()));
         CHECK(cfg->module_dirs[0] == module_dir1.get_string());
         CHECK(cfg->module_dirs[1] == module_dir2.get_string());
@@ -120,9 +120,8 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
         CHECK((10 == cfg->batch_size));
 
         REQUIRE(1 == cfg->module_configs.size());
-        for (auto it : cfg->module_configs)
+        for (const auto* mcfg : cfg->module_configs)
         {
-            SFDAQModuleConfig* mcfg = it;
             CHECK((mcfg->name == module_name.get_string()));
             CHECK((mcfg->mode == SFDAQModuleConfig::SFDAQ_MODE_PASSIVE));
             REQUIRE((2 == mcfg->variables.size()));
@@ -168,9 +167,8 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
         CHECK((12 == cfg->batch_size));
 
         REQUIRE(2 == cfg->module_configs.size());
-        for (auto it : cfg->module_configs)
+        for (const auto* mcfg : cfg->module_configs)
         {
-            SFDAQModuleConfig* mcfg = it;
             CHECK((mcfg->name == "cli_module_name" or mcfg->name == "dump"));
             if (mcfg->name == "cli_module_name")
             {

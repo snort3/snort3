@@ -1445,7 +1445,6 @@ TEST_CASE("Internal limits", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Function type detection", "[JSNormalizer]")
 {
     SECTION("in arrow function")
@@ -1466,4 +1465,3 @@ TEST_CASE("Function type detection", "[JSNormalizer]")
 }
 
 #endif // CATCH_TEST_BUILD
-

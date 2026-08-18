@@ -54,7 +54,6 @@ public:
     DAQ_Verdict get_verdict()
     { return verdict; }
 
-    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     void set_verdict(DAQ_Verdict v)
     { verdict = v; }
 

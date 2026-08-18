@@ -76,7 +76,6 @@ bool TcpSeqOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TcpSeqOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(tcpSeqPerfStats);
 
     if (!p->ptrs.tcph)

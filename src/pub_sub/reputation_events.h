@@ -46,7 +46,6 @@ public:
     const Packet* get_packet() const override
     { return packet; }
 
-    // cppcheck-suppress unusedFunction ; subscriber-facing event API accessor
     ReputationVerdict get_verdict() const
     { return verdict; }
 

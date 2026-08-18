@@ -111,7 +111,7 @@ bool S7commplusOpcodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus S7commplusOpcodeOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7commplus_opcode_prof);    // cppcheck-suppress unreadVariable
+    RuleProfile profile(s7commplus_opcode_prof);
 
     if ( !p->flow )
         return NO_MATCH;

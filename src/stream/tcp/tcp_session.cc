@@ -1514,7 +1514,6 @@ StreamSplitter* TcpSession::get_splitter(bool to_server)
         return client.get_splitter();
 }
 
-// cppcheck-suppress unusedFunction ; cppcheck 2.21 misses the Stream forwarding call
 void TcpSession::start_proxy()
 {
     client.normalizer.init(Normalizer::Policy::PROXY, this, &client, &server);

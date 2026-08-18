@@ -164,7 +164,6 @@ IpsOption::EvalStatus HttpTestIpsOption::eval_header_test(const Field& http_buff
 
 IpsOption::EvalStatus HttpTestIpsOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(HttpTestRuleOptModule::http_test_ps[idx]);
 
     const HttpInspect* const hi = eval_helper(p);

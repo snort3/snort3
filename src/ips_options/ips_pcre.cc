@@ -564,7 +564,6 @@ bool PcreOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(pcrePerfStats);
 
     // short circuit this for testing pcre performance impact

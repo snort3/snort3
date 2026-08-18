@@ -205,7 +205,6 @@ void AppInfoManager::cleanup_appid_info_table()
     app_info_name_table.erase(app_info_name_table.begin(), app_info_name_table.end());
 }
 
-// cppcheck-suppress unusedFunction ; exercised by the AppInfoManager unit test
 void AppInfoManager::dump_app_info_table()
 {
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Cisco provided detectors:\n");

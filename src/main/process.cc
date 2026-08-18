@@ -345,7 +345,6 @@ static void oops_handler(int signal)
     SigSafePrinter ssp(STDERR_FILENO);
     ssp.printf("\nSnort (PID %u) caught fatal signal: %s\n", getpid(), sigstr);
 #ifdef BUILD
-    // cppcheck-suppress syntaxError ; VERSION and BUILD are build-system string macros
     ssp.printf("Version: " VERSION " Build " BUILD "\n\n");
 #else
     ssp.printf("Version: " VERSION "\n\n");

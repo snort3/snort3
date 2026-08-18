@@ -79,7 +79,6 @@ bool IpTosOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpTosOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(ipTosPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())

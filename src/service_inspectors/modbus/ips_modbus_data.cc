@@ -75,7 +75,7 @@ bool ModbusDataOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ModbusDataOption::eval(Cursor& c, Packet* p)
 {
-    RuleProfile profile(modbus_data_prof);  // cppcheck-suppress unreadVariable
+    RuleProfile profile(modbus_data_prof);
 
     InspectionBuffer b;
     if (!get_buf_modbus_data(p, b))

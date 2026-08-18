@@ -2692,7 +2692,6 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in closing tag", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -5499,7 +5498,6 @@ TEST_CASE("ignored properties split", "[JSNormalizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Scope tracking - basic", "[JSNormalizer]")
 {
     SECTION("Global only")

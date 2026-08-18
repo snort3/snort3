@@ -99,7 +99,6 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IcmpIdOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(icmpIdPerfStats);
 
     if (!p->ptrs.icmph)

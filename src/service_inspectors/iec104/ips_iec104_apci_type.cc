@@ -122,7 +122,6 @@ bool Iec104ApciTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Iec104ApciTypeOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(iec104_apci_type_prof);
 
     if (!p->flow)

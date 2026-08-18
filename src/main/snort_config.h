@@ -612,6 +612,7 @@ public:
     { return output_flags & OUTPUT_FLAG__ALERT_REFS; }
 
     // run flags
+    // cppcheck-suppress unusedFunction ; used by process.cc outside this header scan configuration
     bool no_lock_pid_file() const
     { return run_flags & RUN_FLAG__NO_LOCK_PID_FILE; }
 

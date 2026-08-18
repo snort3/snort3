@@ -430,7 +430,6 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
 
 static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(contentPerfStats);
 
     bool found = uniSearchReal(idx, c);

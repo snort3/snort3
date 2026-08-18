@@ -116,7 +116,6 @@ bool RpcOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus RpcOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(rpcCheckPerfStats);
 
     if ( !is_valid(p) )

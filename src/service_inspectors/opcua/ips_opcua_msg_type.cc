@@ -131,7 +131,6 @@ bool OpcuaMsgTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus OpcuaMsgTypeOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(opcua_msg_type_prof);
 
     if ( !p->flow || !p->is_full_pdu() )

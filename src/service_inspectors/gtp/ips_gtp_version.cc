@@ -78,7 +78,6 @@ bool GtpVersionOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus GtpVersionOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(gtp_ver_prof);
 
     if ( !p->flow )

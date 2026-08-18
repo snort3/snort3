@@ -336,7 +336,6 @@ unsigned SdPatternOption::SdSearch(const Cursor& c, Packet* p)
 
 IpsOption::EvalStatus SdPatternOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(sd_pattern_perf_stats);
 
     unsigned matches = SdSearch(c, p);

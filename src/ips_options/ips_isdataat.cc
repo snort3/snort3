@@ -126,7 +126,6 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IsDataAtOption::eval(Cursor& c, Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(isDataAtPerfStats);
 
     int offset;

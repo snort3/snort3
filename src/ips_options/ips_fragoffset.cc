@@ -75,7 +75,6 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FragOffsetOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(fragOffsetPerfStats);
 
     if (!p->has_ip())

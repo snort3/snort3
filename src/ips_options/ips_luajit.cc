@@ -170,7 +170,6 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus LuaJitOption::eval(Cursor& c, Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(luaIpsPerfStats);
 
     cursor = &c;

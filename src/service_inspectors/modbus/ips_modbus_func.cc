@@ -125,7 +125,7 @@ bool ModbusFuncOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ModbusFuncOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(modbus_func_prof);  // cppcheck-suppress unreadVariable
+    RuleProfile profile(modbus_func_prof);
 
     if ( !p->flow )
         return NO_MATCH;

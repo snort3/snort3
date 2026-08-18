@@ -75,7 +75,7 @@ bool S7commplusContentOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus S7commplusContentOption::eval(Cursor& c, Packet* p)
 {
-    RuleProfile profile(s7commplus_content_prof);   // cppcheck-suppress unreadVariable
+    RuleProfile profile(s7commplus_content_prof);
 
     InspectionBuffer b;
     if (!get_buf_s7commplus_content(p, b))

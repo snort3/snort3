@@ -56,7 +56,6 @@ void Http2CursorModule::Http2RuleParaList::reset()
 
 IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(Http2CursorModule::http2_ps[psi]);
 
     if (!p->flow || !p->flow->gadget)

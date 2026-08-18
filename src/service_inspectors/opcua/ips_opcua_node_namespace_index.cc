@@ -82,7 +82,6 @@ bool OpcuaNodeNamespaceIndexOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus OpcuaNodeNamespaceIndexOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(opcua_node_namespace_index_prof);
 
     if ( !p->flow || !p->is_full_pdu() )

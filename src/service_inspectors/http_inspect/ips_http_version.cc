@@ -104,7 +104,6 @@ bool HttpVersionIpsOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus HttpVersionIpsOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(HttpVersionRuleOptModule::http_version_ps);
 
     const HttpInspect* const hi = eval_helper(p);

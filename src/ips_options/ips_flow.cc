@@ -113,7 +113,6 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(flowCheckPerfStats);
 
     const FlowCheckData* fcd = &config;

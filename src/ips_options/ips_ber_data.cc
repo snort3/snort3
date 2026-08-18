@@ -84,7 +84,6 @@ bool BerDataOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus BerDataOption::eval(Cursor& c, Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(berDataPerfStats);
 
     BerReader ber(c);

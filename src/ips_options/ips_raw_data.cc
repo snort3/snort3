@@ -46,7 +46,6 @@ public:
 
 IpsOption::EvalStatus RawDataOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(rawDataPerfStats);
 
     c.set(s_name, p->data, p->dsize);

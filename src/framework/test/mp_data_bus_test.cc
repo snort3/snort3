@@ -272,7 +272,10 @@ TEST_GROUP(mp_data_bus_pub)
     }
 
     void teardown() override
-    { 
+    {
+        delete mp_dbus;
+        mp_dbus = nullptr;
+        snort_conf->mp_dbus = nullptr;
     }
 };
 
@@ -300,7 +303,8 @@ TEST(mp_data_bus_pub, publish)
     mock().checkExpectations();
 
     delete mp_dbus;
-
+    mp_dbus = nullptr;
+    snort_conf->mp_dbus = nullptr;
     CHECK_EQUAL(1, MockMPTransport::get_count());
 }
 
@@ -323,7 +327,8 @@ TEST(mp_data_bus_pub, publish_fail_to_send)
     CHECK_EQUAL(1, MPDataBus::mp_global_stats.total_messages_dropped);
 
     delete mp_dbus;
-
+    mp_dbus = nullptr;
+    snort_conf->mp_dbus = nullptr;
     test_transport_send_result = true;
 }
 

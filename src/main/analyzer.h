@@ -88,7 +88,6 @@ public:
     const char* get_state_string();
     const char* get_source() { return source.c_str(); }
 
-    // cppcheck-suppress unusedFunction ; cppcheck 2.21 misses resume and REG_TEST call paths
     void set_pause_after_cnt(uint64_t msg_cnt) { pause_after_cnt = msg_cnt; }
     void set_skip_cnt(uint64_t msg_cnt) { skip_cnt = msg_cnt; }
 #ifdef REG_TEST
@@ -165,4 +164,3 @@ private:
 extern THREAD_LOCAL snort::ProfileStats daqPerfStats;
 
 #endif
-

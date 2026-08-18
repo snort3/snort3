@@ -76,7 +76,6 @@ bool Dnp3DataOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Dnp3DataOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(dnp3_data_perf_stats);
 
     InspectionBuffer b;

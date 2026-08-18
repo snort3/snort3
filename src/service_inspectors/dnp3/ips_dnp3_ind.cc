@@ -80,7 +80,6 @@ bool Dnp3IndOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Dnp3IndOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(dnp3_ind_perf_stats);
 
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)

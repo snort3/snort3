@@ -85,7 +85,6 @@ bool LenOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(lenCheckPerfStats);
     unsigned n = relative ? c.length() : c.size();
 

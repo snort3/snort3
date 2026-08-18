@@ -76,7 +76,6 @@ bool SocksVersionOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SocksVersionOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(socks_version_prof);
 
     if ( !p->flow )
@@ -293,7 +292,6 @@ bool SocksStateOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SocksStateOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(socks_state_prof);
 
     if ( !p->flow )
@@ -434,7 +432,6 @@ bool SocksCommandOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SocksCommandOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(socks_command_prof);
 
     if ( !p->flow )
@@ -575,7 +572,6 @@ bool Socks5AddressTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Socks5AddressTypeOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(socks5_address_type_prof);
 
     if ( !p->flow )
@@ -717,7 +713,6 @@ bool SocksRemoteAddressOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SocksRemoteAddressOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(socks_remote_address_prof);
 
     if ( !p->flow )
@@ -859,7 +854,6 @@ bool SocksRemotePortOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SocksRemotePortOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(socks_remote_port_prof);
 
     if ( !p->flow )

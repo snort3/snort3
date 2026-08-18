@@ -160,7 +160,6 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteMathPerfStats);
 
     /* Get values from ips options variables, if present. */

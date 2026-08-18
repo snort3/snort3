@@ -58,7 +58,6 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
 int detection_filter_test(THD_NODE* pv, const Packet* const p)
 {
     assert(p);
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(detectionFilterPerfStats);
 
     if (pv == nullptr)

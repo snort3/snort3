@@ -821,6 +821,7 @@ public:
     bool is_control_channel() const override
     { return true; }
 
+    // cppcheck-suppress unusedFunction ; called virtually through the Inspector interface
     bool supports_no_ips() const override
     { return true; }
 

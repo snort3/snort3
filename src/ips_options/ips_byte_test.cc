@@ -268,7 +268,6 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteTestPerfStats);
 
     const ByteTestData* btd = (ByteTestData*)&config;

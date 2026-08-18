@@ -566,7 +566,6 @@ TEST_CASE("input buffer - buffer management", "[Stream buffers]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("input buffer - offset one source", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
@@ -1447,7 +1446,6 @@ TEST_CASE("input stream - last chunk offset", "[Stream buffers]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output buffer - basic", "[Stream buffers]")
 {
     const char exp[EXP_SIZE] = "ABC";
@@ -1568,7 +1566,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int off_c = b.pubseekoff(-exp_len, ios_base::cur, ios_base::out);
         CHECK(off_c == 0);
 
-        char* act_seq = new char[exp_len];
+        char* act_seq = new char[exp_len]();
         CHECK(b.sgetn(act_seq, exp_len) == exp_len);
         CHECK(!memcmp(exp, act_seq, exp_len));
         delete[] act_seq;
@@ -1606,7 +1604,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         memcpy(buf, exp, exp_len);
         b.pubsetbuf(buf, exp_len);
 
-        char* act_seq = new char[exp_len + 1];
+        char* act_seq = new char[exp_len + 1]();
         CHECK(b.sgetn(act_seq, exp_len + 1) == exp_len);
         CHECK(!memcmp(exp, act_seq, exp_len));
         delete[] act_seq;

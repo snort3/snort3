@@ -140,7 +140,6 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteExtractPerfStats);
 
     uint32_t value = 0;

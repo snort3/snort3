@@ -211,6 +211,7 @@ int UdpSession::process(Packet* p)
     return 0;
 }
 
+// cppcheck-suppress unusedFunction ; called virtually through the Session interface
 void UdpSession::count_stale_packet()
 {
     udpStats.stale_packets++;

@@ -75,7 +75,6 @@ bool IpIdOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpIdOption::eval(Cursor&, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(ipIdPerfStats);
 
     if (!p->has_ip())

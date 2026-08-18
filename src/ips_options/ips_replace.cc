@@ -152,7 +152,6 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(replacePerfStats);
 
     if ( p->is_cooked() )
@@ -174,7 +173,6 @@ IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
 
 void ReplaceOption::action(Packet*)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(replacePerfStats);
 
     if ( pending() )

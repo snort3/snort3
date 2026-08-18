@@ -99,7 +99,7 @@ private:
 
 IpsOption::EvalStatus SipIpsOption::eval(Cursor& c, Packet* p)
 {
-    RuleProfile profile(sip_ps[idx]);  // cppcheck-suppress unreadVariable
+    RuleProfile profile(sip_ps[idx]);
 
     InspectionBuffer b;
     if (!get_buf_sip(get_bufid(), p, b))

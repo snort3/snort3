@@ -55,7 +55,6 @@ public:
 
 IpsOption::EvalStatus MmsDataOption::eval(Cursor& c, Packet* p)
 {
-    // cppcheck-suppress unreadVariable
     RuleProfile profile(mms_data_prof);
 
     InspectionBuffer b;
