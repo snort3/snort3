@@ -72,14 +72,17 @@ bool DecodeBuffer::check_restore_buffer()
 
 uint32_t DecodeBuffer::get_decode_avail()
 {
+    uint32_t avail;
+
     if (!(code_depth))
-    {
-        return buf_size;
-    }
+        avail = buf_size;
     else
-    {
-        return (code_depth - decode_bytes_read);
-    }
+        avail = code_depth - decode_bytes_read;
+
+    if (avail > MAX_DEPTH)
+        avail = MAX_DEPTH;
+
+    return avail;
 }
 
 uint32_t DecodeBuffer::get_encode_avail()
