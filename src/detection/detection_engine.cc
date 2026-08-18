@@ -273,7 +273,9 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     // this also handles block pending state
     // must only be done for terminal packets to avoid yoinking stream_tcp state
     // while processing a PDU
-    if ( !p->has_parent() and !p->is_rebuilt() )
+    const bool defrag_closed_release = p->is_defrag() and p->flow and
+        (p->flow->session_state & STREAM_STATE_CLOSED);
+    if ( !p->has_parent() and (!p->is_rebuilt() or defrag_closed_release) )
         Stream::check_flow_closed(p);
 
     clear_events(p);
