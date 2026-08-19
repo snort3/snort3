@@ -95,7 +95,7 @@ inline void DCE2_Smb2UpdateMaxOffset(DCE2_Smb2FileTracker* ftracker, uint64_t of
 bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
     uint32_t data_size)
 {
-    if (!ssd->ftracker_tcp)
+    if (!ssd->revalidate_ftracker_tcp())
         return false;
 
     if (ssd->ftracker_tcp->co_tracker)
@@ -159,11 +159,9 @@ bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
                 p, "No file flow \n");
 
             DCE2_Smb2TreeTracker* ttr = ssd->ftracker_tcp->ttr;
-            uint64_t fid = ssd->ftracker_tcp->file_id;
-            ssd->ftracker_tcp = nullptr;
-            ssd->ftracker_local = nullptr;
             if (ttr)
-                ttr->removeFtracker(fid);
+                ttr->removeFtracker(ssd->ftracker_tcp->file_id);
+            ssd->set_ftracker_tcp(nullptr);
             return false;
         }
 
@@ -713,7 +711,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
                 file->set_file_size(ftracker->file_size);
             }
 
-            ssd->ftracker_tcp = ftracker;
+            ssd->set_ftracker_tcp(ftracker);
             ssd->ftracker_local = std::unique_ptr<DCE2_Smb2LocalFileTracker>(new DCE2_Smb2LocalFileTracker());
             ssd->ftracker_local->file_offset = ftracker->max_offset;
             // In case of upload/download of file with UNKNOWN size, we will not be able to
@@ -737,10 +735,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         auto fileId_persistent = rtr->get_file_id();
         const DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
         if (ftracker and ssd->ftracker_tcp == ftracker)
-        {
-            ssd->ftracker_tcp = nullptr;
-            ssd->ftracker_local = nullptr;
-        }
+            ssd->set_ftracker_tcp(nullptr);
         ttr->removeFtracker(fileId_persistent);
         str->removeRtracker(ssd->flow_key, mid);
     }
@@ -756,10 +751,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             auto fileId_persistent = rtr->get_file_id();
             const DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
             if (ftracker and ssd->ftracker_tcp == ftracker)
-            {
-                ssd->ftracker_tcp = nullptr;
-                ssd->ftracker_local = nullptr;
-            }
+                ssd->set_ftracker_tcp(nullptr);
             ttr->removeFtracker(fileId_persistent);
             str->removeRtracker(ssd->flow_key, mid);
         }
@@ -946,7 +938,7 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         ftracker->upload = false;
         ssd->ftracker_local = std::unique_ptr<DCE2_Smb2LocalFileTracker>(new DCE2_Smb2LocalFileTracker());
         ssd->ftracker_local->file_offset = request->get_offset();
-        ssd->ftracker_tcp = ftracker;
+        ssd->set_ftracker_tcp(ftracker);
         if (!ssd->ftracker_local->file_offset and SMB2_SHARE_TYPE_DISK == ttr->get_share_type())
         {
             FileContext* file = DCE2_Smb2GetFileContext(ssd, ftracker, true);
@@ -999,10 +991,7 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             if (ftracker)
             {
                 if (ssd->ftracker_tcp == ftracker)
-                {
-                    ssd->ftracker_tcp = nullptr;
-                    ssd->ftracker_local = nullptr;
-                }
+                    ssd->set_ftracker_tcp(nullptr);
                 ttr->removeFtracker(rtr->get_file_id());
             }
         }
@@ -1109,7 +1098,7 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         ftracker->upload = true;
         ssd->ftracker_local = std::unique_ptr<DCE2_Smb2LocalFileTracker>(new DCE2_Smb2LocalFileTracker());
         ssd->ftracker_local->file_offset = offset;
-        ssd->ftracker_tcp = ftracker;
+        ssd->set_ftracker_tcp(ftracker);
         if (!ssd->ftracker_local->file_offset and SMB2_SHARE_TYPE_DISK == ttr->get_share_type())
         {
             FileContext* file = DCE2_Smb2GetFileContext(ssd, ftracker, true);
@@ -1156,10 +1145,7 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             if (ftracker)
             {
                 if (ssd->ftracker_tcp == ftracker)
-                {
-                    ssd->ftracker_tcp = nullptr;
-                    ssd->ftracker_local = nullptr;
-                }
+                    ssd->set_ftracker_tcp(nullptr);
                 ttr->removeFtracker(wtr->get_file_id());
             }
         }

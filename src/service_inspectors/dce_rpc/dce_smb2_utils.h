@@ -48,10 +48,14 @@ public:
     void update(int size)
     {
         if ( size < 0 )
-            assert(current_size >= (size_t)-size);
-        current_size += size;
-        if ( size > 0)
         {
+            size_t decrement = (size_t)(-size);
+            assert(current_size >= decrement);
+            current_size = (decrement > current_size) ? 0 : (current_size - decrement);
+        }
+        else
+        {
+            current_size += size;
             if ( stats.cache_max < current_size )
                 stats.cache_max = current_size;
         }
@@ -99,12 +103,15 @@ inline void DCE2_SmbSessionCacheUpdateSize(int size)
 
 inline std::shared_ptr<DCE2_Smb2SessionTracker> DCE2_SmbSessionCacheFindElseCreate(uint64_t sid)
 {
-    bool is_new = false;
-    auto& session_ptr =  smb2_session_cache->find_else_create(get_key(sid), &is_new);
-    if (is_new)
+    Smb2SidHashKey key = get_key(sid);
+    std::shared_ptr<DCE2_Smb2SessionTracker> session_ptr = smb2_session_cache->find(key);
+    if (!session_ptr)
     {
-        session_ptr.reset(new DCE2_Smb2SessionTracker(sid));
+        session_ptr = std::make_shared<DCE2_Smb2SessionTracker>(sid);
+        smb2_session_cache->add(key, session_ptr);
     }
+    else
+        smb2_session_cache->stats.cache_hits++;
     return session_ptr;
 }
 
@@ -146,17 +153,7 @@ inline std::shared_ptr<DCE2_Smb2SessionTracker> DCE2_Smb2FindSidInSsd(DCE2_Smb2S
 inline void DCE2_Smb2InsertSidInSsd(DCE2_Smb2SsnData* ssd, const uint64_t sid,
     std::shared_ptr<DCE2_Smb2SessionTracker> stracker)
 {
-    if (!ssd->flow_key)
-        ssd->flow_key = ~0u;
-
-    constexpr int max_probes = 256;
-    for (int i = 0; i < max_probes; ++i)
-    {
-        if (stracker->insertConnectionTracker(ssd->flow_key, ssd))
-            break;
-        if (!++ssd->flow_key)
-            ssd->flow_key = 1;
-    }
+    stracker->insertConnectionTracker(ssd->flow_id, ssd);
     ssd->insert_session_tracker(sid, std::move(stracker));
 }
 

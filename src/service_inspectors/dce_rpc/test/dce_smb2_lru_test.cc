@@ -113,7 +113,7 @@ public:
     {
         ++test_key.port_l;
         auto* ssd = new DCE2_Smb2SsnData();
-        str->insertConnectionTracker(ssd->flow_key, ssd);
+        str->insertConnectionTracker(ssd->flow_id, ssd);
         channels.push_back(ssd);
         return ssd;
     }

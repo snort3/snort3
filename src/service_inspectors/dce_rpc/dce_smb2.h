@@ -383,8 +383,24 @@ private:
     }
 };
 
+struct SmbFlowKey
+{
+    snort::FlowKey key{};
+    bool operator==(const SmbFlowKey& other) const
+    { return snort::FlowKey::is_equal(&key, &other.key); }
+};
+
+struct SmbFlowKeyHash
+{
+    size_t operator()(const SmbFlowKey& k) const
+    {
+        SmbKeyHash h;
+        return h(k.key);
+    }
+};
+
 typedef DCE2_DbMap<uint32_t, DCE2_Smb2TreeTracker*, std::hash<uint32_t> > DCE2_DbMapTtracker;
-typedef DCE2_DbMap<uint32_t, DCE2_Smb2SsnData*, std::hash<uint32_t> > DCE2_DbMapConntracker;
+typedef DCE2_DbMap<SmbFlowKey, DCE2_Smb2SsnData*, SmbFlowKeyHash> DCE2_DbMapConntracker;
 class DCE2_Smb2SessionTracker
 {
 public:
@@ -416,18 +432,18 @@ public:
     }
 
     // ssd tracker
-    bool insertConnectionTracker(const uint32_t key, DCE2_Smb2SsnData* ssd)
+    bool insertConnectionTracker(const SmbFlowKey& key, DCE2_Smb2SsnData* ssd)
     {
         return conn_trackers.Insert(key, ssd);
     }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    DCE2_Smb2SsnData* findConnectionTracker(const uint32_t key)
+    DCE2_Smb2SsnData* findConnectionTracker(const SmbFlowKey& key)
     {
         return conn_trackers.Find(key);
     }
 
-    void removeConnectionTracker(const uint32_t key)
+    void removeConnectionTracker(const SmbFlowKey& key)
     {
         conn_trackers.Remove(key);
     }
@@ -452,18 +468,18 @@ public:
     // Compute a per-connection unique key for request tracking.
     // message_id is unique per TCP connection, not per SMB session, so we mix
     // in the connection's flow_key to avoid collisions across channels.
-    static uint64_t make_rtracker_key(uint32_t conn_flow_key, uint64_t mid)
+    static uint64_t make_rtracker_key(uint64_t conn_flow_key, uint64_t mid)
     {
-        return mid ^ (static_cast<uint64_t>(conn_flow_key) * 0x9e3779b97f4a7c15ULL);
+        return mid ^ (conn_flow_key * 0x9e3779b97f4a7c15ULL);
     }
 
     // Request Tracker
-    DCE2_Smb2RequestTracker* findRtracker(uint32_t conn_flow_key, uint64_t mid)
+    DCE2_Smb2RequestTracker* findRtracker(uint64_t conn_flow_key, uint64_t mid)
     {
         return req_trackers.Find(make_rtracker_key(conn_flow_key, mid));
     }
 
-    bool insertRtracker(uint32_t conn_flow_key, uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
+    bool insertRtracker(uint64_t conn_flow_key, uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
     {
         auto key = make_rtracker_key(conn_flow_key, message_id);
         if (req_trackers.Insert(key, rtracker))
@@ -474,7 +490,7 @@ public:
         return false;
     }
 
-    void removeRtracker(uint32_t conn_flow_key, uint64_t message_id)
+    void removeRtracker(uint64_t conn_flow_key, uint64_t message_id)
     {
         auto key = make_rtracker_key(conn_flow_key, message_id);
         if (req_trackers.Find(key))
@@ -489,7 +505,7 @@ public:
         return req_trackers.GetSize();
     }
 
-    DCE2_Smb2TreeTracker* GetTreeTrackerFromMessage(uint32_t conn_flow_key, uint64_t mid)
+    DCE2_Smb2TreeTracker* GetTreeTrackerFromMessage(uint64_t conn_flow_key, uint64_t mid)
     {
         DCE2_Smb2RequestTracker* request_tracker = findRtracker(conn_flow_key, mid);
         if (request_tracker)
@@ -522,7 +538,17 @@ struct DCE2_Smb2SsnData
     std::unordered_map<uint64_t, std::weak_ptr<DCE2_Smb2SessionTracker>, std::hash<uint64_t> > session_trackers;
     DCE2_Smb2FileTracker* ftracker_tcp; //To keep tab of current file being transferred over TCP
     std::unique_ptr<DCE2_Smb2LocalFileTracker> ftracker_local;
-    uint32_t flow_key;
+    SmbFlowKey flow_id;
+    uint64_t flow_key;
+    // Identity of the file tracker cached in ftracker_tcp, captured whenever it
+    // is (re)assigned through set_ftracker_tcp(). ftracker_tcp is a raw back-pointer
+    // into cache-owned session/tree/file structures that can be freed (LRU eviction,
+    // session teardown, close) while this ssd survives to a later flush. These let
+    // revalidate_ftracker_tcp() confirm liveness by re-deriving the tracker instead
+    // of dereferencing a possibly-dead pointer.
+    uint64_t cur_file_sid = 0;
+    uint32_t cur_file_tid = 0;
+    uint64_t cur_file_id = 0;
     snort::Flow* flow = nullptr;
     DCE2_Smb2SsnData();
     ~DCE2_Smb2SsnData();
@@ -533,7 +559,10 @@ struct DCE2_Smb2SsnData
         auto session_iter = session_trackers.find(session_id);
         if (session_iter != session_trackers.end())
         {
-            return session_iter->second.lock();
+            auto sptr = session_iter->second.lock();
+            if (!sptr)
+                session_trackers.erase(session_iter);
+            return sptr;
         }
         return nullptr;
     }
@@ -545,7 +574,13 @@ struct DCE2_Smb2SsnData
 
     bool insert_session_tracker(uint64_t session_id, std::shared_ptr<DCE2_Smb2SessionTracker> sptr)
     {
-        return session_trackers.insert(std::make_pair(session_id, sptr)).second;
+        auto result = session_trackers.insert(std::make_pair(session_id, sptr));
+        if (!result.second and result.first->second.expired())
+        {
+            result.first->second = sptr;
+            return true;
+        }
+        return result.second;
     }
 
     int getTotalRequestsPending()
@@ -558,6 +593,49 @@ struct DCE2_Smb2SsnData
                 total += sptr->getTotalRequestsPending();
         }
         return total;
+    }
+
+    // Cache the current TCP file tracker together with the identity (sid/tid/file_id)
+    // needed to re-derive it from the live session/tree/file maps. Every non-null
+    // assignment to ftracker_tcp must go through here so the identity stays in sync.
+    void set_ftracker_tcp(DCE2_Smb2FileTracker* ftracker)
+    {
+        ftracker_tcp = ftracker;
+        if (ftracker)
+        {
+            cur_file_id = ftracker->file_id;
+            cur_file_tid = (ftracker->ttr) ? ftracker->ttr->get_tid() : 0;
+            cur_file_sid = (ftracker->str) ? ftracker->str->session_id : 0;
+        }
+        else
+        {
+            cur_file_id = 0;
+            cur_file_tid = 0;
+            cur_file_sid = 0;
+            ftracker_local = nullptr;
+        }
+    }
+
+    // Return ftracker_tcp only if it is still the live file tracker owned by the
+    // session/tree it was cached from; otherwise clear it (and the companion local
+    // tracker) and return nullptr. Only pointer VALUES are compared, so a freed
+    // tracker is never dereferenced. This neutralizes the dangling ftracker_tcp
+    // read on the idle-timeout flush path.
+    DCE2_Smb2FileTracker* revalidate_ftracker_tcp()
+    {
+        if (!ftracker_tcp)
+            return nullptr;
+
+        auto sptr = find_session_tracker(cur_file_sid);
+        if (sptr)
+        {
+            DCE2_Smb2TreeTracker* ttr = sptr->findTtracker(cur_file_tid);
+            if (ttr and ttr->findFtracker(cur_file_id) == ftracker_tcp)
+                return ftracker_tcp;
+        }
+
+        set_ftracker_tcp(nullptr);
+        return nullptr;
     }
 };
 

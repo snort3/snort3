@@ -111,14 +111,8 @@ DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
     auto all_conn_trackers = str->conn_trackers.get_all_entry();
     for ( const auto& h : all_conn_trackers )
     {
-        if (h.second->ftracker_tcp)
-        {
-            if (h.second->ftracker_tcp == this)
-            {
-                h.second->ftracker_tcp = nullptr;
-                h.second->ftracker_local = nullptr;
-            }
-        }
+        if (h.second->ftracker_tcp and h.second->ftracker_tcp == this)
+            h.second->set_ftracker_tcp(nullptr);
     }
     if (multi_channel_file)
         dce2_smb_stats.v2_mc_file_transfers++;
@@ -163,6 +157,9 @@ DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker(void)
     {
         removeTtracker(h.first);
     }
+    int pending_requests = req_trackers.GetSize();
+    if ( pending_requests > 0 )
+        update_cache_size(-(int)(pending_requests * sizeof(DCE2_Smb2RequestTracker)));
     update_cache_size(-(int)sizeof(DCE2_Smb2SessionTracker));
 }
 
@@ -180,8 +177,7 @@ void DCE2_Smb2SessionTracker::removeSessionFromAllConnection()
                     h.second->ftracker_tcp->file_id);
                 if (ftr and ftr == h.second->ftracker_tcp)
                 {
-                    h.second->ftracker_tcp = nullptr;
-                    h.second->ftracker_local = nullptr;
+                    h.second->set_ftracker_tcp(nullptr);
                     break;
                 }
             }
@@ -219,8 +215,11 @@ DCE2_Smb2SsnData::DCE2_Smb2SsnData()
     max_file_depth = FileService::get_max_file_depth();
     max_outstanding_requests = 10;  // Until Negotiate
     flow = p->flow;
+    flow_id.key = *flow->key;
     SmbKeyHash hasher;
     flow_key = hasher(*flow->key);
+    if (!flow_key)
+        flow_key = 1;
 }
 
 DCE2_Smb2SsnData::~DCE2_Smb2SsnData()
@@ -231,9 +230,7 @@ DCE2_Smb2SsnData::~DCE2_Smb2SsnData()
         auto sptr = it->second.lock();
         if (sptr)
         {
-            if (flow_key)
-                sptr->removeConnectionTracker(flow_key); // remove tcp connection from session
-                                                         // tracker
+            sptr->removeConnectionTracker(flow_id);
             auto ttrs = sptr->tree_trackers.get_all_entry();
             for (const auto& titer: ttrs)
             {
@@ -254,6 +251,10 @@ void DCE2_Smb2SsnData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
 {
     NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(nb_ptr);
     SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(NbssHdr));
+
+    // Drop ftracker_tcp if the underlying file tracker was freed; the fields below
+    // fall back to a zeroed id/tid when it is null.
+    revalidate_ftracker_tcp();
 
     uint32_t tid = (ftracker_tcp and ftracker_tcp->ttr) ? ftracker_tcp->ttr->get_tid() : 0;
     smb_hdr->smb_tid = alignedNtohl((const uint32_t*)&tid);
@@ -613,8 +614,8 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
         }
         while (next_command_offset and smb_hdr);
     }
-    else if ( ssd->ftracker_tcp and ssd->ftracker_local and (ssd->ftracker_local->smb2_pdu_state ==
-        DCE2_SMB_PDU_STATE__RAW_DATA))
+    else if ( ssd->ftracker_local and (ssd->ftracker_local->smb2_pdu_state ==
+        DCE2_SMB_PDU_STATE__RAW_DATA) and ssd->revalidate_ftracker_tcp())
     {
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
             p, "raw data file_name_hash %" PRIu64 " fid 0x%" PRIx64 " dir %s\n",
