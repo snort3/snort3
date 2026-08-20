@@ -912,6 +912,12 @@ void HttpMsgBody::clear()
         mime_bufs = nullptr;
         session_data->partial_mime_last_complete[source_id] = last_attachment_complete;
     }
+    else if ((session_data->cutter[source_id] == nullptr) or tcp_close)
+    {
+        delete session_data->js_ctx[source_id];
+        session_data->js_ctx[source_id] = nullptr;
+        clear_js_ctx_mime();
+    }
 
     if (request != nullptr)
         request->clear_body_params();
