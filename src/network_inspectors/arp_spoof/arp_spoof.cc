@@ -209,6 +209,8 @@ void ArpSpoof::eval(Packet* p)
 
     const arp::EtherARP* ah = layer::get_arp_layer(p);
 
+    if(!ah) return;
+
     /* is the ARP protocol type IP and the ARP hardware type Ethernet? */
     if ((ntohs(ah->ea_hdr.ar_hrd) != 0x0001) ||
         (ntohs(ah->ea_hdr.ar_pro) != ETHERNET_TYPE_IP))
