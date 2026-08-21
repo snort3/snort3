@@ -703,10 +703,22 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
     }
 
     const uint32_t max_segs = tcp_config->max_queued_segs;
+    const uint32_t segment_count = listener->seglist.get_seg_count();
     if ( !listener->seglist.head || !max_segs
-        || listener->seglist.get_seg_count() < max_segs
+        || segment_count < max_segs
         || listener->seglist.segment_within_seglist_window(tsd, max_segs) )
         return false;
+
+    const uint32_t service_search_byte_limit = listener->get_service_search_byte_limit();
+    // Let Magic retain only data that advances the contiguous receive prefix
+    // on two-way flows.  max_bytes remains enforced above.
+    if ( listener->seglist.get_seg_bytes_logical() < service_search_byte_limit and
+        tsd.is_packet_inorder() and
+        SEQ_LEQ(listener->r_win_base, listener->get_rcv_nxt()) and
+        tsd.get_pkt()->flow->two_way_traffic() )
+    {
+        return false;
+    }
 
     tcpStats.exceeded_max_segs++;
 

@@ -96,6 +96,7 @@ public:
     Status scan(Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
 
+    unsigned max(Flow*) override;
     bool is_paf() override { return true; }
 
 private:
@@ -183,6 +184,18 @@ MagicSplitter::~MagicSplitter()
     // release trackers
     for ( unsigned i = 0; i < wand.curse_tracker.size(); i++ )
         delete wand.curse_tracker[i].tracker;
+}
+
+unsigned MagicSplitter::max(Flow* flow)
+{
+    const unsigned max_pdu = StreamSplitter::max(flow);
+
+    // Preserve the normal PAF limit once Wizard selects a service so the queued startup
+    // bytes remain available for the assigned service splitter to rescan.
+    if ( !flow or flow->service )
+        return max_pdu;
+
+    return std::min<unsigned>(wizard->max_search_depth, max_pdu);
 }
 
 StreamSplitter::Status MagicSplitter::scan(

@@ -293,6 +293,9 @@ public:
     snort::StreamSplitter* get_splitter()
     { return splitter; }
 
+    uint32_t get_service_search_byte_limit() const
+    { return service_search_byte_limit; }
+
     void disable_reassembly(snort::Flow* f);
 
     void init_on_syn_sent(TcpSegmentDescriptor&);
@@ -394,6 +397,8 @@ private:
     uint32_t irs = 0;              // IRS     - initial receive sequence number
     uint16_t snd_up = 0;           // SND.UP  - send urgent pointer
     uint16_t rcv_up = 0;           // RCV.UP  - receive urgent pointer
+    // Cached byte allowance while Wizard's Magic splitter is active.
+    uint32_t service_search_byte_limit = 0;
 
 };
 

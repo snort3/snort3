@@ -298,6 +298,7 @@ void TcpStreamTracker::init_tcp_state(TcpSession* s)
     fin_seq_status = FIN_NOT_SEEN;
     fin_seq_set = false;
     rst_pkt_sent = false;
+    service_search_byte_limit = 0;
     order = TcpStreamTracker::IN_SEQUENCE;
 
     if (auto* hpq = Stream::get_held_packet_queue())
@@ -432,6 +433,10 @@ void TcpStreamTracker::set_splitter(StreamSplitter* ss)
     }
 
     splitter = ss;
+    Flow* flow = session ? session->flow : nullptr;
+    // An unclassified Clouseau PAF is Wizard's Magic splitter.
+    service_search_byte_limit = ss and flow and flow->searching_for_service() and
+        !flow->service and !flow->gadget and ss->is_paf() ? ss->max(flow) : 0;
     if ( ss )
     {
         if ( normalizer.is_tcp_ips_enabled() )
