@@ -31,6 +31,7 @@ enum dnp3_paf_state
     DNP3_PAF_STATE__START_1 = 0,
     DNP3_PAF_STATE__START_2,
     DNP3_PAF_STATE__LENGTH,
+    DNP3_PAF_STATE__CONTROL,
     DNP3_PAF_STATE__SET_FLUSH
 };
 
@@ -39,12 +40,13 @@ struct dnp3_paf_data
     dnp3_paf_state paf_state;
     uint8_t dnp3_length;
     uint16_t real_length;
+    uint8_t zero_length_packets;
 };
 
 class Dnp3Splitter : public snort::StreamSplitter
 {
 public:
-    Dnp3Splitter(bool c2s);
+    Dnp3Splitter(bool c2s, uint8_t zero_payload_packet_limit);
 
     Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
@@ -56,6 +58,7 @@ public:
 
 public:
     dnp3_paf_data state;
+    uint8_t zero_payload_packet_limit;
 };
 
 #endif

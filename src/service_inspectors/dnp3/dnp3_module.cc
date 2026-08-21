@@ -33,6 +33,8 @@ static const Parameter s_params[] =
 {
     { "check_crc", Parameter::PT_BOOL, nullptr, "false",
       "validate checksums in DNP3 link layer frames" },
+    { "zero_payload_packet_limit", Parameter::PT_INT, "0:255", "5",
+      "maximum number of consecutive zero-length DNP3 packets allowed before aborting the session" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -86,12 +88,21 @@ ProfileStats* Dnp3Module::get_profile() const
 
 bool Dnp3Module::set(const char*, Value& v, SnortConfig*)
 {
-    assert(v.is("check_crc"));
-    config.check_crc = v.get_bool();
-    return true;
+    if (v.is("check_crc"))
+    {
+        config.check_crc = v.get_bool();
+        return true;
+    }
+    else if (v.is("zero_payload_packet_limit"))
+    {
+        config.zero_payload_packet_limit = v.get_uint8();
+        return true;
+    }
+    return false;
 }
 
 void Dnp3Module::get_data(dnp3ProtoConf& dnp3_config)
 {
     dnp3_config.check_crc = config.check_crc;
+    dnp3_config.zero_payload_packet_limit = config.zero_payload_packet_limit;
 }

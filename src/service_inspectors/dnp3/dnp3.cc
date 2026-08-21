@@ -230,7 +230,7 @@ public:
     void clear(Packet*) override;
 
     StreamSplitter* get_splitter(bool c2s) override
-    { return new Dnp3Splitter(c2s); }
+    { return new Dnp3Splitter(c2s, config.zero_payload_packet_limit); }
 
     bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override
     { return (id == DNP3_DATA_BUFID) ? get_buf_dnp3_data(p, b) : false; }
@@ -242,12 +242,14 @@ private:
 Dnp3::Dnp3(const dnp3ProtoConf& pc)
 {
     config.check_crc = pc.check_crc;
+    config.zero_payload_packet_limit = pc.zero_payload_packet_limit;
 }
 
 
 void Dnp3::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("check_crc", config.check_crc);
+    ConfigLogger::log_value("zero_payload_packet_limit", config.zero_payload_packet_limit);
 }
 
 void Dnp3::eval(Packet* p)

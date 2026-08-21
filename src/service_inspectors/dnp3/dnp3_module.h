@@ -32,6 +32,7 @@ struct SnortConfig;
 struct dnp3ProtoConf
 {
     bool check_crc;
+    uint8_t zero_payload_packet_limit;
 };
 
 class Dnp3Module : public snort::Module
