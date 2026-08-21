@@ -873,7 +873,8 @@ bool HttpMsgBody::run_detection(snort::Packet* p)
             decompressed_file_body.set(mb->file.length(), mb->file.start());
 
             js_ctx_tmp = session_data->js_ctx[source_id];
-            session_data->js_ctx[source_id] = acquire_js_ctx_mime();
+            HttpJSNorm* const js_ctx_mime = acquire_js_ctx_mime();
+            session_data->js_ctx[source_id] = js_ctx_mime;
 
             // When multiple attachments appear in a single TCP segment,
             // the detection engine caches the results of the rule options after
@@ -881,6 +882,13 @@ bool HttpMsgBody::run_detection(snort::Packet* p)
             p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
 
             DetectionEngine::detect(p);
+
+            HttpJSNorm* const js_ctx_detect = session_data->js_ctx[source_id];
+            if ((js_ctx_detect != js_ctx_tmp) && (js_ctx_detect != js_ctx_mime))
+            {
+                delete js_ctx_detect;
+                session_data->js_ctx[source_id] = nullptr;
+            }
 
             if (!is_last_attachment || last_attachment_complete)
                 clear_js_ctx_mime();
