@@ -49,3 +49,5 @@ add_library( ip_codecs OBJECT
     ${PLUGIN_SOURCES}
 )
 
+add_subdirectory(test)
+

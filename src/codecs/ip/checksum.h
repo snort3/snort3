@@ -146,37 +146,62 @@ inline void add_ipv6_pseudoheader(const Pseudoheader6& ph6, uint32_t& cksum)
     cksum += h[17];
 }
 
+constexpr std::size_t TCP_MIN_HEADER_LEN = 20;
+constexpr std::size_t UDP_MIN_HEADER_LEN = 8;
+constexpr std::size_t IP_MIN_HEADER_LEN  = 20;
+
 inline void add_tcp_header(const uint8_t*& d,
     std::size_t& len,
     uint32_t& cksum)
 {
+    // guard a short/corrupt buffer against len underflow and header over-read
+    if ( len < TCP_MIN_HEADER_LEN )
+    {
+        len = 0;
+        return;
+    }
+
     /* TCP hdr must have 20 hdr bytes */
-    for (unsigned i = 0; i < 20; i += sizeof(uint16_t))
+    for (unsigned i = 0; i < TCP_MIN_HEADER_LEN; i += sizeof(uint16_t))
         cksum += read_word(d + i);
-    d += 20;
-    len -= 20;
+    d += TCP_MIN_HEADER_LEN;
+    len -= TCP_MIN_HEADER_LEN;
 }
 
 inline void add_udp_header(const uint8_t*& d,
-    size_t& len,
+    std::size_t& len,
     uint32_t& cksum)
 {
+    // guard a short/corrupt buffer against len underflow and header over-read
+    if ( len < UDP_MIN_HEADER_LEN )
+    {
+        len = 0;
+        return;
+    }
+
     /* UDP must have 8 hdr bytes */
-    for (unsigned i = 0; i < 8; i += sizeof(uint16_t))
+    for (unsigned i = 0; i < UDP_MIN_HEADER_LEN; i += sizeof(uint16_t))
         cksum += read_word(d + i);
-    len -= 8;
-    d += 8;
+    len -= UDP_MIN_HEADER_LEN;
+    d += UDP_MIN_HEADER_LEN;
 }
 
 inline void add_ip_header(const uint8_t*& d,
     std::size_t& len,
     uint32_t& cksum)
 {
+    // guard a short/corrupt buffer against len underflow and header over-read
+    if ( len < IP_MIN_HEADER_LEN )
+    {
+        len = 0;
+        return;
+    }
+
     /* IP must be >= 20 bytes */
-    for (unsigned i = 0; i < 20; i += sizeof(uint16_t))
+    for (unsigned i = 0; i < IP_MIN_HEADER_LEN; i += sizeof(uint16_t))
         cksum += read_word(d + i);
-    d += 20;
-    len -= 20;
+    d += IP_MIN_HEADER_LEN;
+    len -= IP_MIN_HEADER_LEN;
 }
 } // namespace detail
 
