@@ -286,9 +286,19 @@ static bool is_mms(Cursor* c)
         case MMS_MSG__INITIATE_REQUEST:            // fallthrough
         case MMS_MSG__INITIATE_RESPONSE:           // fallthrough
         case MMS_MSG__INITIATE_ERROR:              // fallthrough
-        case MMS_MSG__CONCLUDE_REQUEST:            // fallthrough
-        case MMS_MSG__CONCLUDE_RESPONSE:           // fallthrough
         case MMS_MSG__CONCLUDE_ERROR:
+            if (e.length < c->size() and e.length > 0)
+            {
+                if (c->add_pos(e.header_length + e.length))
+                {
+                    return true;
+                }
+            }
+            break;
+
+        // Conclude-Request/Response are ASN.1 NULL, so a zero length is valid
+        case MMS_MSG__CONCLUDE_REQUEST:            // fallthrough
+        case MMS_MSG__CONCLUDE_RESPONSE:
             if (e.length < c->size())
             {
                 if (c->add_pos(e.header_length + e.length))
