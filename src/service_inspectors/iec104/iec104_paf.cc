@@ -123,7 +123,7 @@ StreamSplitter::Status Iec104Splitter::scan(Packet*, const uint8_t* data, uint32
         {
             iec104_apci_length = *(data + bytes_processed);
             state = IEC104_PAF_STATE__SET_FLUSH;
-            if (iec104_apci_length > len)
+            if (iec104_apci_length > len or iec104_apci_length < IEC104_MIN_APCI_LEN)
             {
                 valid_bytes = false;
             }
