@@ -430,6 +430,13 @@ static void consume_ha_delete_message(HAMessage&, const FlowKey& key)
     Stream::delete_flow(&key);
 }
 
+static Flow* reject_update(bool no_flow_found, Flow* flow)
+{
+    if (no_flow_found && flow)
+        Stream::delete_flow(flow, PruneReason::NONE);
+    return nullptr;
+}
+
 static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packet* p)
 {
     // flow will be nullptr if/when the session does not exist in the caches
@@ -444,6 +451,10 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
     // pointer to one past the last byte in the message
     const uint8_t* content_end = msg.buffer + msg.buffer_length;
 
+    // one bit per client handle already accepted in this message
+    FlowHAClientHandle seen_clients = 0;
+    bool session_client_seen = false;
+
     while (msg.cursor < content_end)
     {
         // do we have sufficient message left to be able to have an HAClientHeader?
@@ -451,14 +462,14 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
         {
             ErrorMessage("Consuming HA Update message - no HAClientHeader\n");
             ha_stats.truncated_msgs++;
-            break;
+            return reject_update(no_flow_found, flow);
         }
 
         HAClientHeader* header = reinterpret_cast<HAClientHeader*>(msg.cursor);
         if ((header->client >= ha->handle_counter) || (ha->client_map[header->client] == nullptr))
         {
             ha_stats.unknown_client_idx++;
-            break;
+            return reject_update(no_flow_found, flow);
         }
         msg.advance_cursor(sizeof(HAClientHeader)); // step to the client content
 
@@ -466,7 +477,7 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
         {
             ErrorMessage("Consuming HA Update message - message too short\n");
             ha_stats.truncated_msgs++;
-            break;
+            return reject_update(no_flow_found, flow);
         }
 
         // If the Flow does not exist in the caches, flow will be nullptr
@@ -474,15 +485,41 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
         // client is always the first segment of the message, the consume()
         // invocation for the session client will create the flow.  This
         // flow can in turn be used by subsequent FlowHAClient's.
+        if (!flow && ha->client_map[header->client] != ha->session_client)
+        {
+            ha_stats.session_client_not_first++;
+            return reject_update(no_flow_found, flow);
+        }
+
+        // reject a repeated segment for a client already accepted in this message
+        if (seen_clients & ha->client_map[header->client]->handle)
+        {
+            ha_stats.duplicate_client_segment++;
+            return reject_update(no_flow_found, flow);
+        }
+        seen_clients |= ha->client_map[header->client]->handle;
+        if (ha->client_map[header->client] == ha->session_client)
+            session_client_seen = true;
+
         if (!ha->client_map[header->client]->consume(flow, &key, msg, header->length))
         {
             ha_stats.client_consume_errors++;
-            break;
+            return reject_update(no_flow_found, flow);
         }
     }
 
+    // On the clean end-of-content path, a message that had no local flow on
+    // entry is only complete if it carried the flow-creating session client.
     if (msg.cursor == content_end)
-        ha_stats.update_msgs_consumed++;
+    {
+        if (no_flow_found && !session_client_seen)
+        {
+            ha_stats.missing_session_client++;
+            return nullptr;
+        }
+        else
+            ha_stats.update_msgs_consumed++;
+    }
 
     if( p && no_flow_found && flow && flow->session )
     {
@@ -623,7 +660,8 @@ static void send_sc_update_message(Flow& flow, SideChannel& sc)
     const uint16_t content_len = calculate_update_msg_content_length(flow, false);
 
     SCMessage* sc_msg = sc.alloc_transmit_message((uint32_t) (header_len + content_len));
-    assert(sc_msg);
+    if (!sc_msg)
+        return;
 
     HAMessage ha_msg(sc_msg->content, sc_msg->content_length);
 
@@ -689,7 +727,8 @@ static void send_sc_deletion_message(Flow& flow, SideChannel& sc)
     const uint32_t msg_len = calculate_msg_header_length(flow);
 
     SCMessage* sc_msg = sc.alloc_transmit_message(msg_len);
-    assert(sc_msg);
+    if (!sc_msg)
+        return;
 
     HAMessage ha_msg(sc_msg->content, sc_msg->content_length);
 

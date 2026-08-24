@@ -25,6 +25,7 @@
 #include "appid_ha.h"
 
 #include "flow/flow_key.h"
+#include "main/analyzer.h"
 #include "managers/inspector_manager.h"
 
 #include "appid_debug.h"
@@ -55,7 +56,7 @@ static AppIdSession* create_appid_session(Flow& flow, const FlowKey* key,
 #endif
         );
 
-        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - New AppId session created in consume\n");
+    APPID_LOG(SAFE_CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - New AppId session created in consume\n");
 
     flow.set_flow_data(asd);
     asd->flow = &flow;
@@ -82,7 +83,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
-    const Packet* p = CURRENT_PACKET;
+    const Packet* p = SAFE_CURRENT_PACKET;
     APPID_LOG(p, TRACE_DEBUG_LEVEL, "high-avail - Consuming app data - flags 0x%x, service %d, "
         "client %d, payload %d, misc %d, referred %d, client_inferred_service %d, "
         "port_service %d, tp_app %d, tp_payload %d\n",
@@ -242,7 +243,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
-    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming HTTP data - URL %s, host %s\n",
+    APPID_LOG(SAFE_CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming HTTP data - URL %s, host %s\n",
         appHA->url, appHA->host);
 
     if (!asd)
@@ -330,7 +331,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
-    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming TLS host - %s\n", appHA->tls_host);
+    APPID_LOG(SAFE_CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming TLS host - %s\n", appHA->tls_host);
 
     if (!asd)
         asd = create_appid_session(*flow, key, *inspector);
@@ -350,11 +351,14 @@ bool AppIdHATlsHostClient::produce(Flow& flow, HAMessage& msg)
     assert(msg.cursor);
 
     const AppIdSession* asd = appid_api.get_appid_session(flow);
-    if (!asd or !asd->get_api().get_tls_host())
+    if (!asd)
+        return false;
+
+    const char* tls_host = asd->get_api().get_tls_host();
+    if (!tls_host)
         return false;
 
     AppIdSessionHATlsHost* appHA = reinterpret_cast<AppIdSessionHATlsHost*>(msg.cursor);
-    const char* tls_host = asd->get_api().get_tls_host();
     auto length = strlen(tls_host);
     if (length >= APPID_HA_MAX_FIELD_LEN)
         length = APPID_HA_MAX_FIELD_LEN - 1;

@@ -92,10 +92,12 @@ struct HAStats
     PegCount unknown_key_type;
     PegCount unknown_client_idx;
     PegCount client_consume_errors;
+    PegCount session_client_not_first;
+    PegCount duplicate_client_segment;
+    PegCount missing_session_client;
 };
 
 extern THREAD_LOCAL HAStats ha_stats;
 extern THREAD_LOCAL snort::ProfileStats ha_perf_stats;
 
 #endif
-
