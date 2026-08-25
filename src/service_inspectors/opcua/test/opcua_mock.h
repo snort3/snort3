@@ -66,8 +66,6 @@ OpcuaFlowData::OpcuaFlowData() :
 OpcuaFlowData::~OpcuaFlowData()
 {
     reset();
-    delete [] client_ssn_data.chunk_data;
-    delete [] server_ssn_data.chunk_data;
 }
 
 void OpcuaFlowData::init() { }

@@ -39,7 +39,7 @@ TEST_GROUP(OpcuaDecodeTest)
 {
     snort::Packet packet;
     OpcuaFlowData* opcua_fd;
-    uint8_t test_data[OPCUA_CHUNK_DATA_BUF_SIZE];
+    uint8_t test_data[OPCUA_CHUNK_DATA_MAX_SIZE];
 
     void setup() override
     {
@@ -534,19 +534,19 @@ TEST(OpcuaDecodeTest, decode_msg_message)
     CHECK_FALSE(opcua_decode(&packet, opcua_fd));
     CHECK_EQUAL(OPCUA_BAD_TYPEID_ENCODING, event_sid);
 
-    // Test case 4: MSG message with extremely large size exceeding buffer limits
-    // Message claims size exceeding OPCUA_CHUNK_DATA_BUF_SIZE
+    // Test case 4: MSG message with extremely large size exceeding accumulated limit
+    // Message claims payload size exceeding OPCUA_CHUNK_DATA_MAX_SIZE
     // Should fail and trigger bad message size event from the dsize guard
     reset();
-    create_msg_message(OPCUA_CHUNK_DATA_BUF_SIZE + 1);
+    create_msg_message(OPCUA_CHUNK_DATA_MAX_SIZE + OPCUA_MSG_HDR_LEN);
     CHECK_FALSE(opcua_decode(&packet, opcua_fd));
     CHECK_EQUAL(OPCUA_BAD_MSG_SIZE, event_sid);
 
-    // Test case 5: MSG chunked message sequence that exceeds buffer capacity
+    // Test case 5: MSG chunked message sequence that exceeds accumulated limit
     // First chunk fills most of the buffer, second chunk overflows remaining space
     // Should fail on the second chunk with large chunked message event
     reset();
-    create_msg_message(OPCUA_CHUNK_DATA_BUF_SIZE - 100, OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC, OPCUA_DEFAULT_NAMESPACE_INDEX, 'C');
+    create_msg_message(OPCUA_CHUNK_DATA_MAX_SIZE - 100, OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC, OPCUA_DEFAULT_NAMESPACE_INDEX, 'C');
     CHECK_TRUE(opcua_decode(&packet, opcua_fd));
     event_sid = 0;
     create_msg_message(200, OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC, OPCUA_DEFAULT_NAMESPACE_INDEX, 'F');
@@ -575,6 +575,26 @@ TEST(OpcuaDecodeTest, decode_msg_message)
     event_sid = 0;
     create_msg_message(28, OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC, OPCUA_DEFAULT_NAMESPACE_INDEX, 'A');
     CHECK_TRUE(opcua_decode(&packet, opcua_fd));
+
+    // Test case 8: TypeId metadata split across two MSG chunks
+    // First chunk provides the encoding and namespace bytes.
+    // Second chunk provides the two NodeId bytes.
+    // Third chunk must not overwrite metadata
+    reset();
+    create_msg_message(26, OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC, OPCUA_DEFAULT_NAMESPACE_INDEX, 'C');
+    CHECK_TRUE(opcua_decode(&packet, opcua_fd));
+    CHECK_EQUAL(2, opcua_fd->client_ssn_data.chunk_metadata_len);
+    memset(test_data, 0, sizeof(test_data));
+    create_msg_message(26, 0x34, 0x12, 'C');
+    CHECK_TRUE(opcua_decode(&packet, opcua_fd));
+    CHECK_EQUAL(0, event_sid);
+    const auto node_id = opcua_fd->client_ssn_data.chunk_metadata[2] | opcua_fd->client_ssn_data.chunk_metadata[3] << 8;
+    CHECK_EQUAL(0x1234, node_id);
+    memset(test_data, 0, sizeof(test_data));
+    create_msg_message(26, 0x78, 0x56, 'F');
+    CHECK_TRUE(opcua_decode(&packet, opcua_fd));
+    CHECK_EQUAL(0, event_sid);
+    CHECK_EQUAL(0x1234, opcua_fd->client_ssn_data.node_id);
 }
 
 int main(int argc, char** argv)

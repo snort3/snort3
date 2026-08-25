@@ -67,9 +67,6 @@ OpcuaFlowData::~OpcuaFlowData()
 {
     reset();
 
-    delete [] client_ssn_data.chunk_data;
-    delete [] server_ssn_data.chunk_data;
-
     assert(opcua_stats.concurrent_sessions > 0);
     opcua_stats.concurrent_sessions--;
 }

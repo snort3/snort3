@@ -31,6 +31,7 @@
 #include "trace/trace_api.h"
 
 #include <unordered_map>
+#include <algorithm>
 
 #include "opcua_module.h"
 #include "opcua_session.h"
@@ -72,34 +73,32 @@ static bool append_message_chunk(const Packet* p, OpcuaSessionData* ssn_data)
     }
 
     // reject impossibly large messages
-    if ( p->dsize > OPCUA_CHUNK_DATA_BUF_SIZE )
+    const uint32_t current_chunk_len = p->dsize - OPCUA_MSG_HDR_LEN;
+    if (current_chunk_len >= OPCUA_CHUNK_DATA_MAX_SIZE)
     {
         DetectionEngine::queue_event(GID_OPCUA, OPCUA_BAD_MSG_SIZE);
         return false;
     }
 
-    // reject new chunks when the chunk data buffer is already full
-    const uint32_t current_chunk_buf_used = ssn_data->chunk_data_len;
-    if ( current_chunk_buf_used >= OPCUA_CHUNK_DATA_BUF_SIZE )
+    // reject new chunks when accumulated size would reach or exceed limit
+    if (ssn_data->accumulated_chunk_data_len >= OPCUA_CHUNK_DATA_MAX_SIZE - current_chunk_len)
     {
         DetectionEngine::queue_event(GID_OPCUA, OPCUA_LARGE_CHUNKED_MSG);
         return false;
     }
+    ssn_data->accumulated_chunk_data_len += current_chunk_len;
 
-    // reject instances where adding in the new chunk data would be too large to process
-    const uint32_t current_chunk_len = p->dsize - OPCUA_MSG_HDR_LEN;
-    const uint32_t available_space = OPCUA_CHUNK_DATA_BUF_SIZE - current_chunk_buf_used;
-    if ( current_chunk_len >= available_space )
-    {
-        DetectionEngine::queue_event(GID_OPCUA, OPCUA_LARGE_CHUNKED_MSG);
-        return false;
-    }
+    // have already copied nodeid metadata
+    if (ssn_data->chunk_metadata_len >= OPCUA_CHUNK_METADATA_BUF_SIZE)
+        return true;
 
-    // append new chunk data to the message chunk buffer
-    void* dst = ssn_data->chunk_data + current_chunk_buf_used;
+    // append new chunk's metadata to the message chunk buffer
+    void* dst = ssn_data->chunk_metadata + ssn_data->chunk_metadata_len;
     const void* src = p->data + OPCUA_MSG_HDR_LEN;
-    memcpy(dst, src, current_chunk_len);
-    ssn_data->chunk_data_len = current_chunk_buf_used + current_chunk_len;
+    const uint32_t bytes_to_copy = std::min(current_chunk_len,
+        static_cast<uint32_t>(OPCUA_CHUNK_METADATA_BUF_SIZE) - ssn_data->chunk_metadata_len);
+    memcpy(dst, src, bytes_to_copy);
+    ssn_data->chunk_metadata_len += bytes_to_copy;
 
     return true;
 }
@@ -470,15 +469,15 @@ static bool parse_msg_msg(Packet* p, OpcuaSessionData* ssn_data)
 
     if ( ssn_data->is_complete_msg )
     {
-        if ( ssn_data->chunk_data_len < OPCUA_TYPEID_ENCODING_MASK_SIZE + OPCUA_TYPEID_NAMESPACE_INDEX_SIZE + OPCUA_TYPEID_NODE_ID_SIZE )
+        if (ssn_data->chunk_metadata_len < OPCUA_TYPEID_ENCODING_MASK_SIZE + OPCUA_TYPEID_NAMESPACE_INDEX_SIZE + OPCUA_TYPEID_NODE_ID_SIZE)
         {
             DetectionEngine::queue_event(GID_OPCUA, OPCUA_BAD_TYPEID_ENCODING);
             return false;
         }
 
-        if ( ssn_data->chunk_data[0] == OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC )
+        if (ssn_data->chunk_metadata[0] == OPCUA_TYPEID_ENCODING_FOUR_BYTES_ENCODED_NUMERIC)
         {
-            ssn_data->node_namespace_index = ssn_data->chunk_data[OPCUA_TYPEID_ENCODING_MASK_SIZE];
+            ssn_data->node_namespace_index = ssn_data->chunk_metadata[OPCUA_TYPEID_ENCODING_MASK_SIZE];
             if ( ssn_data->node_namespace_index != OPCUA_DEFAULT_NAMESPACE_INDEX )
             {
                 DetectionEngine::queue_event(GID_OPCUA, OPCUA_NONZERO_NAMESPACE_INDEX_MSG);
@@ -486,8 +485,8 @@ static bool parse_msg_msg(Packet* p, OpcuaSessionData* ssn_data)
 
             const uint32_t opcua_typeid_node_id_idx_lo = OPCUA_TYPEID_ENCODING_MASK_SIZE + OPCUA_TYPEID_NAMESPACE_INDEX_SIZE;
             const uint32_t opcua_typeid_node_id_idx_hi = opcua_typeid_node_id_idx_lo + 1;
-            uint32_t msg_service = ssn_data->chunk_data[opcua_typeid_node_id_idx_lo];
-            msg_service |= ssn_data->chunk_data[opcua_typeid_node_id_idx_hi] << 8;
+            uint32_t msg_service = ssn_data->chunk_metadata[opcua_typeid_node_id_idx_lo];
+            msg_service |= ssn_data->chunk_metadata[opcua_typeid_node_id_idx_hi] << 8;
             ssn_data->node_id = (OpcuaMsgServiceType) msg_service;
         }
 
