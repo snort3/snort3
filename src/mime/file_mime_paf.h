@@ -56,6 +56,8 @@ enum DataEndState
 };
 
 #define MAX_MIME_BOUNDARY_LEN  70  /* Max length of boundary string, defined in RFC 2046 */
+#define MIN_MIME_PAF_DATA_LEN  64
+#define MAX_MIME_PAF_OCTETS  5120
 
 struct MimeDataPafInfo
 {
@@ -66,6 +68,9 @@ struct MimeDataPafInfo
     const char* boundary_search;
     MimeBoundaryState boundary_state;
     bool boundary_quoted;
+    bool paf_abort;
+    uint64_t data_since_boundary;
+    uint64_t consecutive_small_flush_bytes;
 };
 
 inline bool scanning_boundary(const MimeDataPafInfo* mime_info, uint32_t boundary_start, uint32_t* fp)

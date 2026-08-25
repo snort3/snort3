@@ -329,6 +329,9 @@ static StreamSplitter::Status pop_paf_server(PopPafData* pfdata,
             // FIXIT-M statefully get length
             if ( find_data_end_multi_line(pfdata, ch, true) )
             {
+                if ( pfdata->data_info.paf_abort )
+                    return StreamSplitter::ABORT;
+
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }

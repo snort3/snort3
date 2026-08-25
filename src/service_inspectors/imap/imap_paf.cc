@@ -558,6 +558,9 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
         case IMAP_PAF_DATA_STATE:
             if (find_data_end_mime_data(ch, pfdata))
             {
+                if (pfdata->mime_info.paf_abort)
+                    return StreamSplitter::ABORT;
+
                 // if not a boundary, wait for end of
                 // the server's response before flushing
                 if (pfdata->imap_state == IMAP_PAF_DATA_STATE)

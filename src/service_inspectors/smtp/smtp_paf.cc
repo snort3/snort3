@@ -412,6 +412,9 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
             }
             else if (process_data(pfdata, ch))
             {
+                if (pfdata->data_info.paf_abort)
+                    return StreamSplitter::ABORT;
+
                 pfdata->client_bytes_seen = 0;
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;

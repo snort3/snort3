@@ -243,11 +243,23 @@ void reset_mime_paf_state(MimeDataPafInfo* data_info)
     data_info->boundary_state = MIME_PAF_BOUNDARY_UNKNOWN;
     data_info->data_state = MIME_PAF_FINDING_BOUNDARY_STATE;
     data_info->boundary_quoted = false;
+    data_info->paf_abort = false;
+    data_info->data_since_boundary = 0;
+    data_info->consecutive_small_flush_bytes = 0;
 }
 
 /*  Process data boundary and flush each file based on boundary*/
 bool process_mime_paf_data(MimeDataPafInfo* data_info, uint8_t data)
 {
+    data_info->paf_abort = false;
+    const bool previous_boundary_found = data_info->data_state == MIME_PAF_FOUND_BOUNDARY_STATE;
+
+    if (previous_boundary_found)
+    {
+        data_info->data_since_boundary++;
+        data_info->consecutive_small_flush_bytes++;
+    }
+
     switch (data_info->data_state)
     {
     case MIME_PAF_FINDING_BOUNDARY_STATE:
@@ -264,6 +276,19 @@ bool process_mime_paf_data(MimeDataPafInfo* data_info, uint8_t data)
         if (check_boundary(data_info,  data))
         {
             data_info->data_state = MIME_PAF_FOUND_BOUNDARY_STATE;
+
+            if (previous_boundary_found)
+            {
+                const uint64_t data_len = data_info->data_since_boundary - data_info->boundary_search_len;
+
+                if (data_len >= MIN_MIME_PAF_DATA_LEN)
+                    data_info->consecutive_small_flush_bytes = 0;
+                else if (data_info->consecutive_small_flush_bytes >= MAX_MIME_PAF_OCTETS)
+                    data_info->paf_abort = true;
+            }
+
+            data_info->data_since_boundary = 0;
+            data_info->boundary_search_len = 0;
             return true;
         }
         break;
