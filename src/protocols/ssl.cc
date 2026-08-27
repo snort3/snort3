@@ -860,8 +860,8 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
     while (len > 2 and !(common_name and org_unit))
     {
         X509* cert = nullptr;
-        X509_NAME* cert_subject = nullptr;
-        X509_NAME* cert_issuer = nullptr;
+        const X509_NAME* cert_subject = nullptr;
+        const X509_NAME* cert_issuer = nullptr;
 
         int cert_len = ntoh3(data);
         data += 3;
@@ -918,8 +918,8 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
             lastpos = X509_NAME_get_index_by_NID(cert_subject, NID_commonName, lastpos);
             if (lastpos != -1)
             {
-                X509_NAME_ENTRY* e = X509_NAME_get_entry(cert_subject, lastpos);
-                ASN1_STRING* asn1_str = X509_NAME_ENTRY_get_data(e);
+                const X509_NAME_ENTRY* e = X509_NAME_get_entry(cert_subject, lastpos);
+                const ASN1_STRING* asn1_str = X509_NAME_ENTRY_get_data(e);
                 const unsigned char* str_data = ASN1_STRING_get0_data(asn1_str);
                 int length = ASN1_STRING_length(asn1_str);
                 
@@ -941,8 +941,8 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
             lastpos = X509_NAME_get_index_by_NID(cert_subject, NID_organizationalUnitName, lastpos);
             if (lastpos != -1)
             {
-                X509_NAME_ENTRY* e = X509_NAME_get_entry(cert_subject, lastpos);
-                ASN1_STRING* asn1_str = X509_NAME_ENTRY_get_data(e);
+                const X509_NAME_ENTRY* e = X509_NAME_get_entry(cert_subject, lastpos);
+                const ASN1_STRING* asn1_str = X509_NAME_ENTRY_get_data(e);
                 const unsigned char* str_data = ASN1_STRING_get0_data(asn1_str);
                 org_unit_len = ASN1_STRING_length(asn1_str);
                 
