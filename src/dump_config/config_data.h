@@ -105,6 +105,7 @@ class ConfigData
 {
 public:
     ConfigData(const char* file_name);
+    ~ConfigData();
 
     void add_config_tree(BaseConfigNode* root)
     { config_trees.push_back(root); }

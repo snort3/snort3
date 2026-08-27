@@ -224,6 +224,7 @@ static const TraceOption snort_trace_options[] =
 #ifdef DEBUG_MSGS
     { "main", TRACE_MAIN, "enable main trace logging" },
     { "mime", TRACE_MIME, "enable mime trace logging" },
+    { "conf", TRACE_CONF, "enable configuration trace logging" },
 #endif
 
     { nullptr, 0, nullptr }

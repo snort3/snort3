@@ -42,6 +42,7 @@ enum
     TRACE_INSPECTOR_MANAGER = 0,
     TRACE_MAIN,
     TRACE_MIME,
+    TRACE_CONF,
 };
 
 class SnortModule : public snort::Module

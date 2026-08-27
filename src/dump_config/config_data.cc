@@ -25,6 +25,9 @@
 
 #include <cassert>
 
+#include "main/snort_module.h"
+#include "trace/trace_api.h"
+
 using namespace snort;
 
 BaseConfigNode::BaseConfigNode(BaseConfigNode* p) :
@@ -101,8 +104,19 @@ BaseConfigNode* ValueConfigNode::get_node(const std::string& name)
 
 ConfigData::ConfigData(const char* file)
 {
+    debug_logf(4, snort_trace, TRACE_CONF, nullptr,
+        "ConfigData collection started for %s\n", file ? file : "(none)");
+
     if ( file )
         file_name = file;
+}
+
+ConfigData::~ConfigData()
+{
+    clear();
+
+    debug_logf(4, snort_trace, TRACE_CONF, nullptr,
+        "ConfigData collection closed for %s\n", file_name.empty() ? "(none)" : file_name.c_str());
 }
 
 void ConfigData::sort()

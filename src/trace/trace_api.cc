@@ -121,6 +121,9 @@ void TraceApi::thread_term()
         g_trace_logger_plug = nullptr;
     }
     g_trace_initialized = false;
+
+    if (SThreadType::STHREAD_TYPE_MAIN == get_thread_type())
+        clear_all_traces();
 }
 
 void TraceApi::clear_all_traces()

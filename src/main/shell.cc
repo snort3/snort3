@@ -597,8 +597,7 @@ Shell::Shell(const char* s, bool load_defaults) :
 Shell::~Shell()
 {
     lua_close(lua);
-    if (config_data)
-        delete config_data;
+    delete config_data;
 }
 
 void Shell::set_file(const char* s)
