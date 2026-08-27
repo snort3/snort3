@@ -39,6 +39,7 @@ Config::Config(const Config& other) : type(other.type)
         case UseExpectedForLastPDU:
         case CheckOpenTag:
         case CheckClosingTag:
+        case CheckAliasLimitReached:
             val_bool = other.val_bool;
             break;
         case IgnoredIdsList:
@@ -139,6 +140,9 @@ void ConfigSet::set_overrides(const Overrides& values)
             case CheckClosingTag:
                 check_closing_tag = conf.val_bool;
                 break;
+            case CheckAliasLimitReached:
+                check_alias_limit_reached = conf.val_bool;
+                break;
             case TemporaryBuffer:
                 temporary_buffer = conf.val_string;
                 break;
@@ -201,6 +205,9 @@ Config check_open_tag(bool val)
 
 Config check_closing_tag(bool val)
 { return {ConfigType::CheckClosingTag, val}; }
+
+Config check_alias_limit_reached(bool val)
+{ return {ConfigType::CheckAliasLimitReached, val}; }
 
 Config temporary_buffer(const std::string& val)
 { return {ConfigType::TemporaryBuffer, val}; }

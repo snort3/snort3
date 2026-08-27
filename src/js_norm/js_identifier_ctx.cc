@@ -67,7 +67,7 @@ JSIdentifierCtx::JSIdentifierCtx(int32_t depth, uint32_t max_scope_depth,
     const std::unordered_set<std::string>& ignored_ids_list,
     const std::unordered_set<std::string>& ignored_props_list)
     : ignored_ids_list(ignored_ids_list), ignored_props_list(ignored_props_list),
-    max_scope_depth(max_scope_depth)
+    max_scope_depth(max_scope_depth), alias_depth(depth)
 {
     norm_name = norm_names;
     norm_name_end = norm_names + NORM_NAME_SIZE * std::min(depth, NORM_NAME_CNT);
@@ -93,8 +93,17 @@ const char* JSIdentifierCtx::substitute(const char* id_name, bool is_property)
         return substitute(*id_name, is_property);
 
     const auto it = id_names.find(id_name);
-    if (it != id_names.end() && is_substituted(it->second, is_property))
-        return is_property ? it->second.prop_name : it->second.id_name;
+    if (it != id_names.end())
+    {
+        if (is_substituted(it->second, is_property))
+            return is_property ? it->second.prop_name : it->second.id_name;
+
+        return acquire_norm_name(it->second);
+    }
+
+    // Once the normalization-name pool is exhausted, do not retain unmatched identifiers.
+    if (norm_name >= norm_name_end)
+        return nullptr;
 
     return acquire_norm_name(id_names[id_name]);
 }
@@ -184,20 +193,30 @@ void JSIdentifierCtx::reset()
     memset(&id_fast, 0, sizeof(id_fast));
     norm_name = norm_names;
     id_names.clear();
+    // scopes first: a program scope's destructor dereferences the alias vectors
     scopes.clear();
+    aliases.clear();
+    num_aliases = 0;
     scopes.emplace_back(JSProgramScopeType::GLOBAL);
     init_ignored_names();
 }
 
-void JSIdentifierCtx::add_alias(const char* alias, const std::string&& value)
+bool JSIdentifierCtx::add_alias(const char* alias, std::string&& value)
 {
     assert(alias);
     assert(!scopes.empty());
 
+    // num_aliases counts every lifetime add and is not decremented on scope pop,
+    // so the cap bounds total additions (value vectors + removal list), not live count
+    if (num_aliases >= alias_depth)
+        return false;
+
     auto& a = aliases[alias];
     a.emplace_back(std::move(value));
+    ++num_aliases;
 
     scopes.back().reference(a);
+    return true;
 }
 
 const char* JSIdentifierCtx::alias_lookup(const char* alias) const

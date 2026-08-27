@@ -33,6 +33,15 @@ using namespace jsn;
 
 TEST_CASE("De-aliasing - basic", "[JSNormalizer]")
 {
+    SECTION("alias entry cap triggers identifier overflow")
+    {
+        default_config.test_normalization(
+            "a=eval;a=console;",
+            "var_0000=eval;eval=console;",
+            {identifier_depth(1), check_alias_limit_reached(true)}
+        );
+    }
+
     SECTION("function")
         test_normalization(
             "a = eval; a(\"2 + 2\");",

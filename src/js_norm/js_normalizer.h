@@ -66,6 +66,9 @@ public:
     bool is_mixed_encoding_seen() const
     { return tokenizer.is_mixed_encoding_seen(); }
 
+    bool is_alias_limit_reached() const
+    { return tokenizer.is_alias_limit_reached(); }
+
     bool is_opening_tag_seen() const
     { return tokenizer.is_opening_tag_seen(); }
 

@@ -80,6 +80,9 @@ void JSTokenizerTester::run_checks(const JSTestConfig& checks)
     if (checks.check_closing_tag.is_set())
         CHECK((normalizer.is_closing_tag_seen() == checks.check_closing_tag));
 
+    if (checks.check_alias_limit_reached.is_set())
+        CHECK((normalizer.is_alias_limit_reached() == checks.check_alias_limit_reached));
+
     if (checks.check_mixed_encoding.is_set())
         CHECK((normalizer.is_mixed_encoding_seen() == checks.check_mixed_encoding));
 

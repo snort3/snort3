@@ -2065,6 +2065,11 @@ bool JSTokenizer::is_mixed_encoding_seen() const
     return mixed_encoding_seen;
 }
 
+bool JSTokenizer::is_alias_limit_reached() const
+{
+    return alias_limit_reached;
+}
+
 bool JSTokenizer::is_opening_tag_seen() const
 {
     return opening_tag_seen;
@@ -2163,8 +2168,9 @@ void JSTokenizer::dealias_clear_mutated(bool id_continue)
 {
     if (!id_continue && prefix_increment && dealias_stored)
     {
-        ident_ctx.add_alias(last_dealiased.c_str(),
-            std::string(ident_ctx.substitute(last_dealiased.c_str(), false)));
+        if (!ident_ctx.add_alias(last_dealiased.c_str(),
+            std::string(ident_ctx.substitute(last_dealiased.c_str(), false))))
+            alias_limit_reached = true;
     }
     dealias_stored = false;
     prefix_increment = false;
@@ -2174,8 +2180,9 @@ void JSTokenizer::dealias_increment()
 {
     if (dealias_stored)
     {
-        ident_ctx.add_alias(last_dealiased.c_str(),
-            std::string(ident_ctx.substitute(last_dealiased.c_str(), false)));
+        if (!ident_ctx.add_alias(last_dealiased.c_str(),
+            std::string(ident_ctx.substitute(last_dealiased.c_str(), false))))
+            alias_limit_reached = true;
     }
     prefix_increment = token != IDENTIFIER && token != CLOSING_BRACKET;
     dealias_stored = false;
@@ -2234,7 +2241,9 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
     {
         if (ident_norm())
             break;
-        ident_ctx.add_alias(alias.c_str(), std::string(ident_ctx.substitute(alias.c_str(), false)));
+        if (!ident_ctx.add_alias(alias.c_str(),
+            std::string(ident_ctx.substitute(alias.c_str(), false))))
+            alias_limit_reached = true;
         alias_state = ALIAS_NONE;
     }
     }
@@ -2248,8 +2257,9 @@ void JSTokenizer::dealias_equals(bool complex_assignment)
         {
             if (ident_ctx.alias_lookup(alias.c_str()))
             {
-                ident_ctx.add_alias(alias.c_str(),
-                    std::string(ident_ctx.substitute(alias.c_str(), false)));
+                if (!ident_ctx.add_alias(alias.c_str(),
+                    std::string(ident_ctx.substitute(alias.c_str(), false))))
+                    alias_limit_reached = true;
             }
             alias_state = ALIAS_NONE;
         }
@@ -2265,8 +2275,9 @@ void JSTokenizer::dealias_reset()
         if (alias_state == ALIAS_VALUE || alias_state == ALIAS_EQUALS)
             if (ident_ctx.alias_lookup(alias.c_str()))
             {
-                ident_ctx.add_alias(alias.c_str(),
-                    std::string(ident_ctx.substitute(alias.c_str(), false)));
+                if (!ident_ctx.add_alias(alias.c_str(),
+                    std::string(ident_ctx.substitute(alias.c_str(), false))))
+                    alias_limit_reached = true;
             }
         alias_state = ALIAS_NONE;
     }
@@ -2297,7 +2308,8 @@ void JSTokenizer::dealias_finalize()
 {
     if (alias_state == ALIAS_VALUE)
     {
-        ident_ctx.add_alias(alias.c_str(), aliased.str());
+        if (!ident_ctx.add_alias(alias.c_str(), aliased.str()))
+            alias_limit_reached = true;
         //FIXIT-E: add check for the 'sensitive' assignments here.
         alias_state = ALIAS_NONE;
     }
@@ -3087,6 +3099,7 @@ JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)
     yy_flush_buffer(YY_CURRENT_BUFFER);
     unescape_nest_seen = false;
     mixed_encoding_seen = false;
+    alias_limit_reached = false;
     ext_script = external_script;
     adjusted_data = false;
 

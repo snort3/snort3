@@ -72,7 +72,9 @@ which means that identifier will retain same normal form in multiple scripts,
 if they are a part of the same response, and that this limit is set for a single
 response and not a single script. By default, the value is set to 65536, which
 is the max allowed number of unique identifiers. The generated names are in
-the range from var_0000 to var_ffff.
+the range from var_0000 to var_ffff. This value also caps the total number of
+identifier aliases tracked over the context's lifetime; once reached, further
+assignments trigger the identifier-overflow alert.
 
 ===== max_tmpl_nest
 

@@ -189,6 +189,9 @@ bool JSNorm::post_proc(int ret)
     if (jsn_ctx->is_closing_tag_seen())
         events.create_event(EVENT_CLOSING_TAG);
 
+    if (jsn_ctx->is_alias_limit_reached())
+        ret = JSTokenizer::IDENTIFIER_OVERFLOW;
+
     switch ((JSTokenizer::JSRet)ret)
     {
     case JSTokenizer::EOS:

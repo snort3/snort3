@@ -179,6 +179,7 @@ public:
 
     bool is_unescape_nesting_seen() const;
     bool is_mixed_encoding_seen() const;
+    bool is_alias_limit_reached() const;
     bool is_opening_tag_seen() const;
     bool is_closing_tag_seen() const;
     bool is_buffer_adjusted() const;
@@ -330,6 +331,7 @@ private:
     AliasState alias_state = ALIAS_NONE;
     bool prefix_increment = false;
     bool dealias_stored = false;
+    bool alias_limit_reached = false;
     bool unescape_nest_seen = false;
     bool mixed_encoding_seen = false;
     bool opening_tag_seen = false;

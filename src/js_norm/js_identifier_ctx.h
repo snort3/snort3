@@ -44,7 +44,8 @@ public:
     virtual ~JSIdentifier() = default;
 
     virtual const char* substitute(const char* identifier, bool is_property) = 0;
-    virtual void add_alias(const char* alias, const std::string&& value) = 0;
+    // returns false when the alias cap is reached and the entry was not added
+    virtual bool add_alias(const char* alias, std::string&& value) = 0;
     virtual const char* alias_lookup(const char* alias) const = 0;
     virtual bool is_ignored(const char* identifier) const = 0;
 
@@ -62,7 +63,7 @@ public:
         const std::unordered_set<std::string>& ignored_props_list);
 
     virtual const char* substitute(const char* identifier, bool is_property) override;
-    virtual void add_alias(const char* alias, const std::string&& value) override;
+    virtual bool add_alias(const char* alias, std::string&& value) override;
     virtual const char* alias_lookup(const char* alias) const override;
     virtual bool is_ignored(const char* identifier) const override;
 
@@ -123,12 +124,17 @@ private:
     const char* norm_name_end;
     uint32_t max_scope_depth;
 
+    int32_t alias_depth;
+    int32_t num_aliases = 0;
+
 // advanced program scope access for testing
 #if defined(CATCH_TEST_BUILD) || defined(BENCHMARK_TEST)
 public:
     // compare scope list with the passed pattern
     bool scope_check(const std::list<JSProgramScopeType>& compare) const;
     const std::list<JSProgramScopeType> get_types() const;
+    size_t get_names_count() const { return id_names.size(); }
+    size_t get_aliases_count() const { return num_aliases; }
 #endif // CATCH_TEST_BUILD
 };
 

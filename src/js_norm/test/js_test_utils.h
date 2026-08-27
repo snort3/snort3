@@ -43,7 +43,7 @@ public:
 
     const char* substitute(const char* identifier, bool) override
     { return identifier; }
-    virtual void add_alias(const char*, const std::string&&) override {}
+    virtual bool add_alias(const char*, std::string&&) override { return true; }
     virtual const char* alias_lookup(const char* alias) const override
     { return alias; }
     bool is_ignored(const char*) const override

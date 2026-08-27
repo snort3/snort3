@@ -90,6 +90,23 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
         CHECK(ident_ctx.substitute(n[DEPTH].c_str(), false) == nullptr);
         CHECK(ident_ctx.substitute(n[DEPTH + 1].c_str(), false) == nullptr);
     }
+    SECTION("id_names map bounded at depth")
+    {
+        JSIdentifierCtx ident_ctx(2, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
+
+        const size_t initial_names_count = ident_ctx.get_names_count();
+
+        CHECK(ident_ctx.substitute("aa", false) == std::string("var_0000"));
+        CHECK(ident_ctx.substitute("bb", false) == std::string("var_0001"));
+        CHECK(ident_ctx.get_names_count() == initial_names_count + 2);
+
+        CHECK(ident_ctx.substitute("cc", false) == nullptr);
+        CHECK(ident_ctx.substitute("dd", false) == nullptr);
+        CHECK(ident_ctx.get_names_count() == initial_names_count + 2);
+
+        CHECK(ident_ctx.substitute("aa", false) == std::string("var_0000"));
+        CHECK(ident_ctx.get_names_count() == initial_names_count + 2);
+    }
     SECTION("ignored identifier - single char")
     {
         JSIdentifierCtx ident_ctx(DEPTH, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
@@ -214,5 +231,34 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
         CHECK(true == ident_ctx_limited.scope_pop(JSProgramScopeType::FUNCTION));
         CHECK(true == ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
         CHECK(true == ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
+    }
+}
+
+TEST_CASE("JSIdentifierCtx::alias cap", "[JSIdentifierCtx]")
+{
+    JSIdentifierCtx ident_ctx(1, SCOPE_DEPTH, s_ignored_ids, s_ignored_props);
+
+    CHECK(true == ident_ctx.add_alias("a", "console.log"));
+    CHECK(!strcmp(ident_ctx.alias_lookup("a"), "console.log"));
+
+    CHECK(false == ident_ctx.add_alias("b", "document"));
+}
+
+TEST_CASE("JSIdentifierCtx::add_alias", "[JSIdentifierCtx]")
+{
+    SECTION("aliases bound")
+    {
+        JSIdentifierCtx ident_ctx(DEPTH, 2, s_ignored_ids, s_ignored_props);
+
+        const uint32_t max_aliases = 65536;
+        for (uint32_t index = 0; index < max_aliases; ++index)
+        {
+            const std::string alias = std::string("a") + std::to_string(index);
+            CHECK(true == ident_ctx.add_alias(alias.c_str(), "x"));
+        }
+
+        CHECK(ident_ctx.get_aliases_count() == max_aliases);
+        CHECK(false == ident_ctx.add_alias("overflow", "x"));
+        CHECK(ident_ctx.get_aliases_count() == max_aliases);
     }
 }
