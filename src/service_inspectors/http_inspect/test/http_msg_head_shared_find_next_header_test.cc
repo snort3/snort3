@@ -24,6 +24,8 @@
 #include "config.h"
 #endif
 
+#include <string>
+
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_msg_head_shared.h"
@@ -198,11 +200,32 @@ public:
     {
         return msg.find_next_header(buffer, length, num_seps);
     }
+
+    static void set_content_disposition(HttpMsgHeadShared& msg, const uint8_t* value,
+        int32_t length)
+    {
+        if (msg.header_value == nullptr)
+        {
+            msg.header_name_id = new HeaderId[1];
+            msg.header_value = new Field[1];
+        }
+        msg.header_name_id[0] = HEAD_CONTENT_DISPOSITION;
+        msg.header_value[0].reset();
+        msg.header_value[0].set(length, value);
+        msg.num_headers = 1;
+        msg.headers_present[HEAD_CONTENT_DISPOSITION] = true;
+        msg.content_disposition_filename.reset();
+    }
+
+    static uint64_t get_cd_scan_visits(const HttpMsgHeadShared& msg)
+    {
+        return msg.cd_scan_visits;
+    }
 };
 
-// Test fixture for find_next_header()
-TEST_GROUP(find_next_header)
+class HttpMsgHeadFixture : public Utest
 {
+public:
     Flow* flow = nullptr;
     HttpParaList params;
     HttpFlowData* flow_data = nullptr;
@@ -216,6 +239,7 @@ TEST_GROUP(find_next_header)
         flow->gadget = new HttpInspect(&params);
         msg = new HttpMsgHeadTest(&dummy, 0, flow_data, SRC_CLIENT, false, flow, &params);
     }
+
     void teardown() override
     {
         delete msg;
@@ -224,6 +248,8 @@ TEST_GROUP(find_next_header)
         delete flow;
     }
 };
+
+TEST_GROUP_BASE(find_next_header, HttpMsgHeadFixture) { };
 
 struct FindNextHeaderCase
 {
@@ -350,6 +376,97 @@ TEST(find_next_header, wrapping_and_partial_flush_cases)
 
     for (const auto& test_case : cases)
         run_test_case(test_case, *msg, flow_data);
+}
+
+TEST_GROUP_BASE(content_disposition_scan, HttpMsgHeadFixture) { };
+
+struct ContentDispositionScanCase
+{
+    const char* name;
+    const char* lookalike;
+    const char* expected_filename;
+};
+
+static const uint64_t MAX_VISITS_PER_BYTE = 12;
+
+static std::string build_cd_value(const char* lookalike, unsigned repeats)
+{
+    std::string value("attachment");
+    for (unsigned k = 0; k < repeats; k++)
+    {
+        value += "; ";
+        value += lookalike;
+    }
+    value += "; filename=real.exe";
+    return value;
+}
+
+static uint64_t scan_cd_value(HttpMsgHeadTest& msg, const std::string& value,
+    const char* expected_filename, const char* name)
+{
+    HttpMsgHeadSharedTestPeer::set_content_disposition(msg,
+        (const uint8_t*)value.c_str(), (int32_t)value.length());
+
+    const Field& filename = msg.get_content_disposition_filename();
+    const int32_t expected_length = (int32_t)strlen(expected_filename);
+    CHECK_EQUAL_TEXT(expected_length, filename.length(), name);
+    MEMCMP_EQUAL(expected_filename, filename.start(), expected_length);
+
+    return HttpMsgHeadSharedTestPeer::get_cd_scan_visits(msg);
+}
+
+TEST(content_disposition_scan, filename_lookalike_parameters_scan_linearly)
+{
+    static const ContentDispositionScanCase cases[] = {
+        { "extension_parameter_with_suffix", "filenameZ=x", "real.exe" },
+        { "extended_extension_parameter_with_suffix", "filename*Z=x", "real.exe" },
+        { "parameter_name_with_filename_prefix", "filenames=x", "real.exe" },
+        { "quoted_value_containing_a_filename_parameter", "note=\"filename=x\"", "real.exe" }
+    };
+
+    for (const auto& test_case : cases)
+    {
+        const std::string small = build_cd_value(test_case.lookalike, 512);
+        const std::string large = build_cd_value(test_case.lookalike, 1024);
+
+        const uint64_t small_visits = scan_cd_value(*msg, small, test_case.expected_filename,
+            test_case.name);
+        const uint64_t large_visits = scan_cd_value(*msg, large, test_case.expected_filename,
+            test_case.name);
+
+        CHECK_TEXT(small_visits <= MAX_VISITS_PER_BYTE * small.length(), test_case.name);
+        CHECK_TEXT(large_visits <= MAX_VISITS_PER_BYTE * large.length(), test_case.name);
+        CHECK_TEXT(large_visits <= 3 * small_visits, test_case.name);
+    }
+}
+
+TEST(content_disposition_scan, real_world_parameter_separators)
+{
+    static const ContentDispositionScanCase cases[] = {
+        { "semicolon_separator", "attachment; filename=share.exe", "share.exe" },
+        { "comma_separator", "attachment, filename=share.exe", "share.exe" },
+        { "comma_separator_with_path", "attachment, filename=uploads/share.exe/",
+            "uploads/share.exe/" },
+        { "space_separator", "attachment filename=share.exe", "share.exe" },
+        { "tab_separator", "attachment;\tfilename=share.exe", "share.exe" },
+        { "prefixed_name_is_not_a_filename_parameter",
+            "attachment; xfilename=decoy.txt; filename=share.exe", "share.exe" },
+        { "quoted_value_is_not_a_filename_parameter",
+            "attachment; name=\"filename=decoy.txt\"; filename=share.exe", "share.exe" }
+    };
+
+    for (const auto& test_case : cases)
+    {
+        const std::string value(test_case.lookalike);
+        HttpMsgHeadSharedTestPeer::set_content_disposition(*msg,
+            (const uint8_t*)value.c_str(), (int32_t)value.length());
+
+        const Field& filename = msg->get_content_disposition_filename();
+        CHECK_EQUAL_TEXT((int32_t)strlen(test_case.expected_filename), filename.length(),
+            test_case.name);
+        if (filename.length() > 0)
+            MEMCMP_EQUAL(test_case.expected_filename, filename.start(), filename.length());
+    }
 }
 
 int main(int argc, char** argv)

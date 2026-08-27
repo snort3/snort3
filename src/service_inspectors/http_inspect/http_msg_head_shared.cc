@@ -24,7 +24,6 @@
 #include "http_msg_head_shared.h"
 
 #include "hash/hash_key_operations.h"
-#include "utils/util_cstring.h"
 
 #include "http_common.h"
 #include "http_enum.h"
@@ -438,9 +437,19 @@ const Field& HttpMsgHeadShared::get_content_disposition_filename()
     return content_disposition_filename;
 }
 
+#if defined(REG_TEST) || defined(UNIT_TEST)
+#define CD_RESET_VISITS() cd_scan_visits = 0
+#define CD_COUNT_VISITS(n) cd_scan_visits += (n)
+#else
+#define CD_RESET_VISITS() do { } while (false)
+#define CD_COUNT_VISITS(n) do { } while (false)
+#endif
+
 // Extract the filename from the content-disposition header
 void HttpMsgHeadShared::extract_filename_from_content_disposition()
 {
+    CD_RESET_VISITS();
+
     const Field& cont_disp = get_header_value_raw(HEAD_CONTENT_DISPOSITION);
 
     const uint8_t* cur = cont_disp.start();
@@ -450,6 +459,7 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
     bool char_set = false;
     enum {
         CD_STATE_START,
+        CD_STATE_SKIP_QUOTED,
         CD_STATE_BEFORE_VAL,
         CD_STATE_VAL,
         CD_STATE_QUOTED_VAL,
@@ -462,7 +472,9 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
     };
     const char *cd_file1 = "filename";
     const char *cd_file2 = "filename*";
-    const char* filename_str_start = nullptr;
+    const uint8_t* regular_fname_begin = nullptr;
+    const uint8_t* regular_fname_end = nullptr;
+    bool extended_filename = false;
 
     if (cont_disp.length() <= 0)
     {
@@ -473,31 +485,66 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
 
     while (cur < end and state != CD_STATE_PROBLEM)
     {
+        CD_COUNT_VISITS(1);
         switch (state)
         {
             case CD_STATE_START:
-                if ((filename_str_start = SnortStrcasestr((const char*)cur, end - cur, cd_file2)))
+                if (*cur == '"')
                 {
-                    state = CD_STATE_BEFORE_EXT_VAL;
-                    cur = (const uint8_t*)filename_str_start + strlen(cd_file2) - 1;
+                    state = CD_STATE_SKIP_QUOTED;
+                    break;
                 }
-                else if ((filename_str_start = SnortStrcasestr((const char*)cur, end - cur,
-                    cd_file1)))
+                if (*cur != 'f' && *cur != 'F')
+                    break;
+                if (cur > cont_disp.start())
                 {
-                    state = CD_STATE_BEFORE_VAL;
-                    cur = (const uint8_t*)filename_str_start + strlen(cd_file1) - 1;
+                    const uint8_t prev = *(cur - 1);
+                    if (prev != ';' && prev != ',' && prev != ' ' && prev != '\t' &&
+                        prev != '\r' && prev != '\n')
+                        break;
                 }
-                else
+
+                CD_COUNT_VISITS(strlen(cd_file2) + strlen(cd_file1) + 2);
+                if (static_cast<size_t>(end - cur) >= strlen(cd_file2) &&
+                    !strncasecmp((const char*)cur, cd_file2, strlen(cd_file2)))
                 {
-                    content_disposition_filename.set(STAT_NOT_PRESENT);
-                    return;
+                    const uint8_t* const after_name = cur + strlen(cd_file2);
+                    if (after_name == end || *after_name == '=' || *after_name == ' ' ||
+                        *after_name == '\t')
+                    {
+                        extended_filename = true;
+                        state = CD_STATE_BEFORE_EXT_VAL;
+                        cur = after_name - 1;
+                        break;
+                    }
                 }
+
+                if (static_cast<size_t>(end - cur) >= strlen(cd_file1) &&
+                    !strncasecmp((const char*)cur, cd_file1, strlen(cd_file1)))
+                {
+                    const uint8_t* const after_name = cur + strlen(cd_file1);
+                    if (after_name == end || *after_name == '=' || *after_name == ' ' ||
+                        *after_name == '\t')
+                    {
+                        extended_filename = false;
+                        state = CD_STATE_BEFORE_VAL;
+                        cur = after_name - 1;
+                        break;
+                    }
+                }
+
+                break;
+            case CD_STATE_SKIP_QUOTED:
+                if (*cur == '\\' && cur + 1 < end)
+                    cur++;
+                else if (*cur == '"')
+                    state = CD_STATE_START;
                 break;
             case CD_STATE_BEFORE_VAL:
                 if (*cur == '=')
                     state = CD_STATE_VAL;
-                else if (*cur != ' ')
-                    state = CD_STATE_START;
+                else if (*cur != ' ' && *cur != '\t')
+                    state = CD_STATE_PROBLEM;
                 break;
             case CD_STATE_VAL:
                 if (!fname_begin && *cur == '"')
@@ -525,8 +572,8 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
             case CD_STATE_BEFORE_EXT_VAL:
                 if (*cur == '=')
                     state = CD_STATE_CHARSET;
-                else if (*cur != ' ')
-                    state = CD_STATE_START;
+                else if (*cur != ' ' && *cur != '\t')
+                    state = CD_STATE_PROBLEM;
                 break;
             case CD_STATE_CHARSET:
                 if (*cur == '\'')
@@ -583,8 +630,23 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
             case CD_STATE_FINAL:
                 if (fname_begin && fname_end)
                 {
-                    content_disposition_filename.set(fname_end-fname_begin, fname_begin);
-                    return;
+                    // filename* has precedence over filename and ends the search
+                    if (extended_filename)
+                    {
+                        content_disposition_filename.set(fname_end-fname_begin, fname_begin);
+                        return;
+                    }
+
+                    // Keep the first regular filename as a fallback while scanning for
+                    // a later filename*, which would take precedence over it
+                    if (!regular_fname_begin)
+                    {
+                        regular_fname_begin = fname_begin;
+                        regular_fname_end = fname_end;
+                    }
+                    fname_begin = fname_end = nullptr;
+                    state = CD_STATE_START;
+                    continue;
                 }
                 // fallthrough
             default:
@@ -595,6 +657,16 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
     }
     switch (state)
     {
+        case CD_STATE_START:
+        case CD_STATE_SKIP_QUOTED:
+            // The header ended without a filename parameter. Parameter names that
+            // merely contain "filename" are valid, so this is not a malformed value.
+            if (regular_fname_begin)
+                content_disposition_filename.set(regular_fname_end-regular_fname_begin,
+                    regular_fname_begin);
+            else
+                content_disposition_filename.set(STAT_NOT_PRESENT);
+            break;
         case CD_STATE_FINAL:
         case CD_STATE_VAL:
         case CD_STATE_EXT_VAL:
@@ -602,7 +674,11 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
             {
                 if (!fname_end)
                     fname_end = end;
-                content_disposition_filename.set(fname_end-fname_begin, fname_begin);
+                if (extended_filename || !regular_fname_begin)
+                    content_disposition_filename.set(fname_end-fname_begin, fname_begin);
+                else
+                    content_disposition_filename.set(regular_fname_end-regular_fname_begin,
+                        regular_fname_begin);
                 break;
             }
             // fallthrough
@@ -613,6 +689,9 @@ void HttpMsgHeadShared::extract_filename_from_content_disposition()
             break;
     }
 }
+
+#undef CD_RESET_VISITS
+#undef CD_COUNT_VISITS
 
 #ifdef REG_TEST
 void HttpMsgHeadShared::print_headers(FILE* output)

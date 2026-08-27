@@ -114,6 +114,9 @@ private:
 
     void extract_filename_from_content_disposition();
     Field content_disposition_filename;
+#if defined(REG_TEST) || defined(UNIT_TEST)
+    uint64_t cd_scan_visits = 0;
+#endif
     uint64_t file_cache_index = 0;
     bool file_cache_index_computed = false;
 
