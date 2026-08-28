@@ -204,6 +204,10 @@ StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_
     // reset the cursor position
     mms_cur.set_pos(cur_pkt_ctx.start_offset);
 
+    // reset the per-scan total work budget so nested decode loops share a
+    // single linear work allowance and cannot multiply their per-call budgets
+    reset_tpkt_work_budget(&mms_cur);
+
     // start the parsing based on the layer determination
     switch (layer)
     {

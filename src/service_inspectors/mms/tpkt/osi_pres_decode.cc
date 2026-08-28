@@ -151,10 +151,13 @@ static TpktAppliSearchStateType decode_osi_pres_context_list_item(BerReader* ber
     // set a maximum number of loops to the remaining number of
     //    bytes in the cursor divided by the smallest TLV (0x03)
     uint32_t max_loops      = get_max_loops(tpkt_cur);
-    uint32_t max_pos        = get_max_pos(context_list_param_idx, context_list_length);
+    uint32_t max_pos        = get_max_pos(tpkt_cur, context_list_param_idx, context_list_length);
     uint32_t loop_iteration = 0x00;
-    while (tpkt_cur->get_pos() < max_pos and loop_iteration < max_loops)
+    while (tpkt_cur->get_pos() < max_pos and loop_iteration < max_loops and
+        // cppcheck-suppress knownConditionTrueFalse ; work budget is decremented at runtime and can reach zero
+        get_tpkt_work_budget() != 0)
     {
+        charge_tpkt_work_budget();
         if (!process_next_ber_tag(ber, &e, tpkt_cur, BER_TAG__ADD_NONE))
         {
             return TPKT_APPLI_SEARCH_STATE__EXIT;
@@ -274,6 +277,9 @@ static TpktAppliSearchStateType decode_osi_pres_context_list_item(BerReader* ber
                 return TPKT_APPLI_SEARCH_STATE__EXIT;
             }
             break;
+            default:
+                tpkt_cur->set_pos(tpkt_cur->size());
+                return TPKT_APPLI_SEARCH_STATE__EXIT;
         }
 
         loop_iteration++;
@@ -317,12 +323,14 @@ static TpktAppliSearchStateType decode_osi_pres_normal_mode_params(BerReader* be
     // set a maximum number of loops to the remaining number of
     //    bytes in the cursor divided by the smallest TLV (0x03)
     uint32_t normal_mode_param_max_loops      = get_max_loops(tpkt_cur);
-    uint32_t normal_mode_param_max_pos        = get_max_pos(normal_mode_param_idx,
+    uint32_t normal_mode_param_max_pos        = get_max_pos(tpkt_cur, normal_mode_param_idx,
         normal_mode_param_length);
     uint32_t normal_mode_param_loop_iteration = 0x00;
     while (tpkt_cur->get_pos() < normal_mode_param_max_pos and normal_mode_param_loop_iteration <
-        normal_mode_param_max_loops)
+        // cppcheck-suppress knownConditionTrueFalse ; work budget is decremented at runtime and can reach zero
+        normal_mode_param_max_loops and get_tpkt_work_budget() != 0)
     {
+        charge_tpkt_work_budget();
         if (!process_next_ber_tag(ber, &e, tpkt_cur, BER_TAG__ADD_NONE))
         {
             return TPKT_APPLI_SEARCH_STATE__EXIT;
@@ -379,12 +387,14 @@ static TpktAppliSearchStateType decode_osi_pres_normal_mode_params(BerReader* be
             // set a maximum number of loops to the remaining number of
             //    bytes in the cursor divided by the smallest TLV (0x03)
             uint32_t context_list_item_max_loops = get_max_loops(tpkt_cur);
-            uint32_t max_pos = get_max_pos(context_definition_list_idx,
+            uint32_t max_pos = get_max_pos(tpkt_cur, context_definition_list_idx,
                 context_definition_list_length);
             uint32_t context_list_item_loop_iteration = 0x00;
             while (tpkt_cur->get_pos() < max_pos and context_list_item_loop_iteration <
-                context_list_item_max_loops)
+                // cppcheck-suppress knownConditionTrueFalse ; work budget is decremented at runtime and can reach zero
+                context_list_item_max_loops and get_tpkt_work_budget() != 0)
             {
+                charge_tpkt_work_budget();
                 TpktAppliSearchStateType res = decode_osi_pres_context_list_item(ber, tpkt_cur);
                 if (res != TPKT_APPLI_SEARCH_STATE__SEARCH)
                 {
@@ -413,12 +423,15 @@ static TpktAppliSearchStateType decode_osi_pres_normal_mode_params(BerReader* be
             // set a maximum number of loops to the remaining number of
             //    bytes in the cursor divided by the smallest TLV (0x03)
             uint32_t context_list_item_max_loops      = get_max_loops(tpkt_cur);
-            uint32_t context_list_item_max_pos        = get_max_pos(
+            uint32_t context_list_item_max_pos        = get_max_pos(tpkt_cur,
                 context_definition_result_list_idx, context_definition_result_list_length);
             uint32_t context_list_item_loop_iteration = 0x00;
             while (tpkt_cur->get_pos() < context_list_item_max_pos and
-                context_list_item_loop_iteration < context_list_item_max_loops)
+                context_list_item_loop_iteration < context_list_item_max_loops and
+                // cppcheck-suppress knownConditionTrueFalse ; work budget is decremented at runtime and can reach zero
+                get_tpkt_work_budget() != 0)
             {
+                charge_tpkt_work_budget();
                 TpktAppliSearchStateType res = decode_osi_pres_context_list_item(ber, tpkt_cur);
                 if (res != TPKT_APPLI_SEARCH_STATE__SEARCH)
                 {
@@ -469,6 +482,7 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_pres_layer(Cursor* tpkt_c
 {
     // get the flow data
     Packet* p = DetectionEngine::get_current_packet();
+    // cppcheck-suppress knownConditionTrueFalse ; current packet is provided at runtime
     if (!p || !p->flow)
         return TPKT_APPLI_SEARCH_STATE__EXIT;
 
@@ -477,6 +491,7 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_pres_layer(Cursor* tpkt_c
 
     // if flow data cannot be found something went wrong and we should just
     // exit. the flow data should not be initialized at this point
+    // cppcheck-suppress knownConditionTrueFalse ; flow data is populated at runtime
     if (tpktfd)
     {
         // retrieve the SPDU type in our flow data

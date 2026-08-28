@@ -105,10 +105,12 @@ static TpktAppliSearchStateType decode_osi_acse_user_data_param(BerReader* ber, 
         // set a maximum number of loops to the remaining number of
         //    bytes in the cursor divided by the smallest TLV (0x03)
         const uint32_t max_loops      = get_max_loops(tpkt_cur);
+        const uint32_t max_pos        = get_max_pos(tpkt_cur, user_data_idx, user_data_length);
         uint32_t loop_iteration = 0x00;
-        while (tpkt_cur->get_pos() < (user_data_idx + user_data_length - 1) and loop_iteration <
-            max_loops)
+        while (tpkt_cur->get_pos() < max_pos and loop_iteration <
+            max_loops and get_tpkt_work_budget() != 0)
         {
+            charge_tpkt_work_budget();
             enum
             {
                 ASSOCIATION_DATA_DIRECT_REFERENCE   = 0x06,
@@ -380,9 +382,12 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_acse_layer(Cursor* tpkt_c
         // set a maximum number of loops to the remaining number of
         //    bytes in the cursor divided by the smallest TLV (0x03)
         const uint32_t max_loops      = get_max_loops(tpkt_cur);
+        const uint32_t max_pos        = get_max_pos(tpkt_cur, aarq_idx, aarq_length);
         uint32_t loop_iteration = 0x00;
-        while (tpkt_cur->get_pos() < (aarq_idx + aarq_length - 1) and loop_iteration < max_loops)
+        while (tpkt_cur->get_pos() < max_pos and loop_iteration < max_loops and
+            get_tpkt_work_budget() != 0)
         {
+            charge_tpkt_work_budget();
             TpktAppliSearchStateType res = decode_osi_acse_aarq_param(&ber, tpkt_cur);
             if (res != TPKT_APPLI_SEARCH_STATE__SEARCH)
             {
@@ -404,9 +409,12 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_acse_layer(Cursor* tpkt_c
         // set a maximum number of loops to the remaining number of
         //    bytes in the cursor divided by the smallest TLV (0x03)
         const uint32_t max_loops      = get_max_loops(tpkt_cur);
+        const uint32_t max_pos        = get_max_pos(tpkt_cur, aare_idx, aare_length);
         uint32_t loop_iteration = 0x00;
-        while (tpkt_cur->get_pos() < (aare_idx + aare_length - 1) and loop_iteration < max_loops)
+        while (tpkt_cur->get_pos() < max_pos and loop_iteration < max_loops and
+            get_tpkt_work_budget() != 0)
         {
+            charge_tpkt_work_budget();
             TpktAppliSearchStateType res = decode_osi_acse_aare_param(&ber, tpkt_cur);
             if (res != TPKT_APPLI_SEARCH_STATE__SEARCH)
             {

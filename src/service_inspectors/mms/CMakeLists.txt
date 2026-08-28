@@ -1,3 +1,4 @@
+add_subdirectory(tpkt/test)
 
 set( FILE_LIST
     mms.cc

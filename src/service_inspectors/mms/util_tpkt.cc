@@ -24,6 +24,8 @@
 
 #include "util_tpkt.h"
 
+#include "main/snort_types.h"
+
 #include "tpkt/cotp_decode.h"
 #include "tpkt/osi_acse_decode.h"
 #include "tpkt/osi_pres_decode.h"
@@ -31,6 +33,58 @@
 #include "tpkt/tpkt_decode.h"
 
 using namespace snort;
+
+// per-scan total work budget shared across every nested TPKT decode loop.
+// each loop iteration is charged against this single budget so that deeply
+// nested loops cannot multiply their individual per-call budgets into
+// super-linear total work. the budget is reset once at the start of each scan.
+static THREAD_LOCAL uint32_t tpkt_scan_work_budget = 0;
+
+void reset_tpkt_work_budget(const Cursor* tpkt_cur)
+{
+    tpkt_scan_work_budget = tpkt_cur->size() / TPKT_SMALLEST_TLV_SIZE;
+}
+
+uint32_t get_tpkt_work_budget()
+{
+    return tpkt_scan_work_budget;
+}
+
+void charge_tpkt_work_budget()
+{
+    if (tpkt_scan_work_budget > 0)
+    {
+        tpkt_scan_work_budget--;
+    }
+}
+
+uint32_t get_max_loops(const Cursor* const tpkt_cur)
+{
+    // set a maximum number of loops to the remaining number of
+    //    bytes in the cursor divided by the smallest TLV (0x03)
+    uint32_t max_loops = (tpkt_cur->size() - tpkt_cur->get_pos()) / TPKT_SMALLEST_TLV_SIZE;
+
+    uint32_t work_budget = get_tpkt_work_budget();
+    if (max_loops > work_budget)
+    {
+        max_loops = work_budget;
+    }
+
+    return max_loops;
+}
+
+uint32_t get_max_pos(const Cursor* tpkt_cur, uint32_t idx, uint32_t length)
+{
+    uint64_t max_pos = static_cast<uint64_t>(idx) + length - 1;
+
+    uint32_t cur_size = tpkt_cur->size();
+    if (max_pos > cur_size)
+    {
+        return cur_size;
+    }
+
+    return static_cast<uint32_t>(max_pos);
+}
 
 //-------------------------------------------------------------------------
 // flow stuff
@@ -317,6 +371,18 @@ static bool is_mms(Cursor* c)
     return false;
 }
 
+static void persist_exit_offset_at_end(TpktFlowData* tpktfd, const Cursor* const c, bool is_from_client)
+{
+    if (is_from_client)
+    {
+        tpktfd->ssn_data.client_exit_offset = c->size();
+    }
+    else
+    {
+        tpktfd->ssn_data.server_exit_offset = c->size();
+    }
+}
+
 // function to run analysis on the data and return the best guess of which
 // TPKT encapsulation layer is present starting from the current cursor pos
 TpktEncapLayerType get_next_tpkt_encap_layer(Packet* p, Cursor* c)
@@ -325,6 +391,7 @@ TpktEncapLayerType get_next_tpkt_encap_layer(Packet* p, Cursor* c)
     TpktFlowData* tpktfd = static_cast<TpktFlowData*>(
         p->flow->get_flow_data(TpktFlowData::inspector_id));
 
+    // cppcheck-suppress knownConditionTrueFalse ; flow data is absent until created on the first packet
     if (!tpktfd)
     {
         tpktfd = new TpktFlowData;
@@ -352,24 +419,28 @@ TpktEncapLayerType get_next_tpkt_encap_layer(Packet* p, Cursor* c)
     // check for the COTP layer
     if (is_cotp(c))
     {
+        persist_exit_offset_at_end(tpktfd, c, p->is_from_client());
         return TPKT_ENCAP_LAYER__COTP;
     }
 
     // check for the OSI Session layer
     if (is_osi_session(c))
     {
+        persist_exit_offset_at_end(tpktfd, c, p->is_from_client());
         return TPKT_ENCAP_LAYER__OSI_SESSION;
     }
 
     // check for the OSI Pres layer
     if (is_osi_pres(c))
     {
+        persist_exit_offset_at_end(tpktfd, c, p->is_from_client());
         return TPKT_ENCAP_LAYER__OSI_PRES;
     }
 
     // check for the OSI ACSE layer
     if (is_osi_acse(c))
     {
+        persist_exit_offset_at_end(tpktfd, c, p->is_from_client());
         return TPKT_ENCAP_LAYER__OSI_ACSE;
     }
 
@@ -383,14 +454,7 @@ TpktEncapLayerType get_next_tpkt_encap_layer(Packet* p, Cursor* c)
     // offset to the end of the current data before returning no layer
     // found. in this case we are just moving on from the data and not
     // sending it to the service inspector
-    if (p->is_from_client())
-    {
-        tpktfd->ssn_data.client_exit_offset = c->size();
-    }
-    else
-    {
-        tpktfd->ssn_data.server_exit_offset = c->size();
-    }
+    persist_exit_offset_at_end(tpktfd, c, p->is_from_client());
 
     // no valid layer found
     return TPKT_ENCAP_LAYER__NONE;

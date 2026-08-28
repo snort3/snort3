@@ -53,9 +53,6 @@ struct OsiSessionSpduParameterHdr
 };
 
 TpktAppliSearchStateType tpkt_internal_search_from_osi_session_layer(Cursor*, bool);
-uint32_t get_max_loops(Cursor*);
-
-uint32_t get_max_pos(uint32_t, uint32_t);
 
 #endif
 

@@ -177,5 +177,12 @@ TpktAppliSearchStateType tpkt_search_from_osi_session_layer(Cursor*, bool);
 TpktAppliSearchStateType tpkt_search_from_osi_pres_layer(Cursor*);
 TpktAppliSearchStateType tpkt_search_from_osi_acse_layer(Cursor*);
 
+uint32_t get_max_loops(const Cursor*const);
+uint32_t get_max_pos(const Cursor*, uint32_t, uint32_t);
+
+void reset_tpkt_work_budget(const Cursor*);
+uint32_t get_tpkt_work_budget();
+void charge_tpkt_work_budget();
+
 #endif
 
