@@ -90,6 +90,13 @@ add_catch_test( dce_co_test
         dce_co.cc
 )
 
+add_catch_test( dce_co_frag_budget_test
+    NO_TEST_SOURCE
+    SOURCES
+        test/dce_co_frag_budget_test.cc
+        dce_co.cc
+)
+
 add_catch_test( dce_smb2_lru_test
     NO_TEST_SOURCE
     SOURCES

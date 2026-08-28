@@ -29,9 +29,12 @@ namespace snort
 struct SnortConfig;
 }
 
+#define DCE2_TCP_DEFAULT_MAX_FRAG_REASSEMBLIES 50
+
 struct dce2TcpProtoConf
 {
     dce2CoProtoConf common = {};
+    uint16_t max_frag_reassemblies = DCE2_TCP_DEFAULT_MAX_FRAG_REASSEMBLIES;
 };
 
 class Dce2TcpModule : public snort::Module
@@ -61,6 +64,13 @@ private:
 };
 
 void print_dce2_tcp_conf(const dce2TcpProtoConf& config);
+
+inline uint16_t DCE2_ScTcpMaxFragReassemblies(const dce2TcpProtoConf* sc)
+{
+    if (sc == nullptr)
+        return DCE2_TCP_DEFAULT_MAX_FRAG_REASSEMBLIES;
+    return sc->max_frag_reassemblies;
+}
 
 #endif
 

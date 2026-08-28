@@ -25,6 +25,9 @@
 #include "../dce_tcp.h"
 
 #include "detection/detection_engine.h"
+#include "main/policy.h"
+#include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
 
 #include "catch/catch.hpp"
 
@@ -121,6 +124,11 @@ SfIpRet SfIp::set(const void*, int)
 {
     return SFIP_SUCCESS;
 }
+
+void Active::block_session(Packet*, bool) { }
+void Active::set_drop_reason(const char*) { }
+bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
+IpsPolicy* get_ips_policy() { return nullptr; }
 }
 
 DceEndianness::DceEndianness()

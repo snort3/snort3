@@ -72,6 +72,7 @@ struct dce2TcpStats
     PegCount tcp_expected_sessions;
     PegCount tcp_expected_realized_sessions;
     PegCount tcp_pkts;
+    PegCount tcp_frag_budget_blocks;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
 };

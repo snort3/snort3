@@ -25,6 +25,10 @@
 
 #include "dce_co.h"
 
+#include "detection/ips_context.h"
+#include "main/snort_config.h"
+#include "packet_io/active.h"
+#include "packet_io/sfdaq.h"
 #include "utils/util.h"
 
 #include "dce_expected_session.h"
@@ -84,6 +88,12 @@ private:
     uint16_t old_alt_dsize;
     bool old_detect_limited;
 };
+
+static inline bool DCE2_CoCanEnforceInlineBlock(const Packet* p)
+{
+    return p && p->context && p->context->conf &&
+        p->context->conf->ips_inline_mode() && SFDAQ::forwarding_packet(p->pkth);
+}
 
 }
 
@@ -295,6 +305,8 @@ void DCE2_CoInitTracker(DCE2_CoTracker* cot)
     cot->retained_seg_owner = nullptr;
     cot->retained_seg_limit = DCE2_CO_SEGMENTATION_RETAIN_LIMIT;
     cot->tracked_seg_bytes = 0;
+    cot->frag_reassembled = 0;
+    cot->frag_budget_tripped = false;
 }
 
 void DCE2_CoConfigureTracker(DCE2_CoTracker* cot, uint32_t* retained_seg_owner,
@@ -1647,7 +1659,37 @@ static void DCE2_CoReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoRpkt
 
 static inline void DCE2_CoFragReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
+    // Bound DCE/TCP work per PAF flush to preserve legitimate long-lived flows; SMB keeps its own policy.
+    // Force-block and latch for the flow on exhaustion because silently skipping reassembly creates a gap.
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+    {
+        if (cot->frag_budget_tripped)
+            return;
+
+        const uint16_t limit =
+            DCE2_ScTcpMaxFragReassemblies((const dce2TcpProtoConf*)sd->config);
+
+        if (limit > 0 && cot->frag_reassembled >= limit)
+        {
+            dce_alert(GID_DCE2, DCE2_CO_EXCESSIVE_FRAG_REASSEMBLIES,
+                dce_get_proto_stats_ptr(sd), *sd);
+
+            Packet* p = DetectionEngine::get_current_packet();
+            if (DCE2_CoCanEnforceInlineBlock(p))
+            {
+                p->active->block_session(p, true);
+                p->active->set_drop_reason("dce_tcp");
+                dce2_tcp_stats.tcp_frag_budget_blocks++;
+                cot->frag_budget_tripped = true;
+            }
+            return;
+        }
+    }
+
     DCE2_CoReassemble(sd, cot, DCE2_CO_RPKT_TYPE__FRAG);
+
+    if (sd->trans == DCE2_TRANS_TYPE__TCP)
+        cot->frag_reassembled++;
 }
 
 static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
@@ -2657,6 +2699,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
     dce_common_stats->co_pdus++;
     co_reassembled = 0;
+    cot->frag_reassembled = 0;
 
     while (data_len > 0)
     {

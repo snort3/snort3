@@ -25,6 +25,7 @@
 #include "dce_tcp_module.h"
 
 #include "log/messages.h"
+#include "utils/cpp_macros.h"
 
 #include "dce_tcp.h"
 
@@ -50,6 +51,11 @@ static const Parameter s_params[] =
       "Samba | Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20", "WinXP",
       "target based policy to use" },
 
+    { "max_frag_reassemblies", Parameter::PT_INT, "0:65535",
+      STRINGIFY_MX(DCE2_TCP_DEFAULT_MAX_FRAG_REASSEMBLIES),
+      "fragment reassemblies allowed per DCE/TCP PAF flush; values above a flush's "
+      "reassembly count do not block (0 disables)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -68,6 +74,7 @@ static const RuleMap dce2_tcp_rules[] =
     { DCE2_CO_FRAG_DIFF_CALL_ID, DCE2_CO_FRAG_DIFF_CALL_ID_STR },
     { DCE2_CO_FRAG_DIFF_OPNUM, DCE2_CO_FRAG_DIFF_OPNUM_STR },
     { DCE2_CO_FRAG_DIFF_CTX_ID, DCE2_CO_FRAG_DIFF_CTX_ID_STR },
+    { DCE2_CO_EXCESSIVE_FRAG_REASSEMBLIES, DCE2_CO_EXCESSIVE_FRAG_REASSEMBLIES_STR },
     { 0, nullptr }
 };
 
@@ -105,6 +112,8 @@ static const PegInfo dce2_tcp_pegs[] =
     { CountType::SUM, "tcp_expected_sessions", "total tcp dynamic endpoint expected sessions" },
     { CountType::SUM, "tcp_expected_realized", "total tcp dynamic endpoint expected realized sessions" },
     { CountType::SUM, "tcp_packets", "total tcp packets" },
+    { CountType::SUM, "tcp_frag_budget_blocks",
+      "total flows blocked by the fragment reassembly budget" },
     { CountType::NOW, "concurrent_sessions", "total concurrent sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent sessions" },
     { CountType::END, nullptr, nullptr }
@@ -135,6 +144,11 @@ ProfileStats* Dce2TcpModule::get_profile() const
 
 bool Dce2TcpModule::set(const char*, Value& v, SnortConfig*)
 {
+    if ( v.is("max_frag_reassemblies") )
+    {
+        config.max_frag_reassemblies = v.get_uint16();
+        return true;
+    }
     return dce2_set_co_config(v,config.common);
 }
 
@@ -146,4 +160,6 @@ void Dce2TcpModule::get_data(dce2TcpProtoConf& dce2_tcp_config)
 void print_dce2_tcp_conf(const dce2TcpProtoConf& config)
 {
     print_dce2_co_config(config.common);
+    ConfigLogger::log_limit("max_frag_reassemblies",
+        static_cast<int>(config.max_frag_reassemblies), 0, false);
 }

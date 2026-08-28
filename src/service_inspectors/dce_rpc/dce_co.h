@@ -41,6 +41,7 @@
 #define DCE2_CO_FRAG_DIFF_CALL_ID           37
 #define DCE2_CO_FRAG_DIFF_OPNUM             38
 #define DCE2_CO_FRAG_DIFF_CTX_ID            39
+#define DCE2_CO_EXCESSIVE_FRAG_REASSEMBLIES 66
 
 /* Map response fields offsets */
 #define DCE2_CO_MAP_HANDLE_OFS              20
@@ -85,8 +86,12 @@ from opnum established for fragmented request"
 #define DCE2_CO_FRAG_DIFF_CTX_ID_STR \
     "connection-oriented DCE/RPC - context id of non first/last fragment different \
 from context id established for fragmented request"
+#define DCE2_CO_EXCESSIVE_FRAG_REASSEMBLIES_STR \
+    "connection-oriented DCE/RPC - excessive fragment reassemblies within one DCE/TCP PAF flush, \
+potential CPU amplification DoS"
 
 #define DCE2_MAX_XMIT_SIZE_FUZZ    500
+
 #define DCE2_MOCK_HDR_LEN__CO_CLI   ((unsigned)(sizeof(DceRpcCoHdr) + sizeof(DceRpcCoRequest)))
 #define DCE2_MOCK_HDR_LEN__CO_SRV   ((unsigned)(sizeof(DceRpcCoHdr) + sizeof(DceRpcCoResponse)))
 #define DCE2_CO__MIN_ALLOC_SIZE     50
@@ -252,6 +257,11 @@ struct DCE2_CoTracker
     uint32_t* retained_seg_owner;
     uint32_t retained_seg_limit;
     uint32_t tracked_seg_bytes;
+
+    // Fragment reassemblies performed within the current DCE/TCP PAF flush.
+    // The inline-enforced trip latch persists; passive trips do not set it.
+    uint16_t frag_reassembled;
+    bool frag_budget_tripped;
 };
 
 /*
