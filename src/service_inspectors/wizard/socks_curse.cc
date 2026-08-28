@@ -1033,7 +1033,6 @@ TEST_CASE("socks4 and socks4a detection", "[SocksCurse]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("socks4 invalid input", "[SocksCurse]")
 {
     SECTION("invalid command")
@@ -1094,7 +1093,6 @@ TEST_CASE("socks4 invalid input", "[SocksCurse]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("not_found state is sticky", "[SocksCurse]")
 {
     CurseTracker tracker{};
@@ -1107,7 +1105,6 @@ TEST_CASE("not_found state is sticky", "[SocksCurse]")
     CHECK(tracker.socks.state == SOCKS_STATE__NOT_FOUND);
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("socks4 length boundaries", "[SocksCurse]")
 {
     SECTION("userid 255 bytes - max allowed")

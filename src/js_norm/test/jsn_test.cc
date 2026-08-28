@@ -138,7 +138,6 @@ TEST_CASE("normalization", "[JSNorm]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("non-blocking events", "[JSNorm]")
 {
     // cppcheck-suppress knownConditionTrueFalse ; test intentionally pins the event enum cardinality

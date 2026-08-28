@@ -336,7 +336,6 @@ TEST_CASE("Visibility", "[Ring2]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Wrapping", "[Ring2]")
 {
     Ring2 buffer(21);
@@ -830,7 +829,6 @@ TEST_CASE("Empty buffer", "[Ring2]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; Catch2 registers the generated test function
 TEST_CASE("Oversized record", "[Ring2]")
 {
     if constexpr (sizeof(size_t) > sizeof(uint32_t))

@@ -1578,7 +1578,6 @@ TEST_CASE("stream object malformed", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("stream object over PDU", "[PDFTokenizer]")
 {
     SECTION("split inside non-JS stream")
@@ -1662,7 +1661,6 @@ TEST_CASE("stream object over PDU", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("UTF-16, basic", "[PDFTokenizer]")
 {
     SECTION("basic string")
@@ -1886,7 +1884,6 @@ TEST_CASE("UTF-16, basic", "[PDFTokenizer]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("UTF-16, cross-PDU", "[PDFTokenizer]")
 {
     SECTION("split between symbols")

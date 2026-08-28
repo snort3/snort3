@@ -127,7 +127,6 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
 {
     SECTION("single char identifier")

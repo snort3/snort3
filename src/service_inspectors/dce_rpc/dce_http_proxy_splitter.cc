@@ -343,7 +343,6 @@ TEST_CASE("DceHttpProxySplitter-scan - bad_2_proxy_response", "[http_proxy_split
     delete splitter;
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("DceHttpProxySplitter-scan - bad_3_proxy_response", "[http_proxy_splitter]")
 {
     DceHttpProxySplitter* splitter = new DceHttpProxySplitter(false);
