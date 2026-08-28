@@ -84,3 +84,14 @@ cause HA to generate a Deletion message for the target flow.  This handles
 the case where a TCP session is being removed from from the flow cache due
 to a timeout or pruning function.  Other normal TCP stream closure actions
 are handled in the ../tcp/tcp_session.cc module.
+
+IDS mode LAST policy overlap fallback
+
+In IDS reassembly with the LAST overlap policy, Stream TCP falls back to AtomSplitter
+before LAST mutates queued data already scanned by a protocol-aware splitter.
+Retransmissions handled without changing the queue remain on PAF.  LAST,
+raw-packet detection, and generic rebuilt-stream detection continue, while
+service-aware inspection stops for that direction.
+
+Fallback is limited to PAF states that directly expose the scan boundary.
+LIMITED and STOP states, other overlap policies, and IPS mode are unchanged.

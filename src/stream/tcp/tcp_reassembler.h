@@ -80,6 +80,8 @@ public:
     virtual bool try_advance_empty_seglist_to_ack(
         const TcpSegmentDescriptor&, uint32_t)
     { return false; }
+    virtual void fallback_on_scanned_overlap(uint32_t)
+    { }
 
 protected:
     uint8_t packet_dir = 0;

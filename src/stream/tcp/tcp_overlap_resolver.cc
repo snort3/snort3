@@ -29,8 +29,10 @@
 
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
+#include "tcp_reassembler.h"
 #include "tcp_segment_node.h"
 #include "tcp_session.h"
+#include "tcp_stream_tracker.h"
 
 using namespace snort;
 
@@ -290,6 +292,7 @@ void TcpOverlapResolver::left_overlap_keep_last(TcpOverlapState& tos)
     tos.overlap = tos.left->next_seq() - tos.seq;
     if ( tos.overlap > 0 )
     {
+        tos.seglist.tracker->reassembler->fallback_on_scanned_overlap(tos.seq);
         tcpStats.overlaps++;
         tos.seglist.overlap_count++;
 
@@ -500,11 +503,13 @@ public:
 
 private:
     void right_overlap_truncate_existing(TcpOverlapState& tos) override
-     {
-         tos.right->offset += tos.overlap;
-         tos.right->length -= ( int16_t )tos.overlap;
-         tos.seglist.seg_bytes_logical -= tos.overlap;
-     }
+    {
+        tos.seglist.tracker->reassembler->fallback_on_scanned_overlap(
+            tos.right->start_seq());
+        tos.right->offset += tos.overlap;
+        tos.right->length -= ( int16_t )tos.overlap;
+        tos.seglist.seg_bytes_logical -= tos.overlap;
+    }
 
     void insert_left_overlap(TcpOverlapState& tos) override
     { left_overlap_keep_last(tos); }
@@ -513,7 +518,11 @@ private:
     { right_overlap_truncate_existing(tos); }
 
     void insert_full_overlap(TcpOverlapState& tos) override
-    { full_right_overlap_os4(tos); }
+    {
+        tos.seglist.tracker->reassembler->fallback_on_scanned_overlap(
+            tos.right->start_seq());
+        full_right_overlap_os4(tos);
+    }
 };
 
 class TcpOverlapResolverLinux : public TcpOverlapResolver

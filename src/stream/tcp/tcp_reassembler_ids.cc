@@ -267,6 +267,18 @@ bool TcpReassemblerIds::ack_flush_in_window(uint32_t flush_amt) const
     return !SEQ_GT(seglist.seglist_base_seq + flush_amt, tracker.r_win_base);
 }
 
+// Fall back before LAST mutates a queue range already scanned by PAF.
+void TcpReassemblerIds::fallback_on_scanned_overlap(uint32_t seq)
+{
+    // AtomSplitter is non-PAF; SEARCH through SKIP expose the scan boundary directly.
+    if ( !is_splitter_paf()
+        or paf.state < StreamSplitter::SEARCH or paf.state > StreamSplitter::SKIP )
+        return;
+
+    if ( SEQ_GT(paf.seq_num, seq) )
+        tracker.fallback();
+}
+
 int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
 {
     // anything here to scan/flush?

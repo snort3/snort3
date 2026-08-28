@@ -50,6 +50,7 @@ public:
     int flush_stream(snort::Packet*, uint32_t dir, bool final_flush = false) override;
     bool try_advance_empty_seglist_to_ack(
         const TcpSegmentDescriptor&, uint32_t max_queued_bytes) override;
+    void fallback_on_scanned_overlap(uint32_t) override;
 
     FlushPolicy get_flush_policy() const override
     { return STREAM_FLPOLICY_ON_ACK; }
