@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.12.4.0 2026-07-22 12:31:07 EDT TST
+Revision 3.12.5.0 2026-08-28 18:29:11 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -830,6 +830,12 @@ Peg counts:
     unknown client index (sum)
   * high_availability.client_consume_errors: client data consume
     failure count (sum)
+  * high_availability.session_client_not_first: non-session client
+    received first without a local flow (sum)
+  * high_availability.duplicate_client_segment: messages received
+    with a duplicate client segment (sum)
+  * high_availability.missing_session_client: updates without a
+    required session client (sum)
 
 
 2.12. host_cache
@@ -1648,7 +1654,8 @@ Configuration:
   * implied snort.-H: make hash tables deterministic
   * implied snort.-h: show help overview (same as --help)
   * string snort.-i: <iface>… list of interfaces
-  * port snort.-j: <port> to listen for Telnet connections
+  * port snort.-j: <port> to listen for Telnet connections (use 0 for
+    auto-assigned port)
   * enum snort.-k = all: <mode> checksum mode; default is all { all|
     noip|notcp|noudp|noicmp|none }
   * string snort.-L: <mode> logging mode (none, dump, pcap, or log_*)
@@ -1691,6 +1698,12 @@ Configuration:
   * implied snort.--close-all-plugins: Snort will not dlclose plugin
     libraries at shutdown unless this is set
   * string snort.--control-socket: <file> to create unix socket
+  * string snort.--control-socket-uid: <username> or <uid> allowed to
+    connect to control socket
+  * string snort.--control-socket-gid: <groupname> or <gid> allowed
+    to connect to control socket
+  * string snort.--control-secret-file: <file> containing
+    base64-encoded shared secret for control channel authentication
   * implied snort.--create-instance-file: create instance mappings
     file for this Snort process at startup
   * string snort.--create-pidfile: create PID file, even when not in
@@ -1896,6 +1909,7 @@ Commands:
     configuration
   * snort.show_plugins(): show loaded plugins
   * snort.show_config_generation(): show loaded configuration ID
+  * snort.show_control_port(): show TCP control channel port
   * snort.show_snort_cpu(): show snort cpu usage
   * snort.show_snort_packet_latency(): show snort packet latency data
 
@@ -3168,6 +3182,9 @@ Configuration:
     cache { 512:maxSZ }
   * int dce_smb.smb_max_file_chunks = 1024: maximum out-of-order file
     data chunks buffered per tracker { 1:65535 }
+  * int dce_smb.smb_max_writex_detects = 10: maximum file data
+    detections per SMB message on the chained WriteAndX path, 0 is
+    unlimited { 0:255 }
 
 Rules:
 
@@ -3231,6 +3248,12 @@ Rules:
     beyond payload boundary
   * 133:60 (dce_smb) SMB - excessive out-of-order file chunks causing
     potential DoS
+  * 133:63 (dce_smb) SMB - segmentation buffer accounting overrun,
+    possible evasion attempt
+  * 133:64 (dce_smb) SMB - excessive raw WriteAndX reassembly memory
+    causing potential DoS
+  * 133:65 (dce_smb) SMB - excessive chained WriteAndX commands
+    causing potential DoS
 
 Peg counts:
 
@@ -3352,6 +3375,9 @@ Peg counts:
     seen with invalid structure size (sum)
   * dce_smb.v2_read_rtrkr_misng: total number of SMBv2 read response
     packets ignored due to missing read request tracker (sum)
+  * dce_smb.v2_read_resp_ftrkr_misng: total number of SMBv2 read
+    response packets whose file data went uninspected because the
+    file tracker was gone (sum)
   * dce_smb.v2_read_resp_hdr_err: total number of SMBv2 read response
     packets ignored due to corrupted header (sum)
   * dce_smb.v2_read_req_hdr_err: total number of SMBv2 read request
@@ -3421,6 +3447,12 @@ Peg counts:
     (sum)
   * dce_smb.v2_total_file_trackers: total number of file trackers
     (sum)
+  * dce_smb.v2_max_file_trackers: maximum file trackers held
+    concurrently on a packet thread (max)
+  * dce_smb.v2_ftracker_evicted: file trackers evicted to stay within
+    the smb memcap (sum)
+  * dce_smb.v2_ftracker_evict_live: evictions forced to discard
+    reassembly or in-progress transfer state (sum)
   * dce_smb.v2_updated_file_flows: total number of updated file flows
     due to parent flow cleanup (sum)
   * dce_smb.v2_ignored_file_processing: total number of file
@@ -3434,6 +3466,12 @@ Peg counts:
     structure size (sum)
   * dce_smb.v2_ioctl_ignored: total number of SMBv2 IOCTL packets
     ignored due to missing trackers or invalid share type (sum)
+  * dce_smb.smb_empty_nbss_batches: total number of empty-NBSS-frame
+    batches accumulated by the SMB PAF splitter (sum)
+  * dce_smb.smb_nbss_hdr_rejected: total number of NBSS headers with
+    a known type but an invalid flags or trailer length (sum)
+  * dce_smb.v2_empty_nbss_frames_consumed: total number of empty NBSS
+    frames consumed before the SMB2 header in rebuilt packets (sum)
   * dce_smb.total_sessions: total smb sessions (sum)
 
 
@@ -3462,6 +3500,9 @@ Configuration:
   * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
+  * int dce_tcp.max_frag_reassemblies = 50: fragment reassemblies
+    allowed per DCE/TCP PAF flush; values above a flush’s reassembly
+    count do not block (0 disables) { 0:65535 }
 
 Rules:
 
@@ -3494,6 +3535,9 @@ Rules:
   * 133:39 (dce_tcp) connection-oriented DCE/RPC - context id of non
     first/last fragment different from context id established for
     fragmented request
+  * 133:66 (dce_tcp) connection-oriented DCE/RPC - excessive fragment
+    reassemblies within one DCE/TCP PAF flush, potential CPU
+    amplification DoS
 
 Peg counts:
 
@@ -3546,6 +3590,8 @@ Peg counts:
   * dce_tcp.tcp_expected_realized: total tcp dynamic endpoint
     expected realized sessions (sum)
   * dce_tcp.tcp_packets: total tcp packets (sum)
+  * dce_tcp.tcp_frag_budget_blocks: total flows blocked by the
+    fragment reassembly budget (sum)
   * dce_tcp.concurrent_sessions: total concurrent sessions (now)
   * dce_tcp.max_concurrent_sessions: maximum concurrent sessions
     (max)
@@ -3636,6 +3682,9 @@ Configuration:
 
   * bool dnp3.check_crc = false: validate checksums in DNP3 link
     layer frames
+  * int dnp3.zero_payload_packet_limit = 5: maximum number of
+    consecutive zero-length DNP3 packets allowed before aborting the
+    session { 0:255 }
 
 Rules:
 
@@ -3700,6 +3749,7 @@ Peg counts:
   * dns.max_concurrent_sessions: maximum concurrent dns sessions
     (max)
   * dns.aborted_sessions: total dns sessions aborted (sum)
+  * dns.name_len_exceeded: total dns names truncated at limit (sum)
   * dns.malformed_name_dropped: packets dropped due to domain name
     exceeding 255-octet limit (sum)
 
@@ -5840,8 +5890,8 @@ Peg counts:
     sessions (max)
   * rpc_decode.oversized_records: records skipped after inspection
     depth was exceeded (sum)
-  * rpc_decode.partial_flushes: partial record serializations into the
-    alt buffer (sum)
+  * rpc_decode.partial_flushes: partial record serializations into
+    the alt buffer (sum)
 
 
 5.42. s7commplus
@@ -5903,6 +5953,8 @@ Configuration:
   * int sip.max_request_name_len = 20: maximum request name field
     size { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
+  * int sip.max_undersized_msgs = 32: maximum number of undersized
+    SIP messages { 0:max32 }
   * int sip.max_uri_len = 256: maximum request uri field size {
     0:65535 }
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
@@ -6225,6 +6277,8 @@ Peg counts:
     dynamic ports (sum)
   * socks.udp_packets: UDP packets processed (sum)
   * socks.udp_frags: UDP fragmented packets detected (sum)
+  * socks.aborted_handshakes: handshakes aborted after exceeding the
+    pre-established flush budget (sum)
 
 
 5.48. ssh
@@ -6354,9 +6408,16 @@ Configuration:
   * int stream.require_3whs = -1: don’t track midstream TCP sessions
     after given seconds from start up; -1 tracks all { -1:max31 }
   * bool stream.allowlist_cache.enable = false: enable allowlist
-    cache
-  * bool stream.allowlist_cache.move_on_excess = false: move flows to
-    allowlist instead of removing when max flows limit reached
+    cache (requires DAQ WHITELIST support); under memory pressure,
+    allowlist entries may be reclaimed and a subsequent packet on a
+    previously-trusted flow will trigger fresh inspection
+  * bool stream.allowlist_cache.move_on_excess = false: move oldest
+    eligible TCP or UDP flow to allowlist (via DAQ WHITELIST verdict)
+    instead of pruning it when flow allocation approaches max_flows
+  * int stream.allowlist_cache.max_excess_flows = 0: admission
+    threshold offset: excess-to-allowlist admission begins when total
+    flows reach stream.max_flows - max_excess_flows; 0 disables {
+    0:max32 }
   * bool stream.drop_stale_packets = false: enable dropping of
     packets with stale timestamp
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
@@ -6758,8 +6819,8 @@ Peg counts:
   * stream_tcp.gaps: missing data between PDUs (sum)
   * stream_tcp.exceeded_max_segs: number of times the maximum queued
     segment limit was reached (sum)
-  * stream_tcp.exceeded_max_bytes: number of times the maximum queued
-    byte limit was reached (sum)
+  * stream_tcp.exceeded_max_bytes: number of segments exceeding the
+    configured max seglist bytes footprint (sum)
   * stream_tcp.payload_fully_trimmed: segments with no data after
     trimming (sum)
   * stream_tcp.internal_events: 135:X events generated (sum)
@@ -10050,7 +10111,8 @@ libraries see the Getting Started section of the manual.
   * -H make hash tables deterministic
   * -h show help overview (same as --help)
   * -i <iface>… list of interfaces
-  * -j <port> to listen for Telnet connections
+  * -j <port> to listen for Telnet connections (use 0 for
+    auto-assigned port)
   * -k <mode> checksum mode; default is all (all|noip|notcp|noudp|
     noicmp|none)
   * -L <mode> logging mode (none, dump, pcap, or log_*)
@@ -10084,6 +10146,12 @@ libraries see the Getting Started section of the manual.
   * --close-all-plugins Snort will not dlclose plugin libraries at
     shutdown unless this is set
   * --control-socket <file> to create unix socket
+  * --control-socket-uid <username> or <uid> allowed to connect to
+    control socket
+  * --control-socket-gid <groupname> or <gid> allowed to connect to
+    control socket
+  * --control-secret-file <file> containing base64-encoded shared
+    secret for control channel authentication
   * --create-instance-file create instance mappings file for this
     Snort process at startup
   * --create-pidfile create PID file, even when not in Daemon mode
@@ -10584,6 +10652,9 @@ libraries see the Getting Started section of the manual.
     request { 1:65535 }
   * int dce_smb.smb_max_file_chunks = 1024: maximum out-of-order file
     data chunks buffered per tracker { 1:65535 }
+  * int dce_smb.smb_max_writex_detects = 10: maximum file data
+    detections per SMB message on the chained WriteAndX path, 0 is
+    unlimited { 0:255 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
@@ -10592,6 +10663,9 @@ libraries see the Getting Started section of the manual.
     per signature per flow
   * int dce_tcp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
+  * int dce_tcp.max_frag_reassemblies = 50: fragment reassemblies
+    allowed per DCE/TCP PAF flush; values above a flush’s reassembly
+    count do not block (0 disables) { 0:65535 }
   * enum dce_tcp.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
@@ -10654,6 +10728,9 @@ libraries see the Getting Started section of the manual.
     0:255 }
   * int dnp3_obj.var = 0: match given DNP3 object header var { 0:255
     }
+  * int dnp3.zero_payload_packet_limit = 5: maximum number of
+    consecutive zero-length DNP3 packets allowed before aborting the
+    session { 0:255 }
   * bool dns.publish_response = false: parse and publish dns
     responses
   * string domain_filter.file: file with list of domains identifying
@@ -12009,6 +12086,8 @@ libraries see the Getting Started section of the manual.
   * int sip.max_request_name_len = 20: maximum request name field
     size { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
+  * int sip.max_undersized_msgs = 32: maximum number of undersized
+    SIP messages { 0:max32 }
   * int sip.max_uri_len = 256: maximum request uri field size {
     0:65535 }
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
@@ -12090,7 +12169,13 @@ libraries see the Getting Started section of the manual.
   * string snort.-c: <conf> use this configuration
   * implied snort.--close-all-plugins: Snort will not dlclose plugin
     libraries at shutdown unless this is set
+  * string snort.--control-secret-file: <file> containing
+    base64-encoded shared secret for control channel authentication
   * string snort.--control-socket: <file> to create unix socket
+  * string snort.--control-socket-gid: <groupname> or <gid> allowed
+    to connect to control socket
+  * string snort.--control-socket-uid: <username> or <uid> allowed to
+    connect to control socket
   * implied snort.-C: print out payloads with character data only (no
     hex)
   * implied snort.--create-instance-file: create instance mappings
@@ -12175,7 +12260,8 @@ libraries see the Getting Started section of the manual.
   * string snort.-i: <iface>… list of interfaces
   * string snort.--include-path: <path> where to find Lua and rule
     included files; searched before current or config directories
-  * port snort.-j: <port> to listen for Telnet connections
+  * port snort.-j: <port> to listen for Telnet connections (use 0 for
+    auto-assigned port)
   * enum snort.-k = all: <mode> checksum mode; default is all { all|
     noip|notcp|noudp|noicmp|none }
   * implied snort.--list-buffers: output available inspection buffers
@@ -12390,9 +12476,16 @@ libraries see the Getting Started section of the manual.
   * string std_connector[].redirect: output file name where printout
     is redirected
   * bool stream.allowlist_cache.enable = false: enable allowlist
-    cache
-  * bool stream.allowlist_cache.move_on_excess = false: move flows to
-    allowlist instead of removing when max flows limit reached
+    cache (requires DAQ WHITELIST support); under memory pressure,
+    allowlist entries may be reclaimed and a subsequent packet on a
+    previously-trusted flow will trigger fresh inspection
+  * int stream.allowlist_cache.max_excess_flows = 0: admission
+    threshold offset: excess-to-allowlist admission begins when total
+    flows reach stream.max_flows - max_excess_flows; 0 disables {
+    0:max32 }
+  * bool stream.allowlist_cache.move_on_excess = false: move oldest
+    eligible TCP or UDP flow to allowlist (via DAQ WHITELIST verdict)
+    instead of pruning it when flow allocation approaches max_flows
   * bool stream.drop_stale_packets = false: enable dropping of
     packets with stale timestamp
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
@@ -12828,6 +12921,10 @@ libraries see the Getting Started section of the manual.
   * dce_smb.shutdowns: total connection-oriented shutdowns (sum)
   * dce_smb.smb_client_segs_reassembled: total smb client segments
     reassembled (sum)
+  * dce_smb.smb_empty_nbss_batches: total number of empty-NBSS-frame
+    batches accumulated by the SMB PAF splitter (sum)
+  * dce_smb.smb_nbss_hdr_rejected: total number of NBSS headers with
+    a known type but an invalid flags or trailer length (sum)
   * dce_smb.smb_server_segs_reassembled: total smb server segments
     reassembled (sum)
   * dce_smb.total_encrypted_sessions: total encrypted sessions (sum)
@@ -12874,8 +12971,14 @@ libraries see the Getting Started section of the manual.
   * dce_smb.v2_crt: total number of SMBv2 create packets seen (sum)
   * dce_smb.v2_crt_tree_trkr_misng: total number of SMBv2 create
     response packets ignored due to missing tree tracker (sum)
+  * dce_smb.v2_empty_nbss_frames_consumed: total number of empty NBSS
+    frames consumed before the SMB2 header in rebuilt packets (sum)
   * dce_smb.v2_extra_file_data_err: total number of SMBv2 packets
     seen with where file data beyond file size is observed (sum)
+  * dce_smb.v2_ftracker_evicted: file trackers evicted to stay within
+    the smb memcap (sum)
+  * dce_smb.v2_ftracker_evict_live: evictions forced to discard
+    reassembly or in-progress transfer state (sum)
   * dce_smb.v2_hdr_err: total number of SMBv2 packets seen with
     corrupted hdr (sum)
   * dce_smb.v2_ignored_file_processing: total number of file
@@ -12893,6 +12996,8 @@ libraries see the Getting Started section of the manual.
   * dce_smb.v2_logoff_inv_str_sz: total number of SMBv2 logoff
     packets seen with invalid structure size (sum)
   * dce_smb.v2_logoff: total number of SMBv2 logoff (sum)
+  * dce_smb.v2_max_file_trackers: maximum file trackers held
+    concurrently on a packet thread (max)
   * dce_smb.v2_mc_file_transfers: total multichannel files
     transferred (sum)
   * dce_smb.v2_msgs_uninspected: total number of SMBv2 packets seen
@@ -12905,6 +13010,9 @@ libraries see the Getting Started section of the manual.
     seen with invalid structure size (sum)
   * dce_smb.v2_read_req_hdr_err: total number of SMBv2 read request
     packets ignored due to corrupted header (sum)
+  * dce_smb.v2_read_resp_ftrkr_misng: total number of SMBv2 read
+    response packets whose file data went uninspected because the
+    file tracker was gone (sum)
   * dce_smb.v2_read_resp_hdr_err: total number of SMBv2 read response
     packets ignored due to corrupted header (sum)
   * dce_smb.v2_read_rtrkr_misng: total number of SMBv2 read response
@@ -13016,6 +13124,8 @@ libraries see the Getting Started section of the manual.
     expected realized sessions (sum)
   * dce_tcp.tcp_expected_sessions: total tcp dynamic endpoint
     expected sessions (sum)
+  * dce_tcp.tcp_frag_budget_blocks: total flows blocked by the
+    fragment reassembly budget (sum)
   * dce_tcp.tcp_packets: total tcp packets (sum)
   * dce_tcp.tcp_sessions: total tcp sessions (sum)
   * dce_udp.acks: total connection-less acks (sum)
@@ -13123,6 +13233,7 @@ libraries see the Getting Started section of the manual.
     exceeding 255-octet limit (sum)
   * dns.max_concurrent_sessions: maximum concurrent dns sessions
     (max)
+  * dns.name_len_exceeded: total dns names truncated at limit (sum)
   * dns.packets: total packets processed (sum)
   * dns.requests: total dns requests (sum)
   * dns.responses: total dns responses (sum)
@@ -13225,13 +13336,19 @@ libraries see the Getting Started section of the manual.
   * high_availability.daq_stores: states stored via daq (sum)
   * high_availability.delete_msgs_consumed: deletion messages
     consumed (sum)
+  * high_availability.duplicate_client_segment: messages received
+    with a duplicate client segment (sum)
   * high_availability.key_mismatch: messages received with a flow key
     mismatch (sum)
+  * high_availability.missing_session_client: updates without a
+    required session client (sum)
   * high_availability.msg_length_mismatch: messages received with an
     inconsistent total length (sum)
   * high_availability.msgs_recv: total messages received (sum)
   * high_availability.msg_version_mismatch: messages received with a
     version mismatch (sum)
+  * high_availability.session_client_not_first: non-session client
+    received first without a local flow (sum)
   * high_availability.truncated_msgs: truncated messages received
     (sum)
   * high_availability.unknown_client_idx: messages received with an
@@ -13721,8 +13838,8 @@ libraries see the Getting Started section of the manual.
     sessions (max)
   * rpc_decode.oversized_records: records skipped after inspection
     depth was exceeded (sum)
-  * rpc_decode.partial_flushes: partial record serializations into the
-    alt buffer (sum)
+  * rpc_decode.partial_flushes: partial record serializations into
+    the alt buffer (sum)
   * rpc_decode.total_packets: total packets (sum)
   * s7commplus.concurrent_sessions: total concurrent s7commplus
     sessions (now)
@@ -13850,6 +13967,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * snort.remote_commands: total remote commands processed (sum)
   * snort.signals: total signals processed (sum)
+  * socks.aborted_handshakes: handshakes aborted after exceeding the
+    pre-established flush budget (sum)
   * socks.auth_failures: failed authentications (sum)
   * socks.auth_requests: authentication requests (sum)
   * socks.auth_successes: successful authentications (sum)
@@ -14040,8 +14159,8 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.established: number of sessions currently established
     (now)
   * stream_tcp.events: events generated (sum)
-  * stream_tcp.exceeded_max_bytes: number of times the maximum queued
-    byte limit was reached (sum)
+  * stream_tcp.exceeded_max_bytes: number of segments exceeding the
+    configured max seglist bytes footprint (sum)
   * stream_tcp.exceeded_max_segs: number of times the maximum queued
     segment limit was reached (sum)
   * stream_tcp.fins: number of fin packets (sum)
@@ -14889,12 +15008,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -15823,6 +15942,29 @@ HTTP reserved GZIP flags are set
 
 Too many partial flushes. Partial depth is enabled and 20 or more
 partial flushes are made before a regular flush.
+
+119:298 (http_inspect) maximum request size exceeded
+
+The size of a client request, counting the request line and headers
+but not the body, exceeds the configured max_request_size.
+
+119:299 (http_inspect) maximum request line length exceeded
+
+The length of the request line alone, not counting the terminating CR
+/LF sequence, exceeds the configured max_request_line_length.
+
+119:300 (http_inspect) invalid HTTP request line format
+
+The request line does not conform to the expected grammar: bad
+method, missing or malformed URI, malformed or unsupported
+HTTP-version, improper whitespace, or incorrect line termination.
+
+119:301 (http_inspect) invalid Content-Length or Transfer-Encoding
+header
+
+A message header contains a negative Content-Length value, or both a
+Content-Length and a Transfer-Encoding header where that combination
+is not allowed.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
@@ -17703,6 +17845,7 @@ alert is raised by the enhanced JavaScript normalizer.
     configuration
   * snort.show_plugins(): show loaded plugins
   * snort.show_config_generation(): show loaded configuration ID
+  * snort.show_control_port(): show TCP control channel port
   * snort.show_snort_cpu(): show snort cpu usage
   * snort.show_snort_packet_latency(): show snort packet latency data
   * stream.dump_flows(): dump the flow table in text format

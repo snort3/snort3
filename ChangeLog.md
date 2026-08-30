@@ -1,3 +1,111 @@
+2026-08-28: 3.12.5.0
+
+* appid: add tls host info logs
+* appid: address FIXITs in tp_\* cluster
+* appid: fix mDNS query detection, remove osvers normalization, cache pub id
+* appid: implement HTTP/2 stream end event handling and configuration limits
+* appid: move appid debug initialization earlier
+* appid: refactor AppIdServiceSubtype handling
+* appid: restore appid_peg_ids lock and guard stats readers
+* arp_spoof: add null check
+* build: address compilation warnings on Mac
+* build: address cppcheck warnings
+* codecs/ip: guard checksum header helpers against size_t length underflow
+* control: add authentication and sandbox mode
+* control: serialize local responses with stdout logs
+* cppcheck: audit Full analysis findings
+* cppcheck: clean up local diagnostics
+* cppcheck: clear remaining Full findings
+* cppcheck: const-qualify local read-only views
+* cppcheck: document conditionally used code
+* cppcheck: document intentional inherited interfaces
+* cppcheck: initialize aggregate and configuration state
+* cppcheck: initialize class members by default
+* cppcheck: make internal helpers static
+* cppcheck: prepare Snort sources for 2.21
+* cppcheck: remove per-test Catch suppressions
+* cppcheck: resolve remaining non-API fast findings
+* dce_rpc:  fix SMB1 segmentation buffer accounting underflow
+* dce_rpc: add lru pruning for ftrackers
+* dce_rpc: bound CO detection to current PDU
+* dce_rpc: bound consecutive tiny nbss pdu flushes
+* dce_rpc: cap smbv1 chained WriteAndX file data detections per message
+* dce_rpc: fix for co segmentation heap exhaustion
+* dce_rpc: fix preallocation of buffer for reamining smb_countleft
+* dce_rpc: fix smb2 ftracker_tcp use-after-free
+* dce_rpc: fix upfront buffer alloc in handle-segementation for smbv1
+* dce_rpc: remove unused  DCE_ListFindKey and DCE2_ListRemove
+* dce_rpc: suppress cppcheck in test code
+* dce_smb: fixing smb durable-reconnect file-tracker leak
+* dce_tcp: fix fragment reassembly runs uncapped detection per pdu
+* decoder: ciscometadata layer checks
+* detection: perform rate filter test before logging part
+* detection: release closed flow on defrag-rebuilt terminal packet
+* dnp3: bound zero length packet flushes
+* dnp3: inspect each dnp3 pdu individually rather than inspecting the whole payload for each pdu in it
+* dns: bound TCP splitter re-detection on short messages
+* dns: enforce name length limits in ParseDNSName
+* dump_config: clear ConfigData
+* file_api: clamped uri filename and hostnames
+* file_api: drain async captures before exit statistics
+* file_api: fix FileMemPool double-free corrupting pool queue
+* file_api: fix shared-FileContext UAF/leak/race cluster
+* file_api: fix use-after-free in FileFlows destructor on flow teardown
+* flow: bound allowlist_cache.move_on_excess growth
+* flow: publish restart events for packet-triggered restarts
+* flow: reset service event state on restart
+* flow: revert back to old behavior of adding UDP to the allowlist
+* flow_cache_test: make moved const to fix cppcheck constVariablePointer
+* ftp_telnet: Fix FTP ignore_flow memory leak
+* ftp_telnet: fix rescan in telnet normalize
+* ha: harden HA update message parser and client null-flow checks
+* http2_inspect: bound HPACK decode work by discarded header bytes
+* http2_inspect: clamp HPACK dynamic table size to a sensor-side maximum
+* http2_inspect: cleanup on discard
+* http2_inspect: document HPACK dynamic table size limit
+* http2_inspect: free reassembly buffer before overwrite on uninspected flush
+* http_inspect: bound Content-Disposition filename parser rescans
+* http_inspect: guard null interim status when archiving 100-Continue
+* http_inspect: improve buffers reliability
+* http_inspect: improve JS norm context memory handling
+* http_inspect: preserve direction separation after pipeline failure
+* http_inspect: prevent JS context leak during MIME detection
+* http_inspect: reject entire attachment when it exceeds defined limit
+* http_inspect: reset js_data buffer between attachments
+* iec104: add abort on invalid PDU length
+* ips_options: validate replace offset and length packet data size
+* js_norm: bound accumulated PDF reassembly state
+* js_norm: bound PDF array nesting depth
+* js_norm: cap JSIdentifierCtx alias entries
+* js_norm: cap PDF tokenizer JavaScript stream reference set
+* js_norm: fix coverity warning
+* js_norm: reject nested unicode-escape identifier as bad token
+* main: address build issue
+* mime: abort boundary search on reaching its maximum size
+* mime: abort if there is minimal data between boundaries that exceed a threshold
+* mime: clamp decode available value to the max size of the decode buffer
+* mms: add tpkt layer work budget management
+* mms: reject zero length ber tags
+* opcua: replace unused data buffer with metadata buffer
+* perf_monitor: refresh global stats for final summaries
+* protocols: cover Geneve layer limits
+* rna: clamp tcp_window fingerprint range to table bounds
+* rpc_decode: bound nested detection to SunRPC records
+* rpc_decode: fix quadratic cpu usage in fragmented rpc reassembly
+* sip: abort flows flooded with undersized SIP messages
+* smb: fix conn_trackers hash collision via linear probe registration
+* socks: bound pre-established handshake flushes in the splitter
+* ssh: limit PDU carving in key-exchange
+* stream_ip: fix heap overflow from unsigned underflow in FragRebuild
+* stream_ip: fix max layers for IPv6
+* stream_ip: reject fragments greater than INT16_MAX
+* stream_tcp: fall back on IDS LAST scanned overlap
+* stream_tcp: fix unsigned seq subtraction wrap in scan_data_pre_ack
+* stream_tcp: harden no-ack overlap handling
+* stream_tcp: pair session clear event with counted-establish latch
+* stream_tcp: retain service search through segment limit
+* stream_tcp: tighten midstream windows and bound reassembly queues
+
 2026-07-22: 3.12.4.0
 
 * dce_rpc: fix uid, tid, fid quadratic search for splayed list

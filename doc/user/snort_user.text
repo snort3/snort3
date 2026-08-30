@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.12.4.0 2026-07-22 12:31:25 EDT TST
+Revision 3.12.5.0 2026-08-28 18:29:30 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -75,9 +75,10 @@ Table of Contents
     5.18. Advanced Logging
     5.19. Sensitive Data Filtering
     5.20. SMTP
-    5.21. Telnet
-    5.22. Trace
-    5.23. Wizard
+    5.21. Stream Allowlist Cache
+    5.22. Telnet
+    5.23. Trace
+    5.24. Wizard
 
 6. DAQ Configuration and Modules
 
@@ -85,6 +86,12 @@ Table of Contents
     6.2. Configuration
     6.3. Interaction With Multiple Packet Threads
     6.4. DAQ Modules Included With Snort 3
+
+7. Security
+
+    7.1. Snort Process
+    7.2. Configuration Files
+    7.3. Control Channel
 
 Snorty
 
@@ -1731,6 +1738,15 @@ the available commands with help().
 To enable local telnet access on port 12345:
 
 snort --shell -j 12345 <args>
+
+To enable UNIX socket control:
+
+snort --control-socket /var/run/snort.sock <args>
+
+Note
+
+For security considerations including privilege restrictions and Lua
+sandboxing, see "Security / Control Channel" section for details.
 
 The command line interface is still under development. Suggestions
 are welcome.
@@ -4351,7 +4367,57 @@ the case of an alternating sequence of requests and responses. It
 will trigger the alert once the client issue a request before getting
 the response to a previous request.
 
-5.10.3.21. URI processing
+5.10.3.21. max_request_size
+
+http_inspect generates 119:298 when the size of a client request (the
+request line plus headers, before any body) exceeds max_request_size
+= N {-1 : 65536} (default 0). A value of 0 disables the check; -1
+means no limit.
+
+5.10.3.22. max_request_line_length
+
+http_inspect generates 119:299 when the length of the request line
+alone (not counting terminating CR/LF sequence) exceeds
+max_request_line_length = N {-1 : 49152} (default 0). A value of 0
+disables the check; -1 means no limit. For HTTP/2 traffic, the length
+is the combined length of the :method, :scheme, :authority, and :path
+pseudo-header values. The alert’s Message Detail field, however,
+echoes the full synthesized HTTP/1-style request line, including its
+trailing " HTTP/2.0" version suffix, so the string shown there is
+longer than the reported length.
+
+5.10.3.23. Validate Request Line Format
+
+http_inspect generates 119:300 when the request line does not conform
+to the expected grammar:
+
+  * the method contains a character outside the RFC token set
+  * the method is missing (the line does not begin with a token
+    followed by whitespace)
+  * the method is not all upper case
+  * the method is not recognized
+  * the URI is missing
+  * the URI contains an unescaped space
+  * there is improper or extra whitespace in the start line
+  * the HTTP-version is missing or malformed
+  * the HTTP-version uses an unsupported major version
+  * the HTTP-version has an invalid subversion
+  * the HTTP-version is not all upper case
+  * the request line is terminated incorrectly (bare LF without a
+    preceding CR, or CR without a following LF)
+  * the request uses the primitive HTTP/0.9 format (no HTTP-version
+    at all). A request whose HTTP-version field is present but too
+    badly malformed to parse as a supported version is also
+    classified as HTTP/0.9, since http_inspect cannot always
+    distinguish a missing version from a version that is present but
+    unrecognizable.
+
+This is a diagnostic alert with no configuration of its own; it fires
+during normal request-line parsing. The alert’s Message Detail field
+names the specific reason and, when available, echoes the request
+line that triggered it.
+
+5.10.3.24. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -5277,7 +5343,10 @@ normal form in multiple scripts, if they are a part of the same
 response, and that this limit is set for a single response and not a
 single script. By default, the value is set to 65536, which is the
 max allowed number of unique identifiers. The generated names are in
-the range from var_0000 to var_ffff.
+the range from var_0000 to var_ffff. This value also caps the total
+number of identifier aliases tracked over the context’s lifetime;
+once reached, further assignments trigger the identifier-overflow
+alert.
 
 5.13.2.3. max_tmpl_nest
 
@@ -6102,12 +6171,14 @@ Fields supported for HTTP:
   * info_msg - last informational reason phrase returned by the
     server
   * proxied - list with the headers associated with proxied requests
-  * orig_filenames - list with the names of the files sent by client
-  * resp_filenames - list with the names of the files sent by server
+  * orig_filenames - list with the names of the files sent by client,
+    up to the limit set for the HTTP transaction
+  * resp_filenames - list with the names of the files sent by server,
+    up to the limit set for the HTTP transaction
   * orig_mime_types - list with the content types of the files sent
-    by client
+    by client, up to the limit set for the HTTP transaction
   * resp_mime_types - list with the content types of the files sent
-    by server
+    by server, up to the limit set for the HTTP transaction
 
 Fields supported for SSH:
 
@@ -6811,7 +6882,103 @@ smtp =
 }
 
 
-5.21. Telnet
+5.21. Stream Allowlist Cache
+
+--------------
+
+The stream allowlist cache preserves flows that Snort has decided not
+to inspect further, so the DAQ can offload them via a WHITELIST
+verdict. Two entry paths lead into the allowlist LRU: legitimate
+trust decisions (via Stream::stop_inspection) and, optionally, an
+excess-driven admission path that shifts flows to the allowlist under
+memory pressure instead of hard-pruning them.
+
+5.21.1. Configuration
+
+The allowlist cache is off by default. Enable and tune it under
+stream:
+
+stream =
+{
+    max_flows = 200000,
+    allowlist_cache =
+    {
+        enable = true,
+        move_on_excess = true,
+        max_excess_flows = 10000,
+    }
+}
+
+  * enable: turns the allowlist LRU on. Requires the underlying DAQ
+    instance to advertise WHITELIST capability; otherwise the feature
+    is silently disabled for that packet thread with a warning at
+    startup.
+  * move_on_excess: when total flows approach the max_flows ceiling,
+    move the oldest eligible TCP or UDP flow to the allowlist instead
+    of hard-pruning it. The moved flow keeps its 5-tuple in the DAQ’s
+    offload path and no longer consumes Snort’s inspection budget.
+  * max_excess_flows: admission threshold offset. Excess-to-allowlist
+    admission begins when total flows reach stream.max_flows -
+    max_excess_flows. Setting max_excess_flows to 0 disables the
+    path. Setting it to a value greater than or equal to max_flows
+    also disables it (a startup warning is emitted in both cases).
+
+5.21.2. How excess admission works
+
+At each flow allocation, Snort checks whether current total flows
+have reached the trigger threshold. When it fires, Snort scans a
+small bounded window of the oldest TCP+UDP flows (the window size is
+controlled by the internal constant allowlist_admission_scan_cap) and
+moves the first eligible one (not blocked, not suspended) to the
+allowlist. If every candidate in the scan window is blocked, Snort
+rotates the head to prevent stalling and falls back to normal excess
+pruning on the next allocation. If a reclaimable expired flow is
+encountered during the scan, admission defers entirely (across both
+TCP and UDP) and lets the normal timeout / prune_idle path reclaim
+it, rather than parking a newer flow in the allowlist while a dead
+one sits at tail. Suspended or HA-standby expired flows will not be
+pruned soon, so admission continues past them.
+
+Total live flows stay bounded by max_flows. When the allowlist grows
+past its natural share and total exceeds max_flows, standard EXCESS
+pruning reclaims the oldest allowlist entry (regardless of how it got
+there) so the cache does not grow without bound.
+
+5.21.3. Trade-offs
+
+Legitimate trust flows share the allowlist LRU with excess-moved
+flows. Under sustained memory pressure, both kinds are subject to
+EXCESS pruning; a subsequent packet on a previously-trusted flow will
+then trigger fresh inspection. This is intentional: bounded total
+live flows takes priority over retention of trust decisions.
+
+Only TCP and UDP flows are admitted; other protocol types fall
+through to normal excess pruning so they keep honoring their idle
+timeouts.
+
+5.21.4. Monitoring
+
+The following stream pegs cover the feature:
+
+  * excess_to_allowlist: cumulative count of flows moved to the
+    allowlist via the excess path.
+  * excess_prunes: cumulative EXCESS-reason prunes (including
+    allowlist evictions once total exceeds max_flows).
+  * allowlist_flows: current allowlist LRU size (all origins).
+  * current_flows: total cache size; always ⇐ max_flows.
+
+5.21.5. Build-time gate
+
+The feature is compiled behind ALLOWLIST_MOVE_ON_EXCESS. It is off in
+production builds by default. Configure with
+--enable-allowlist-move-on-excess to force it on, or enable it
+implicitly via --enable-unit-tests. Snort binaries compiled without
+the flag parse allowlist_cache.move_on_excess and max_excess_flows
+without error but emit a parse warning and behave as if the feature
+were disabled.
+
+
+5.22. Telnet
 
 --------------
 
@@ -6821,7 +6988,7 @@ command sequences per RFC 854. It will also determine when a telnet
 connection is encrypted, per the use of the telnet encryption option
 per RFC 2946.
 
-5.21.1. Configuring the inspector to block exploits and attacks
+5.22.1. Configuring the inspector to block exploits and attacks
 
 ayt_attack_thresh number
 
@@ -6830,7 +6997,7 @@ the threshold number specified. This addresses a few specific
 vulnerabilities relating to bsd-based implementations of telnet.
 
 
-5.22. Trace
+5.23. Trace
 
 --------------
 
@@ -6843,7 +7010,7 @@ enable debug tracing, Snort must be configured at build time with
 wizard and snort.inspector_manager) are providing non-debug trace
 messages in normal production builds.
 
-5.22.1. Trace module
+5.23.1. Trace module
 
 The trace module is responsible for configuring traces and supports
 the following parameters:
@@ -6883,7 +7050,7 @@ The trace module supports config reloading. Also, it’s possible to
 set or clear modules traces and packet filter constraints via the
 control channel command.
 
-5.22.2. Trace module - configuring traces
+5.23.2. Trace module - configuring traces
 
 The trace module has the modules option - a table with trace
 configuration for specific modules. The following lines placed in
@@ -6965,7 +7132,7 @@ trace =
     }
 }
 
-5.22.3. Trace module - configuring packet filter constraints for
+5.23.3. Trace module - configuring packet filter constraints for
 packet related trace messages
 
 There is a capability to filter traces by the packet constraints. The
@@ -7020,7 +7187,7 @@ trace =
     }
 }
 
-5.22.4. Trace module - configuring trace output method
+5.23.4. Trace module - configuring trace output method
 
 There is a capability to configure the output method for trace
 messages. The trace module has the output option with two acceptable
@@ -7049,7 +7216,7 @@ trace =
 As a result, each trace message will be printed into syslog (the
 Snort run-mode will be ignored).
 
-5.22.5. Configuring traces via control channel command
+5.23.5. Configuring traces via control channel command
 
 There is a capability to configure module trace options and packet
 constraints via the control channel command by using a Snort shell.
@@ -7084,7 +7251,7 @@ trace.set({modules = {...}}) - set only module trace options keeping old filteri
 
 trace.set({}) - disable traces and constraints (set to empty)
 
-5.22.6. Trace messages format
+5.23.6. Trace messages format
 
 Each tracing message has a standard format:
 
@@ -7133,7 +7300,7 @@ m – minutes
 s – seconds
 S – milliseconds
 
-5.22.7. Example - Debugging rules using detection trace
+5.23.7. Example - Debugging rules using detection trace
 
 The detection engine is responsible for rule evaluation. Turning on
 the trace for it can help with debugging new rules.
@@ -7261,7 +7428,7 @@ detection:rule_eval:1: Matched rule gid:sid:rev 1:3:0
 detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
 04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow
 
-5.22.8. Example - Protocols decoding trace
+5.23.8. Example - Protocols decoding trace
 
 Turning on decode trace will print out information about the packets
 decoded protocols. Can be useful in case of tunneling.
@@ -7285,7 +7452,7 @@ decode:all:1: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, l
 decode:all:1: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
 decode:all:1: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0
 
-5.22.9. Example - Track the time packet spends in each inspector
+5.23.9. Example - Track the time packet spends in each inspector
 
 There is a capability to track which inspectors evaluate a packet,
 and how much time the inspector consumes doing so. These trace
@@ -7326,7 +7493,7 @@ snort:inspector_manager:1: post detection inspection, raw, packet 1, context 1
 snort:inspector_manager:1: end inspection, raw, packet 1, context 1, total time: 0 usec
 snort:main:1: [0] Destroying completed command RUN
 
-5.22.10. Example - trace filtering by packet constraints:
+5.23.10. Example - trace filtering by packet constraints:
 
 In snort.lua, the following lines were added:
 
@@ -7388,7 +7555,7 @@ detection:rule_eval:1: packet 4 UNK 10.1.1.2:200 10.2.1.1:100 (non-fast-patterns
 The trace messages for two last packets (numbers 5 and 6) weren’t
 printed.
 
-5.22.11. Example - configuring traces via trace.set() command
+5.23.11. Example - configuring traces via trace.set() command
 
 In snort.lua, the following lines were added:
 
@@ -7471,7 +7638,7 @@ The new configuration was applied. decode:all:1 messages aren’t
 filtered because they don’t include a packet (a packet isn’t
 well-formed at the point when the message is printing).
 
-5.22.12. Other available traces
+5.23.12. Other available traces
 
 There are more trace options supported by detection:
 
@@ -7498,7 +7665,7 @@ developer. Some are for corner cases, others for complex data
 structures.
 
 
-5.23. Wizard
+5.24. Wizard
 
 --------------
 
@@ -7511,7 +7678,7 @@ the session can be handed off to the appropriate inspector. The
 wizard is still under development; if you find you need to tweak the
 defaults please let us know.
 
-5.23.1. Wizard patterns
+5.24.1. Wizard patterns
 
 Wizard supports 3 kinds of patterns:
 
@@ -7537,7 +7704,7 @@ looks at the first arriving packet from the meta-flow. If no pattern
 matches that packet or wizard’s max_search_depth is reached, the
 meta-flow is abandoned by wizard.
 
-5.23.2. Wizard patterns - Spells
+5.24.2. Wizard patterns - Spells
 
 Spell is a text based pattern. The best area of usage - text
 protocols: http, smtp, sip, etc. Spells are:
@@ -7573,7 +7740,7 @@ contain following options:
         to_client = { '220*SMTP', '220*MAIL' }
       }
 
-5.23.3. Wizard patterns - Hexes
+5.24.3. Wizard patterns - Hexes
 
 Hexes can be used to match binary protocols: dnp3, http2, ssl, etc.
 Hexes use hexadecimal representation of the data for pattern
@@ -7597,7 +7764,7 @@ Example of a hex definition in Lua:
     to_client = { '|05 64|' }
   }
 
-5.23.4. Wizard patterns - Curses
+5.24.4. Wizard patterns - Curses
 
 Curses are internal algorithms of service identification. They are
 implemented as state machines in C++ code and can have their own
@@ -7609,7 +7776,7 @@ A list of available services can be obtained using snort
 A configuration which enables some curses:
   curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'sslv2'}
 
-5.23.5. Additional Details:
+5.24.5. Additional Details:
 
   * Note that usually more specific patterns have higher precedence.
 
@@ -7979,4 +8146,434 @@ x6F 73 74 3A 20 6C 6F 63 61 6C 68 6F 73 74 0D 0A              # ost: localhost..
 A comment indicating packet number and size precedes each packet
 dump. Note that the commands are not applicable in raw mode and have
 no effect.
+
+
+---------------------------------------------------------------------
+
+7. Security
+
+---------------------------------------------------------------------
+
+
+7.1. Snort Process
+
+--------------
+
+Snort requires elevated privileges to capture packets but should not
+run as root longer than necessary.
+
+7.1.1. Privilege Dropping
+
+Use -u and -g to drop privileges after initialization:
+
+snort -u snort -g snort -i eth0 -c snort.lua
+
+Snort starts as root to:
+
+  * Open packet capture interface
+  * Bind to privileged ports
+  * Create PID files in protected directories
+
+Then drops to specified user/group before processing traffic.
+
+7.1.2. User and Group Setup
+
+Create a dedicated non-privileged account:
+
+useradd -r -s /bin/false -M snort
+groupadd snort
+
+Grant minimal required permissions:
+
+chown snort:snort /var/log/snort
+chown snort:snort /var/run/snort
+chmod 750 /var/log/snort
+
+7.1.3. File Permissions
+
+Set restrictive umask before starting Snort:
+
+snort -m 0027 ...
+
+Or use --umask parameter. Default 0 means use system umask.
+
+7.1.4. Chroot
+
+Optionally restrict filesystem access:
+
+snort -t /var/snort/jail -u snort -g snort ...
+
+Chroot directory must contain required libraries and config files.
+Applied after initialization but before privilege drop.
+
+7.1.5. Security Recommendations
+
+  * Never run Snort as root in production
+  * Use dedicated user account (not nobody, not daemon)
+  * Restrict log directory permissions (750 or 700)
+  * Use read-only mounts for config files where possible
+  * Enable SELinux/AppArmor confinement when available
+  * Monitor Snort’s resource usage (CPU, memory, file descriptors)
+
+
+7.2. Configuration Files
+
+--------------
+
+Snort configuration files contain sensitive information and control
+detection behavior.
+
+7.2.1. File Ownership and Permissions
+
+Restrict access to configuration files:
+
+chown root:snort /etc/snort/snort.lua
+chmod 640 /etc/snort/snort.lua
+chown root:snort /etc/snort/rules/*.rules
+chmod 640 /etc/snort/rules/*.rules
+
+Only root should write to config files. Snort user needs read access
+only.
+
+7.2.2. Lua Sandbox for Config Files
+
+Restrict Lua operations during configuration loading:
+
+snort -c snort.lua --lua-sandbox lua/sandbox.lua
+
+The sandbox prevents config files from:
+
+  * Executing shell commands (os.execute, io.popen)
+  * Reading arbitrary files outside config directory
+  * Loading untrusted Lua modules
+
+Recommended for production when using external or untrusted Lua
+configurations.
+
+7.2.2.1. Sandbox File Requirements
+
+The sandbox file MUST define a global table named sandbox_env. This
+is the restricted environment in which configuration files and
+control commands execute. Snort will fail to start if sandbox_env is
+missing or not a table.
+
+Minimum valid sandbox file:
+
+sandbox_env = { }
+
+With this minimal definition, Snort will automatically add:
+
+  * Built-in control commands (help, quit, pause, resume, dump_stats,
+    etc.)
+  * Snort version constants (SNORT_VERSION, SNORT_MAJOR_VERSION,
+    etc.)
+  * Safe include() function for loading sub-configurations
+  * Whitelist management functions (snort_whitelist_append,
+    snort_whitelist_add_prefix)
+
+To allow Lua standard library functions in control commands, add them
+explicitly:
+
+sandbox_env =
+{
+    assert = assert,
+    pairs = pairs,
+    ipairs = ipairs,
+    tostring = tostring,
+    tonumber = tonumber,
+    type = type,
+    string = { format = string.format, find = string.find, ... },
+    table = { insert = table.insert, sort = table.sort, ... },
+    math = { floor = math.floor, max = math.max, ... },
+}
+
+Functions NOT in sandbox_env are inaccessible from sandboxed code.
+Omit dangerous functions (os, io, ffi, debug, loadfile, loadstring,
+require) to prevent abuse.
+
+Optionally, define create_sandbox_env() for custom initialization. It
+is called after Snort adds its built-in functions to sandbox_env:
+
+function create_sandbox_env()
+    -- sandbox_env already contains Snort commands and version constants
+    -- Add custom helpers or validation here
+end
+
+Warning
+
+Do not set a read-only metatable (__newindex) on sandbox_env inside
+create_sandbox_env(). Snort registers control commands into
+sandbox_env after this function returns, and a read-only metatable
+would block that registration.
+
+A reference sandbox file is provided at lua/sandbox.lua in the
+installation directory.
+
+Note: third-party configuration bundles may require additional
+functions beyond what the default sandbox provides. They typically
+ship their own sandbox file.
+
+7.2.2.2. Tweaks Compatibility
+
+The default sandbox does NOT expose io or os libraries. Some tweaks
+files (notably talos.lua) use io.open to check for optional files.
+Using --tweaks talos with the default sandbox will fail.
+
+To use talos tweaks with sandboxing, add io.open and io.close to your
+custom sandbox:
+
+sandbox_env =
+{
+    -- ... other safe functions ...
+    io = { open = io.open, close = io.close },
+}
+
+Only expose the minimum io functions required. Never expose io.popen
+(shell execution) or os.execute.
+
+7.2.3. Read-Only Configuration
+
+Mount config directories read-only where possible:
+
+mount -o ro,bind /etc/snort /var/snort/config
+
+Prevents runtime modification of rules and configuration.
+
+
+7.3. Control Channel
+
+--------------
+
+The control channel allows runtime interaction with Snort via Lua
+commands. Security depends on the interface type used.
+
+7.3.1. Lua Sandbox (applies to all control channels)
+
+When --lua-sandbox is specified, ALL control commands execute in the
+restricted sandbox environment, regardless of the control channel
+type (local shell, UNIX socket, or TCP socket). This provides
+defense-in-depth by preventing:
+
+  * Shell command execution (os.execute, io.popen)
+  * File I/O (io.open, loadfile, dofile)
+  * Arbitrary code loading (loadstring, require)
+  * Raw memory access (ffi)
+  * Sandbox escape via debug library
+
+The sandbox is applied uniformly to ensure consistent security across
+all control interfaces.
+
+7.3.2. Local shell
+
+Local shell mode (--shell) provides an interactive prompt on the
+console.
+
+Security model:
+
+  * Physical or SSH access to the host required
+  * User must have permission to execute snort binary
+  * Lua sandbox applies if --lua-sandbox is configured (same as other
+    control channels)
+  * Intended for development and debugging only
+
+Recommendations:
+
+  * Do not use in production with --shell exposed
+  * Use --pause with --shell to control when processing starts
+  * Shell access implies full trust in the operator
+  * Use --lua-sandbox to restrict Lua operations even for local shell
+
+7.3.3. UNIX socket
+
+UNIX socket provides local control access with multiple security
+layers.
+
+Enable UNIX socket:
+
+snort --control-socket /var/run/snort.sock
+
+7.3.3.1. Security Layers
+
+Layer 1 - File Permissions (automatic):
+
+  * Socket created with mode 0600 (owner read/write only)
+  * Prevents unauthorized users from connecting
+
+Layer 2 - Peer Credential Validation (optional):
+
+  * Validate connecting process UID/GID at accept() time
+  * Configure allowed user and group:
+
+    snort --control-socket /var/run/snort.sock \
+          --control-socket-uid snortadmin \
+          --control-socket-gid snortctl
+
+  * Root (UID 0) can always connect when UID validation enabled
+  * Rejected connections logged with peer credentials
+
+Layer 3 - Lua Sandbox (optional):
+
+  * Restrict Lua operations for control commands
+  * Apply sandbox to control channel:
+
+    snort --control-socket /var/run/snort.sock \
+          --lua-sandbox lua/sandbox.lua
+
+  * Blocks os.execute(), io.open(), ffi, require(), loadstring()
+  * Allows legitimate Snort control commands (help, pause,
+    dump_stats, etc.)
+
+Note: Challenge-response authentication (--control-secret-file) is
+NOT used for UNIX sockets. UNIX sockets rely on file permissions and
+peer credential validation, which provide sufficient protection for
+local-only connections. Challenge-response is reserved for TCP
+sockets where these OS-level protections are unavailable.
+
+7.3.3.2. Deployment Examples
+
+Basic (automatic security):
+
+snort --control-socket /var/run/snort.sock
+
+Restricted user access:
+
+snort --control-socket /var/run/snort.sock \
+      --control-socket-uid snortadmin
+
+Maximum security:
+
+snort --control-socket /var/run/snort.sock \
+      --control-socket-uid 0 \
+      --lua-sandbox lua/sandbox.lua
+
+7.3.3.3. Platform Support
+
+File permissions: All platforms.
+
+Peer credentials: Linux (SO_PEERCRED), BSD/macOS (getpeereid).
+
+Lua sandbox: All platforms.
+
+7.3.4. TCP socket
+
+TCP socket provides network control access with optional shared
+secret authentication.
+
+Enable TCP socket on localhost:
+
+snort -j 12345
+
+Note: Use port 0 to let the OS assign an available port
+automatically. The actual port is reported via the show_control_port
+() shell command and in the startup log.
+
+7.3.4.1. Security Layers
+
+Layer 1 - Network Binding:
+
+  * Binds to 127.0.0.1 (localhost only) by default - not remotely
+    accessible
+  * No encryption (plain text Lua commands)
+
+Layer 2 - Shared Secret Authentication (optional):
+
+  * Challenge-response authentication using HMAC-SHA256
+  * Protects against unauthorized connections on localhost
+  * Configure with base64-encoded shared secret file:
+
+    snort -j 12345 --control-secret-file /etc/snort/control.secret
+
+Secret file format: first line contains base64-encoded secret (16-32
+bytes recommended). Secrets shorter than 16 bytes produce a warning.
+Empty secrets are rejected. Example:
+
+openssl rand -base64 32 > /etc/snort/control.secret
+chmod 600 /etc/snort/control.secret
+
+Secret rotation: The secret file is re-read on every configuration
+reload (reload_config command or SIGHUP). To rotate the secret
+without restarting Snort:
+
+ 1. Write new secret to the file
+ 2. Issue reload_config() or send SIGHUP
+ 3. New connections will use the updated secret
+
+Authentication protocol:
+
+ 1. Client connects to control socket
+ 2. Server sends 32-byte random challenge
+ 3. Client computes HMAC-SHA256(secret, challenge)
+ 4. Client sends 32-byte HMAC response
+ 5. Server verifies HMAC and accepts/rejects connection
+
+Note: Challenge-response authentication is ONLY applied to TCP
+sockets. UNIX sockets use file permissions and peer credential
+validation instead, which are more appropriate for local-only
+connections and avoid the 1-second timeout overhead per connection.
+
+Layer 3 - Lua Sandbox (optional):
+
+  * Restrict Lua operations for control commands
+  * Apply sandbox to control channel:
+
+    snort -j 12345 --control-secret-file /etc/snort/control.secret \
+          --lua-sandbox lua/sandbox.lua
+
+7.3.4.2. Deployment Examples
+
+Development (no authentication):
+
+snort -j 12345
+
+Basic authentication:
+
+snort -j 12345 --control-secret-file /etc/snort/control.secret
+
+Maximum security:
+
+snort -j 12345 \
+      --control-secret-file /etc/snort/control.secret \
+      --lua-sandbox lua/sandbox.lua
+
+7.3.4.3. Security Considerations
+
+Shared secret authentication provides protection against:
+
+  * Unauthorized localhost connections
+  * Accidental connections from other processes
+
+Does NOT protect against:
+
+  * Network eavesdropping (no encryption)
+  * Man-in-the-middle attacks (no TLS)
+  * Root user attacks (root can read secret file and ptrace)
+  * Denial of Service: authentication handshake blocks main thread
+    for 1 second per connection. Attacker can spam connections to
+    block the main (control) thread.
+
+Recommendations:
+
+  * Always use shared secret authentication for TCP sockets
+  * Protect secret file with mode 600 (owner read/write only)
+  * Use UNIX socket (--control-socket) for local-only control instead
+    of TCP
+  * Use SSH tunneling + shared secret for remote access if TCP
+    required
+  * Rotate secrets periodically
+  * Never bind -j to 0.0.0.0 or public network interfaces
+  * Use firewall rules to restrict access to control port
+
+Known Limitations:
+
+  * Current implementation uses blocking I/O for authentication
+    handshake
+  * Each connection attempt blocks Snort’s main thread for up to 1
+    second
+  * For production environments, strongly prefer UNIX socket over TCP
+    socket
+
+Future security enhancements under consideration:
+
+  * TLS/SSL encryption
+  * Client certificate authentication
 
