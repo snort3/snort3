@@ -110,6 +110,9 @@ SfIpRet SfIp::pton(const int, const char* ) { return SFIP_SUCCESS; }
 const char* SfIp::ntop(char* buf, int) const
 { buf[0] = 0; return buf; }
 
+const char* SfIp::ntop(SfIpString buf) const
+{ buf[0] = 0; return buf; }
+
 bool ControlConn::respond(const char*, ...) { return true; }
 
 class TcpStreamTracker;
@@ -122,6 +125,7 @@ PolicySwitcher::~PolicySwitcher() { }
 
 namespace snort
 {
+Flow::Flow() { }
 Flow::~Flow() = default;
 void Flow::init(PktType) { }
 void Flow::flush(bool) { }
@@ -131,6 +135,7 @@ void Flow::free_flow_data() { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(const Packet*) { }
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
 void packet_gettimeofday(struct timeval* ) { }
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool) { }

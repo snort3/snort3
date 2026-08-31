@@ -57,7 +57,9 @@ FlowData::FlowData(unsigned u) : id(u) { }
 FlowData::~FlowData() = default;
 unsigned FlowData::create_flow_data_id() { return 0; }
 
+Flow::Flow() { }
 Flow::~Flow() { }
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() { }
 
 void FlowDataStore::set(FlowData*) { }

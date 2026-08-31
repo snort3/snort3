@@ -137,8 +137,10 @@ THREAD_LOCAL const snort::Trace* dce_smb_trace = nullptr;
 
 namespace snort
 {
+Flow::Flow() = default;
 Flow::~Flow() = default;
 FlowDataStore::~FlowDataStore() = default;
+void FlowStash::reset() { }
 
 Packet::Packet(bool)
 {

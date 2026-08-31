@@ -51,6 +51,7 @@ struct Iec104SessionData
 class Iec104FlowData: public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(Iec104FlowData)
     Iec104FlowData();
     ~Iec104FlowData() override;
 

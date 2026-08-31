@@ -28,6 +28,7 @@
 class ExtractorFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(ExtractorFlowData)
     ~ExtractorFlowData() override {}
 
     template<typename T>

@@ -166,8 +166,10 @@ namespace snort
         old_gadget->rem_ref();
     }
 
-    // Mock Flow destructor
+    // Mock Flow constructor/destructor
+    Flow::Flow() { }
     Flow::~Flow() = default;
+    void FlowStash::reset() { }
     
     // Mock Profiler
     THREAD_LOCAL bool TimeProfilerStats::enabled = false;

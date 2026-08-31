@@ -41,6 +41,7 @@ class DiscoveryFilter;
 class RNAFlow : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(RNAFlow)
     FpFingerprintState state;
 
     RNAFlow() : FlowData(inspector_id) { }

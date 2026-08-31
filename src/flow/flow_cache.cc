@@ -234,6 +234,9 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 {
     PolicySwitcher psw(flow);
 
+    // capture current usage before flush() below frees queued segments + flow data
+    const size_t mem_usage = flow->get_mem_usage();
+
     if ( !flow->was_blocked() )
     {
         flow->flush(do_cleanup);
@@ -247,6 +250,12 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
     if ( UNLIKELY(snort::PacketTracer::is_active() or snort::PacketTracer::is_daq_activated()) )
         log_flow_release(flow, reason);
 
+    // sample before reset() since reset() tears down inspector state.
+    const PegCount peak = flow->get_peak_mem_usage();
+    if ( peak > released_max_flow_mem )
+        released_max_flow_mem = peak;
+    released_total_flow_mem += mem_usage;
+
     uint8_t in_allowlist = flow->flags.in_allowlist;
     flow->reset(do_cleanup);
     prune_stats.update(reason, ( in_allowlist ? static_cast<PktType>(allowlist_lru_index) : flow->key->pkt_type ));
@@ -257,6 +266,12 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 void FlowCache::retire(Flow* flow)
 {
     PolicySwitcher psw(flow);
+
+    const PegCount peak = flow->get_peak_mem_usage();
+    if ( peak > released_max_flow_mem )
+        released_max_flow_mem = peak;
+    released_total_flow_mem += flow->get_mem_usage();
+
     flow->reset(true);
     prune_stats.update(PruneReason::NONE, flow->key->pkt_type);
     remove(flow);

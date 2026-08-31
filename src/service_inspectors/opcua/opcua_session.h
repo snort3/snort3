@@ -69,6 +69,7 @@ public:
 class OpcuaFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(OpcuaFlowData)
     OpcuaFlowData();
     ~OpcuaFlowData() override;
 

@@ -96,6 +96,12 @@ PegCount FlowControl::get_uni_ip_flows() const
 PegCount FlowControl::get_num_flows() const
 { return cache->flows_size(); }
 
+PegCount FlowControl::get_released_max_flow_mem() const
+{ return cache->get_released_max_flow_mem(); }
+
+PegCount FlowControl::get_released_total_flow_mem() const
+{ return cache->get_released_total_flow_mem(); }
+
 
 //-------------------------------------------------------------------------
 // cache foo

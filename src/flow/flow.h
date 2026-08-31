@@ -175,7 +175,7 @@ public:
         RESET,
         ALLOW
     };
-    Flow() = default;
+    Flow();
     virtual ~Flow();
 
     Flow(const Flow&) = delete;
@@ -235,6 +235,22 @@ public:
     { return stash.store(ip, sc); }
     const std::list<SfIp>* get_aux_ip_list() const
     { return stash.get_aux_ip_list(); }
+
+    void add_mem(size_t bytes)
+    {
+        mem_bytes += bytes;
+        if (mem_bytes > peak_mem_bytes)
+            peak_mem_bytes = mem_bytes;
+    }
+    void sub_mem(size_t bytes)
+    {
+        // make sure mem_bytes never drops below its sizeof(Flow) baseline
+        // (which would indicate an alloc/dealloc mismatch)
+        assert(bytes + sizeof(Flow) <= mem_bytes);
+        mem_bytes -= (bytes <= mem_bytes) ? bytes : mem_bytes;
+    }
+    size_t get_mem_usage() const { return mem_bytes; }
+    size_t get_peak_mem_usage() const { return peak_mem_bytes; }
 
     uint32_t update_session_flags(uint32_t ssn_flags)
     { return ssn_state.session_flags = ssn_flags; }
@@ -461,8 +477,10 @@ protected:
         }
     }
     DeferredTrust deferred_trust;
-    FlowStash stash;
-    FlowDataStore flow_data;
+    // owner passed at construction so accounting never null-checks; here rather
+    // than in the ctor to keep Flow default-constructible for test stubs
+    FlowStash stash{this};
+    FlowDataStore flow_data{this};
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
@@ -576,6 +594,10 @@ private:
     void release_gadget();
     std::atomic_ullong inspection_duration{0};
     uint16_t inspected_packet_count{0};
+    // baseline seeded here so it precedes stash/flow_data construction under
+    // any Flow::Flow()
+    size_t mem_bytes = sizeof(Flow);
+    size_t peak_mem_bytes = sizeof(Flow);
 
 public:
     uint64_t connection_id = 0;     // Connection ID value provided from a plugin.

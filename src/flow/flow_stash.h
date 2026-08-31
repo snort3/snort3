@@ -34,6 +34,7 @@
 
 namespace snort
 {
+class Flow;
 class StashItem;
 struct SnortConfig;
 
@@ -125,6 +126,11 @@ public:
     void get_val(StashGenericObject* &obj_val) const
     { obj_val = val.generic_obj_val; }
 
+    // Capacity of the owned string without copying it; 0 for non-string
+    // items. Used by per-flow memory accounting on the stash write path.
+    size_t get_string_capacity() const
+    { return type == STASH_ITEM_TYPE_STRING ? val.str_val->capacity() : 0; }
+
 private:
     std::string key;
     StashItemType type;
@@ -134,12 +140,13 @@ private:
 class SO_PUBLIC FlowStash
 {
 public:
-    FlowStash() = default;
+    // owner passed at construction (a stash only exists as a Flow member) so
+    // accounting paths need no null checks
+    explicit FlowStash(Flow* f) : owner_flow(f) { }
     ~FlowStash()
     { reset(); }
 
-    void reset()
-    { container.clear(); }
+    void reset();
 
     bool get(const std::string& key, int32_t& val) const;
     bool get(const std::string& key, uint32_t& val) const;
@@ -160,11 +167,14 @@ private:
     static constexpr unsigned FLOW_STASH_INCREMENTS = 7;
 
     std::vector<std::unique_ptr<StashItem>> container;
+    Flow* const owner_flow;
 
     template<typename T>
     bool get(const std::string& key, T& val, StashItemType type) const;
     template<typename T>
     void internal_store(const std::string& key, T& val);
+
+    static size_t item_mem_usage(const StashItem&);
 };
 
 }

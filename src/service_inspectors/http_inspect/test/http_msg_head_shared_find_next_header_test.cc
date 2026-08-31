@@ -51,7 +51,9 @@ namespace snort
 FlowData::FlowData(unsigned) : id(0) {}
 FlowData::~FlowData() = default;
 FlowDataStore::~FlowDataStore() = default;
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 uint32_t str_to_hash(const uint8_t*, size_t) { return 0; }
 Inspector::Inspector() {}
 

@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "flow.h"
 #include "managers/plugin_manager.h"
 
 using namespace snort;
@@ -51,12 +52,20 @@ void FlowDataStore::set(FlowData* fd)
         FlowData* lower_fd = *lower;
         if (lower_fd->get_id() == id)
         {
+            // Replacing an existing entry: drop the old object's fixed
+            // footprint before it is deleted.
+            owner_flow->sub_mem(lower_fd->size_of());
             delete lower_fd;
             *lower = fd;
         }
         else
             flow_data.emplace(lower, fd);
     }
+    // Stamp the owning flow on the attached object so it can push its own
+    // dynamic allocations, and account its fixed footprint here so the
+    // contribution is symmetric with the sub_mem in erase()/clear().
+    fd->set_flow(owner_flow);
+    owner_flow->add_mem(fd->size_of());
 }
 
 void FlowDataStore::erase(unsigned id)
@@ -67,6 +76,7 @@ void FlowDataStore::erase(unsigned id)
     if (lower != flow_data.end() && (*lower)->get_id() == id)
     {
         FlowData* lower_fd = *lower;
+        owner_flow->sub_mem(lower_fd->size_of());
         flow_data.erase(lower);
         delete lower_fd;
     }
@@ -80,6 +90,7 @@ void FlowDataStore::clear()
     {
         FlowData* fd = flow_data.back();
         flow_data.pop_back();
+        owner_flow->sub_mem(fd->size_of());
         delete fd;
     }
 }

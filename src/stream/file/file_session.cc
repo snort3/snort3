@@ -43,10 +43,16 @@ static THREAD_LOCAL ProfileStats file_ssn_stats;
 //-------------------------------------------------------------------------
 
 FileSession::FileSession(Flow* f) : Session(f)
-{ }
+{
+    if (flow)
+        flow->add_mem(sizeof(*this));
+}
 
 FileSession::~FileSession()
-{ }
+{
+    if (flow)
+        flow->sub_mem(sizeof(*this));
+}
 
 bool FileSession::setup(Packet*)
 {

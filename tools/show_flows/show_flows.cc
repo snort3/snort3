@@ -118,13 +118,13 @@ void DumpFlowsDeSerializer::deserialize(std::fstream& bin_stream, std::fstream& 
 {
     if ( dff.filter_none )
     {
-        while ( bin_stream.read(reinterpret_cast<char*>(&dfd), sizeof(DumpFlowsDescriptor)) )
+        while ( bin_stream.read(reinterpret_cast<char*>(&dfd.bin), sizeof(DumpFlowsBinaryDescriptor)) )
             dfd.print(text_stream);
     }
     else
     {
-        while ( bin_stream.read(reinterpret_cast<char*>(&dfd), sizeof(DumpFlowsDescriptor)) )
-            if ( dff.filter_flow(dfd.client_ip, dfd.server_ip, dfd.client_port, dfd.server_port, (PktType) dfd.pkt_type) )
+        while ( bin_stream.read(reinterpret_cast<char*>(&dfd.bin), sizeof(DumpFlowsBinaryDescriptor)) )
+            if ( dff.filter_flow(dfd.bin.client_ip, dfd.bin.server_ip, dfd.bin.client_port, dfd.bin.server_port, (PktType) dfd.bin.pkt_type) )
                 dfd.print(text_stream);
     }
 }

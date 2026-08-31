@@ -132,6 +132,7 @@ struct POPData
 class PopFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(PopFlowData)
     PopFlowData();
     ~PopFlowData() override;
 

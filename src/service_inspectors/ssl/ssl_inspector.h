@@ -52,6 +52,7 @@ private:
 class SslFlowData : public SslBaseFlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(SslFlowData)
     SslFlowData(const snort::Flow* flow, snort::Inspector*, const SSLData* = nullptr);
     ~SslFlowData() override;
 

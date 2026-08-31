@@ -110,6 +110,9 @@ public:
     PegCount get_uni_ip_flows() const;
     PegCount get_num_flows() const;
 
+    PegCount get_released_max_flow_mem() const;
+    PegCount get_released_total_flow_mem() const;
+
 private:
     bool set_key(snort::FlowKey*, snort::Packet*);
     unsigned process(snort::Flow*, snort::Packet*, bool new_ha_flow);

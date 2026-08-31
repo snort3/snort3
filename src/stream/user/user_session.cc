@@ -424,10 +424,16 @@ void UserSession::restart(Packet* p)
 //-------------------------------------------------------------------------
 
 UserSession::UserSession(Flow* f) : Session(f)
-{ }
+{
+    if (flow)
+        flow->add_mem(sizeof(*this));
+}
 
 UserSession::~UserSession()
-{ }
+{
+    if (flow)
+        flow->sub_mem(sizeof(*this));
+}
 
 bool UserSession::setup(Packet*)
 {

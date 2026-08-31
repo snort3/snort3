@@ -91,11 +91,15 @@ TcpSession::TcpSession(Flow* f)
 {
     tsm = TcpStateMachine::get_instance();
     tcpStats.instantiated++;
+    if (flow)
+        flow->add_mem(sizeof(*this));
 }
 
 TcpSession::~TcpSession()
 {
     clear_session(true, false, false);
+    if (flow)
+        flow->sub_mem(sizeof(*this));
 }
 
 bool TcpSession::setup(Packet* p)

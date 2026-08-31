@@ -59,7 +59,9 @@ AppIdInspector::AppIdInspector(AppIdModule&) : config(&test_app_config), ctxt(te
 namespace snort
 {
 AppIdApi appid_api;
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 AppIdSession* AppIdApi::get_appid_session(snort::Flow const&) { return nullptr; }
 
 MpseGroup::~MpseGroup() = default;

@@ -47,6 +47,8 @@
 using namespace snort;
 extern THREAD_LOCAL class FlowControl* flow_con;
 
+Flow::Flow() = default;
+
 Flow::~Flow()
 {
     PolicySwitcher ps(this);
@@ -55,6 +57,13 @@ Flow::~Flow()
 
     free_flow_data();
     delete session;
+
+    // Leak guard: every add_mem() must be balanced by a sub_mem(). By this point
+    // all tracked memory has been released -- free_flow_data() drops flow_data and
+    // the stash, delete session drops the session and its reassembly segments --
+    // and nothing below is tracked. So mem_bytes must be back at its sizeof(Flow)
+    // baseline; anything higher is an add_mem() with no matching sub_mem().
+    assert(mem_bytes == sizeof(Flow));
 
     delete_mpls_layer(mpls_client);
     delete_mpls_layer(mpls_server);

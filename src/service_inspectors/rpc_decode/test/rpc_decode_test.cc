@@ -100,6 +100,7 @@ FlowData* FlowDataStore::get(unsigned) const { return stored_flow_data; }
 void FlowDataStore::set(FlowData* fd) { stored_flow_data = fd; }
 
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 
 IpsContext::IpsContext(unsigned)
 { }

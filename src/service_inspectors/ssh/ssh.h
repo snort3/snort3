@@ -103,6 +103,7 @@ struct SSHData
 class SshFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(SshFlowData)
     SshFlowData();
     ~SshFlowData() override;
 

@@ -35,7 +35,9 @@
 
 using namespace snort;
 
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 class QuicStreamIntf: public snort::StreamFlowIntf
 {
 public:

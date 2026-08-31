@@ -228,7 +228,9 @@ void Stream::delete_flow(Flow*, PruneReason)
 
 namespace snort
 {
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 FlowDataStore::~FlowDataStore() = default;

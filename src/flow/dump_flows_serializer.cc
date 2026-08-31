@@ -34,56 +34,59 @@ using namespace snort;
 
 void DumpFlowsSerializer::initialize(const Flow& flow, const struct timeval& now)
 {
-    dfd.flow_id = flow.flow_id;
-    
+    dfd.bin.flow_id = flow.flow_id;
+
     if ( flow.flags.key_is_reversed )
     {
-        dfd.client_ip.set(flow.key->ip_h);
-        dfd.server_ip.set(flow.key->ip_l);
-        dfd.client_port = flow.key->port_h;
-        dfd.server_port = flow.key->port_l;
+        dfd.bin.client_ip.set(flow.key->ip_h);
+        dfd.bin.server_ip.set(flow.key->ip_l);
+        dfd.bin.client_port = flow.key->port_h;
+        dfd.bin.server_port = flow.key->port_l;
     }
     else
     {
-        dfd.client_ip.set(flow.key->ip_l);
-        dfd.server_ip.set(flow.key->ip_h);
-        dfd.client_port = flow.key->port_l;
-        dfd.server_port = flow.key->port_h;
+        dfd.bin.client_ip.set(flow.key->ip_l);
+        dfd.bin.server_ip.set(flow.key->ip_h);
+        dfd.bin.client_port = flow.key->port_l;
+        dfd.bin.server_port = flow.key->port_h;
     }
-     
-    dfd.instance_number = get_relative_instance_number();
-    dfd.address_space_id = flow.key->addressSpaceId;
-    dfd.pkt_type = static_cast<uint8_t>(flow.key->pkt_type);
+
+    dfd.bin.instance_number = get_relative_instance_number();
+    dfd.bin.address_space_id = flow.key->addressSpaceId;
+    dfd.bin.pkt_type = static_cast<uint8_t>(flow.key->pkt_type);
     if ( flow.key->pkt_type == PktType::TCP && flow.session )
     {
         TcpSession* tcp_session = static_cast<TcpSession*>(flow.session);
-        dfd.tcp_client_state = static_cast<uint8_t>(tcp_session->client.get_tcp_state());
-        dfd.tcp_server_state = static_cast<uint8_t>(tcp_session->server.get_tcp_state());
+        dfd.bin.tcp_client_state = static_cast<uint8_t>(tcp_session->client.get_tcp_state());
+        dfd.bin.tcp_server_state = static_cast<uint8_t>(tcp_session->server.get_tcp_state());
     }
     else
     {
-        dfd.tcp_client_state = static_cast<uint8_t>(TcpStreamTracker::TCP_MAX_STATES);
-        dfd.tcp_server_state = static_cast<uint8_t>(TcpStreamTracker::TCP_MAX_STATES);
+        dfd.bin.tcp_client_state = static_cast<uint8_t>(TcpStreamTracker::TCP_MAX_STATES);
+        dfd.bin.tcp_server_state = static_cast<uint8_t>(TcpStreamTracker::TCP_MAX_STATES);
     }
-        
-    dfd.client_pkts = flow.flowstats.client_pkts;
-    dfd.server_pkts = flow.flowstats.server_pkts;
-    dfd.client_bytes = flow.flowstats.client_bytes;
-    dfd.server_bytes = flow.flowstats.server_bytes;
-    
-    dfd.idle_time = now.tv_sec - flow.last_data_seen;
-    dfd.up_time = now.tv_sec - flow.flowstats.start_time.tv_sec;
-    dfd.remaining_time = (flow.last_data_seen + flow.idle_timeout) - now.tv_sec;
-    if ( flow.is_hard_expiration() )
-         dfd.expiration_time = abs((int)(flow.expire_time - now.tv_sec));
-    else
-         dfd.expiration_time = abs(dfd.remaining_time);
 
-    dfd.allowed_on_excess = flow.flags.allowed_on_excess;
-    dfd.in_allowlist = flow.flags.in_allowlist;
+    dfd.bin.client_pkts = flow.flowstats.client_pkts;
+    dfd.bin.server_pkts = flow.flowstats.server_pkts;
+    dfd.bin.client_bytes = flow.flowstats.client_bytes;
+    dfd.bin.server_bytes = flow.flowstats.server_bytes;
+
+    dfd.bin.idle_time = now.tv_sec - flow.last_data_seen;
+    dfd.bin.up_time = now.tv_sec - flow.flowstats.start_time.tv_sec;
+    dfd.bin.remaining_time = (flow.last_data_seen + flow.idle_timeout) - now.tv_sec;
+    if ( flow.is_hard_expiration() )
+         dfd.bin.expiration_time = abs((int)(flow.expire_time - now.tv_sec));
+    else
+         dfd.bin.expiration_time = abs(dfd.bin.remaining_time);
+
+    dfd.bin.allowed_on_excess = flow.flags.allowed_on_excess;
+    dfd.bin.in_allowlist = flow.flags.in_allowlist;
+
+    // text-only field, not part of the serialized binary record
+    dfd.flow_mem = flow.get_mem_usage();
 }
 
 void DumpFlowsSerializer::write (std::fstream& stream) const
 {
-    stream.write(reinterpret_cast<const char*>(&dfd), sizeof(DumpFlowsDescriptor));
+    stream.write(reinterpret_cast<const char*>(&dfd.bin), sizeof(DumpFlowsBinaryDescriptor));
 }

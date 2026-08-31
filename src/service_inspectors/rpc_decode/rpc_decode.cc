@@ -101,6 +101,7 @@ struct RpcSsnData
 class RpcFlowData : public FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(RpcFlowData)
     RpcFlowData();
     ~RpcFlowData() override;
 

@@ -298,6 +298,7 @@ vector<const char*> FtpResponseExtractor::get_field_names() const
 class FtpExtractorFlowData : public ExtractorFlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(FtpExtractorFlowData)
     static constexpr ServiceType type_id = ServiceType::FTP;
 
     FtpExtractorFlowData(FtpExtractor& owner, const Flow& origin)

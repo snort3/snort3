@@ -39,7 +39,9 @@ void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 
 int DetectionEngine::queue_event(unsigned, unsigned) { return 0; }
 
+Flow::Flow() { }
 Flow::~Flow() { }
+void FlowStash::reset() { }
 
 FlowData::FlowData(unsigned) : id(0) { }
 FlowData::~FlowData() { }

@@ -43,6 +43,7 @@ struct modbus_session_data_t
 class ModbusFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(ModbusFlowData)
     ModbusFlowData();
     ~ModbusFlowData() override;
 

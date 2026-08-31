@@ -29,6 +29,7 @@
 #include "tcp_segment_node.h"
 
 namespace snort { struct Packet; }
+namespace snort { class Flow; }
 
 class TcpOverlapResolver;
 class TcpOverlapState;
@@ -141,28 +142,7 @@ private:
         seg_count--;
     }
 
-    uint32_t purge()
-    {
-        int i = 0;
-
-        while ( head )
-        {
-            i++;
-            TcpSegmentNode* dump_me = head;
-            head = head->next;
-            dump_me->term();
-        }
-
-        head = tail = cur_rseg = cur_sseg = nullptr;
-        seg_count = 0;
-        flush_count = 0;
-        seg_bytes_total = 0;
-        seg_bytes_logical = 0;
-        total_bytes_queued = 0;
-        total_segs_queued = 0;
-        overlap_count = 0;
-        return i;
-    }
+    uint32_t purge();
 
 public:
     TcpSegmentNode* head = nullptr;
@@ -182,6 +162,10 @@ public:
     uint32_t overlap_count = 0;         /* overlaps encountered */
 
     TcpSession* session = nullptr;
+    // Cached session->flow, resolved once in init(). The owning flow is
+    // fixed for the session's lifetime, so the per-segment accounting
+    // hot path avoids re-chasing session->flow on every insert/delete.
+    snort::Flow* flow = nullptr;
     TcpStreamTracker* tracker = nullptr;
     TcpOverlapResolver* overlap_resolver = nullptr;
     TcpOverlapState* tos = nullptr;

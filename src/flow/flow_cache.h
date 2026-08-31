@@ -110,6 +110,8 @@ public:
     {
         prune_stats = PruneStats();
         delete_stats = FlowDeleteStats();
+        released_max_flow_mem = 0;
+        released_total_flow_mem = 0;
     }
 
     void unlink_uni(snort::Flow*);
@@ -134,6 +136,12 @@ public:
     PegCount get_lru_flow_count(uint8_t lru_idx) const;
     PegCount get_excess_to_allowlist_count() const
     { return excess_to_allowlist_count; }
+
+    PegCount get_released_max_flow_mem() const
+    { return released_max_flow_mem; }
+
+    PegCount get_released_total_flow_mem() const
+    { return released_total_flow_mem; }
 #ifdef UNIT_TEST
     size_t count_flows_in_lru(uint8_t lru_index) const;
 #endif
@@ -196,6 +204,11 @@ private:
     FlowDeleteStats delete_stats;
     uint64_t empty_lru_mask = 0;
     PegCount excess_to_allowlist_count = 0;
+
+    // flow-memory accounting, sampled at release/retire.
+    // read Flow::get_mem_usage() directly rather than these pegs for specific flow memory
+    PegCount released_max_flow_mem = 0;
+    PegCount released_total_flow_mem = 0;
 
 };
 #endif

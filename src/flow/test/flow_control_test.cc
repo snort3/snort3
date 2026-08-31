@@ -98,7 +98,9 @@ void Active::resume() { }
 void Active::set_drop_reason(char const*) { }
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
 FlowCache::~FlowCache() = default;
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
 DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;

@@ -43,6 +43,7 @@ using namespace std;
 class QuicExtractorFlowData : public ExtractorFlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(QuicExtractorFlowData)
     static constexpr ServiceType type_id = ServiceType::QUIC;
 
     QuicExtractorFlowData(QuicExtractor& owner, const Flow& origin)

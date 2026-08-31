@@ -161,6 +161,7 @@ pending-update mask is 16 bits, so a maximum of 16 clients total are allowed.
 When peers register divergent name sets the standby will hit unknown_client_idx
 or client_consume_errors counters.
 
+
 SideChannel reload limitation
 -----------------------------
 SideChannelManager is configured once at process startup (snort.cc calls
@@ -176,3 +177,67 @@ supported, but adding, removing, or repointing a side_channel{} configuration
 is not honored at reload time -- the new SideChannel definition will be
 ignored and HA will continue to use (or fail to find) the startup-time
 channel.  Changes to side_channel{} require a process restart.
+
+06/03/2026
+==== Per-Flow Memory Tracking
+
+Flow::get_mem_usage() returns a running byte count of heap allocations
+relevant to the flow. get_peak_mem_usage() returns the high water mark over the flow's
+lifetime. Both are intended to be O(1) so they can be queried often (e.g on pruning).
+
+The choice to use a push model here, rather than summing the flow's allocations on demand
+is deliberate. It allows us to query the flow's memory utilization quickly (and frequently,
+in the case of pruning) with limited perf hit, at the cost of accuracy.
+
+The count is kept in two ways:
+1) Fixed footprints which are accounted for automatically. Every FlowData object
+that's attached via set_flow_data() has its size_of() added by FlowDataStore on attach,
+and is subtracted on detach (set/erase/clear). Because the same value is being added
+and removed, this will ensure we don't drift over time and "leak" allocations.
+
+2) Dynamic footprints, which are pushed at the site of allocation. Inspectors that grow
+heap allocations can call flow->add_mem(n) at allocation, and sub_mem(n) at deallocation.
+This is for objects and buffers not covered by a FlowData size_of(). Currently pushed:
+  - the per-protocol Session object itself (sizeof(*this)), in the ctor/dtor of
+    tcp/udp/icmp/ip/file/user session (stream/*).
+  - queued TCP reassembly segments (stream/tcp/tcp_reassembly_segments.cc).
+  - HTTP decompression state (http_inspect, via the zlib/brotli allocator hooks in
+    http_compress_stream.cc).
+  - FlowStash items: the StashItem wrapper plus each item's key/string capacity, on the
+    stash write path (flow_stash.cc). A stashed generic object's own heap is the object's
+    responsibility to push.
+  - appid_ha.cc consume path repeats the sizeof(AppIdSessionApi) add that
+    allocate_session() would otherwise do, since it bypasses it.
+HTTP/HTTP2 reassembly buffers are not yet tracked.
+
+sub_mem stops at zero - if we are in a situation where allocated is less than deallocated,
+we set sub_mem to zero to avoid breaking the MAX/SUM pegs with a wrap around value.
+
+=== Adding a new FlowData subclass
+
+Put one macro (from flow_data.h) in a public/protected section:
+
+  FLOW_DATA_SIZE_OF(MyFlowData)                  // sizeof(*this)
+  FLOW_DATA_SIZE_OF_EXTRA(MyFlowData, EXTRA)     // + always-present heap stuff
+
+The EXTRA macro covers objects that this class owns for its whole lifetime, e.g
+members that are new'd at construction and freed in the destructor. 
+
+Skipping the macro isn't a build error, we let size_of() default to just sizeof(FlowData), so
+the class still works and is counted, but we undercount in this scenario.
+
+For transient buffers that are grown during packet processing, use the add_mem/sub_mem calls from
+the above section.
+
+=== Observability:
+  * dump_flow_memory_summary control (live view, stream module): walks the cache
+    reading get_mem_usage()/get_peak_mem_usage() and prints a per-protocol and ALL
+    summary (count/total/avg/cur_max/peak_max), a current-bytes histogram, and the
+    top-N flows by peak (optional arg: N, default 10).
+
+  * Stream base peg counters, sampled at release/retire (flow_cache.cc):
+    - released_max_flow_mem (MAX): largest peak_mem_usage seen at release on
+      this thread during the interval.
+    - released_total_flow_mem (SUM): cumulative get_mem_usage() released
+      across all flows.
+

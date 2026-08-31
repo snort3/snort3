@@ -315,6 +315,11 @@ public:
         );
     ~AppIdSession() override;
 
+    // Include the AppIdSessionApi built in the ctor so set_flow_data()
+    // charges it and erase()/clear() releases it on every attach path
+    // (allocate_session, HA consume, future-session realization).
+    FLOW_DATA_SIZE_OF_EXTRA(AppIdSession, sizeof(snort::AppIdSessionApi))
+
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
         AppidSessionDirection, AppIdInspector&, OdpContext&);
     static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t,

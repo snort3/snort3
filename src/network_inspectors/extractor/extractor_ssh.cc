@@ -171,6 +171,7 @@ static std::string match(const char* client_list, const std::string& server_list
 class SshExtractorFlowData : public ExtractorFlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(SshExtractorFlowData)
     static constexpr ServiceType type_id = ServiceType::SSH;
 
     SshExtractorFlowData(SshExtractor& owner, const Flow& origin)

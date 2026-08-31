@@ -44,6 +44,7 @@ struct SIPData
 class SipFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(SipFlowData)
     SipFlowData();
     ~SipFlowData() override;
 

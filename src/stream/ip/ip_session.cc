@@ -143,10 +143,16 @@ static inline void update_session(Packet* p, Flow* lws)
 //-------------------------------------------------------------------------
 
 IpSession::IpSession(Flow* f) : Session(f)
-{ }
+{
+    if (flow)
+        flow->add_mem(sizeof(*this));
+}
 
 IpSession::~IpSession()
-{ }
+{
+    if (flow)
+        flow->sub_mem(sizeof(*this));
+}
 
 void IpSession::clear()
 {

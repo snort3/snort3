@@ -822,7 +822,8 @@ void HttpMsgHeader::setup_encoding_decompression()
         return;
 
     session_data->compress[source_id] = HttpCompressStream::create(compression,
-        params->decompression_param, transaction->get_infractions(source_id), session_data->events[source_id]);
+        params->decompression_param, transaction->get_infractions(source_id),
+        session_data->events[source_id], flow);
 }
 
 void HttpMsgHeader::setup_utf_decoding()

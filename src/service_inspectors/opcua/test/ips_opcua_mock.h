@@ -39,7 +39,9 @@ FlowDataStore::~FlowDataStore() { }
 FlowData* FlowDataStore::get(unsigned) const { return ofd; }
 void FlowDataStore::set(FlowData*) { }
 
+Flow::Flow() { }
 Flow::~Flow() { }
+void FlowStash::reset() { }
 
 Module::Module(char const*, char const*, Parameter const*, bool) {}
 Module::Module(char const*, char const*) {}

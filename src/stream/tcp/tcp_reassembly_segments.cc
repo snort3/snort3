@@ -28,6 +28,7 @@
 #include "detection/detection_engine.h"
 #include "tcp_reassembly_segments.h"
 
+#include "flow/flow.h"
 #include "log/messages.h"
 #include "protocols/tcp.h"
 #include "stream/stream_log.h"
@@ -42,14 +43,43 @@
 
 using namespace snort;
 
+static inline size_t segment_mem(const TcpSegmentNode* tsn)
+{ return sizeof(TcpSegmentNode) + tsn->size; }
+
 TcpReassemblySegments::~TcpReassemblySegments()
 {
     delete tos;
 }
 
+uint32_t TcpReassemblySegments::purge()
+{
+    int i = 0;
+
+    while ( head )
+    {
+        i++;
+        TcpSegmentNode* dump_me = head;
+        head = head->next;
+        if (flow)
+            flow->sub_mem(segment_mem(dump_me));
+        dump_me->term();
+    }
+
+    head = tail = cur_rseg = cur_sseg = nullptr;
+    seg_count = 0;
+    flush_count = 0;
+    seg_bytes_total = 0;
+    seg_bytes_logical = 0;
+    total_bytes_queued = 0;
+    total_segs_queued = 0;
+    overlap_count = 0;
+    return i;
+}
+
 void TcpReassemblySegments::init(TcpSession* ssn, TcpStreamTracker* trk, Overlap::Policy pol)
 {
     session = ssn;
+    flow = ssn ? ssn->flow : nullptr;
     tracker = trk;
     overlap_resolver = TcpOverlapResolverFactory::get_instance(pol);
     if ( tos )
@@ -351,6 +381,9 @@ void TcpReassemblySegments::insert_segment_data(TcpSegmentNode* prev, TcpSegment
     total_segs_queued++;
     tcpStats.segs_queued++;
 
+    if (flow)
+        flow->add_mem(segment_mem(tsn));
+
     if ( seg_count > tcpStats.max_segs )
         tcpStats.max_segs = seg_count;
 
@@ -415,6 +448,9 @@ int TcpReassemblySegments::delete_reassembly_segment(TcpSegmentNode* tsn)
 {
     int ret;
     assert(tsn);
+
+    if (flow)
+        flow->sub_mem(segment_mem(tsn));
 
     seg_bytes_total -= tsn->size;
     seg_bytes_logical -= tsn->length;

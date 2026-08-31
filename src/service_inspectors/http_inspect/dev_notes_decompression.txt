@@ -52,3 +52,18 @@ On the final drain the library has no more buffered output, so the
 pending count is released back to the cutter as real consumption. The
 cutter emits a nonzero flush and the last section follows the normal
 reassembly path.
+
+==== Per-flow memory accounting
+
+A compress stream can hold significant heap memory that is invisible
+to sizeof(HttpFlowData): zlib's inflate window and, for brotli, the
+decoder state and ring buffer (potentially several MB). Both libraries
+allocate this through allocator hooks that we supply, so the stream
+routes every library allocation through track_alloc()/track_free(),
+which charge and credit the owning flow (see the "per flow memory
+tracking" dev notes). Because the free hook receives only a pointer,
+the stream keeps a ptr->size map so it can subtract the exact amount.
+The wrapper object plus any fixed sub-allocation it owns directly
+(zlib's z_stream) are charged once at construction and credited in the
+base destructor. The flow returns to its prior usage when the stream
+is destroyed.

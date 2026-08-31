@@ -87,6 +87,7 @@ struct CipEventData
 class CipFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(CipFlowData)
     CipFlowData();
     ~CipFlowData() override;
 

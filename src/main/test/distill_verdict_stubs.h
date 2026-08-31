@@ -245,7 +245,9 @@ NetworkPolicy* get_default_network_policy(const snort::SnortConfig*) { return nu
 NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
 IpsPolicy* get_ips_policy() { return nullptr; }
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 bool Flow::handle_allowlist() { return true; }
 FlowDataStore::~FlowDataStore() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }

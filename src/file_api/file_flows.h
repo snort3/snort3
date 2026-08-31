@@ -56,6 +56,8 @@ public:
 
     FileFlows(Flow* f) : FlowData(file_flow_data_id), flow(f) { }
     ~FileFlows() override;
+
+    FLOW_DATA_SIZE_OF(FileFlows)
     std::mutex file_flow_context_mutex;
     static void init()
     { file_flow_data_id = FlowData::create_flow_data_id(); }

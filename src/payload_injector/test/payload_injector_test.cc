@@ -61,7 +61,9 @@ void Active::block_session(snort::Packet* p, bool force)
         p->flow->set_state(Flow::FlowState::BLOCK);
 }
 void DetectionEngine::disable_all(snort::Packet*) { }
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 IpsContext::IpsContext(unsigned int) { }
 IpsContext::~IpsContext() = default;
 DataBus::DataBus() = default;

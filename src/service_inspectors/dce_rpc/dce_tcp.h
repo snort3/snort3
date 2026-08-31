@@ -99,6 +99,7 @@ enum DCE2_TcpFlowState
 class Dce2TcpFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(Dce2TcpFlowData)
     Dce2TcpFlowData();
     ~Dce2TcpFlowData() override;
 

@@ -170,6 +170,7 @@ struct dnp3_session_data_t
 class Dnp3FlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(Dnp3FlowData)
     Dnp3FlowData();
     ~Dnp3FlowData() override;
 

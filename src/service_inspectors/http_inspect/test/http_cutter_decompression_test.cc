@@ -72,7 +72,9 @@ fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 uint32_t str_to_hash(const uint8_t*, size_t) { return 0; }
 FlowData* FlowDataStore::get(unsigned) const { return nullptr; }
 void FlowDataStore::set(FlowData*) { }
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 unsigned DataBus::get_id(PubKey const&) { return 0; }
 void DataBus::publish(unsigned int, unsigned int, DataEvent&, Flow*) { }
 HttpTransactionEndEvent::HttpTransactionEndEvent(const HttpTransaction* const trans)
@@ -150,6 +152,27 @@ THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
 TEST_GROUP_BASE(cl_cutter_decompression_test, HttpDecompressionFixture)
 {
 };
+
+// Verify per-flow memory accounting is symmetric for the zlib path: zlib's
+// internal inflate window is routed through our zalloc/zfree hooks, so it is
+// charged to the flow on init and returned on destruction. Other tests pass a
+// null flow (no-op path); this one passes the fixture's real flow.
+TEST(cl_cutter_decompression_test, mem_accounting_symmetry)
+{
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    const size_t baseline = flow->get_mem_usage();
+
+    auto* const tracked = HttpCompressStream::create(CMP_DEFLATE,
+        params.decompression_param, infractions, &events, flow);
+
+    // wrapper + z_stream + zlib's inflate window are all charged by now
+    CHECK(flow->get_mem_usage() > baseline + sizeof(*tracked));
+
+    delete tracked;
+    CHECK_EQUAL(baseline, flow->get_mem_usage());
+}
 
 TEST(cl_cutter_decompression_test, long_body_deflate_overrun)
 {

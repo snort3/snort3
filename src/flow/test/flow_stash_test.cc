@@ -24,6 +24,7 @@
 
 #include <string>
 
+#include "flow/flow.h"
 #include "flow/flow_stash.h"
 #include "main/snort_config.h"
 #include "utils/util.h"
@@ -65,15 +66,25 @@ char* snort_strdup(const char* str)
     memcpy(p, str, n);
     return p;
 }
+
+// stash takes an owning flow at construction; only the inline add_mem()/
+// sub_mem() are exercised, so bare ctor/dtor stubs suffice
+Flow::Flow() { }
+Flow::~Flow() = default;
+FlowDataStore::~FlowDataStore() = default;
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
+void FlowDataStore::clear() { }
 }
 
 TEST_GROUP(stash_tests)
-{ };
+{
+    Flow flow;
+};
 
 // Stash tests
 TEST(stash_tests, new_int32_item)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", 10);
 
@@ -85,7 +96,7 @@ TEST(stash_tests, new_int32_item)
 
 TEST(stash_tests, update_int32_item)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", 10);
     stash.store("item_1", 20);
@@ -98,7 +109,7 @@ TEST(stash_tests, update_int32_item)
 
 TEST(stash_tests, new_uint32_item)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", 10u);
 
@@ -110,7 +121,7 @@ TEST(stash_tests, new_uint32_item)
 
 TEST(stash_tests, update_uint32_item)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", 10u);
     stash.store("item_1", 20u);
@@ -123,7 +134,7 @@ TEST(stash_tests, update_uint32_item)
 
 TEST(stash_tests, new_str_item_ref)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", "value_1");
 
@@ -135,7 +146,7 @@ TEST(stash_tests, new_str_item_ref)
 
 TEST(stash_tests, new_str_item_ptr)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", new string("value_1"));
 
@@ -147,7 +158,7 @@ TEST(stash_tests, new_str_item_ptr)
 
 TEST(stash_tests, update_str_item)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", "value_1");
     stash.store("item_1", new string("value_2"));
@@ -160,7 +171,7 @@ TEST(stash_tests, update_str_item)
 
 TEST(stash_tests, non_existent_item)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
 
     stash.store("item_1", 10);
 
@@ -171,7 +182,7 @@ TEST(stash_tests, non_existent_item)
 
 TEST(stash_tests, new_generic_object)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
     StashGenericObject *test_object = new StashGenericObject;
 
     stash.store("item_1", test_object);
@@ -183,7 +194,7 @@ TEST(stash_tests, new_generic_object)
 
 TEST(stash_tests, update_generic_object)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
     StashGenericObject *test_object = new StashGenericObject;
     stash.store("item_1", test_object);
 
@@ -197,14 +208,14 @@ TEST(stash_tests, update_generic_object)
 
 TEST(stash_tests, non_existent_generic_object)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
     StashGenericObject *retrieved_object;
     CHECK_FALSE(stash.get("item_1", retrieved_object));
 }
 
 TEST(stash_tests, mixed_items)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
     StashGenericObject *test_object = new StashGenericObject;
 
     stash.store("item_1", 10);
@@ -229,7 +240,7 @@ TEST(stash_tests, mixed_items)
 
 TEST(stash_tests, store_ip)
 {
-    FlowStash stash;
+    FlowStash stash(&flow);
     SfIp ip;
     CHECK(ip.set("1.1.1.1") == SFIP_SUCCESS);
 
@@ -260,6 +271,35 @@ TEST(stash_tests, store_ip)
     CHECK_TRUE(stash.store(ip, nullptr));
     CHECK_FALSE(stash.store(ip, nullptr));
     CHECK_FALSE(stash.store(ip3, nullptr));
+}
+
+TEST(stash_tests, mem_accounting_round_trip)
+{
+    const size_t baseline = flow.get_mem_usage();
+
+    {
+        FlowStash stash(&flow);
+        int32_t val = 10;
+
+        stash.store("item_1", val);
+        const size_t one_item = flow.get_mem_usage();
+        CHECK(one_item > baseline);
+
+        // replacing a key is net zero: the old item is subtracted before the
+        // new one is added
+        stash.store("item_1", val);
+        CHECK_EQUAL(one_item, flow.get_mem_usage());
+
+        // replacing with a shorter string must shrink the total
+        stash.store("item_2", "a considerably longer string value");
+        const size_t long_str = flow.get_mem_usage();
+        stash.store("item_2", "tiny");
+        CHECK(flow.get_mem_usage() < long_str);
+    }
+
+    // every add_mem() is matched by a sub_mem() once the stash goes away
+    CHECK_EQUAL(baseline, flow.get_mem_usage());
+    CHECK(flow.get_peak_mem_usage() >= flow.get_mem_usage());
 }
 
 int main(int argc, char** argv)

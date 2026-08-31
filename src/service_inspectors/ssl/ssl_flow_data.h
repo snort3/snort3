@@ -51,6 +51,7 @@ namespace snort
 class SO_PUBLIC SslBaseFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(SslBaseFlowData)
     SslBaseFlowData(snort::Inspector* h = nullptr) : snort::FlowData(inspector_id)
     { handler = h; }
 

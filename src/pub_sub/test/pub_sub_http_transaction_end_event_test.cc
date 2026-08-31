@@ -49,7 +49,9 @@ FlowData::FlowData(unsigned) : id(0) { }
 FlowData::~FlowData() = default;
 FlowData* FlowDataStore::get(uint32_t) const { return nullptr; }
 void FlowDataStore::set(FlowData*) { }
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
 unsigned DataBus::get_id(PubKey const&) { return 0; }
 void DataBus::publish(unsigned int, unsigned int, DataEvent&, Flow*) { }

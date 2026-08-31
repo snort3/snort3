@@ -79,7 +79,9 @@ void Flow::set_service(Packet* packet, const char* new_service)
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_SERVICE_CHANGE, packet);
 }
 
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
 
 void Flow::release_gadget()

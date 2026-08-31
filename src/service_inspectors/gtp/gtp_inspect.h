@@ -38,6 +38,7 @@ struct GTP_Roptions
 class GtpFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(GtpFlowData)
     GtpFlowData();
     ~GtpFlowData() override;
 

@@ -126,6 +126,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
         );
     is_session_monitored(asd->flags, p, inspector);
     asd->flow = p->flow;
+    asd->set_flow(p->flow);
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->snort_protocol_id = asd->config.snort_proto_ids[PROTO_INDEX_UNSYNCHRONIZED];
 

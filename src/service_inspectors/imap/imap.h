@@ -190,6 +190,7 @@ struct IMAPData
 class ImapFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(ImapFlowData)
     ImapFlowData();
     ~ImapFlowData() override;
 

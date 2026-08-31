@@ -70,7 +70,9 @@ FlowDataStore::~FlowDataStore() = default;
 FlowData* FlowDataStore::get(unsigned) const { return nullptr; }
 void FlowDataStore::set(FlowData*) {}
 
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 
 Packet::Packet(bool)
     : flow(nullptr), packet_flags(0), xtradata_mask(0), proto_bits(0), alt_dsize(0), num_layers(0),

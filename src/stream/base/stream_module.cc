@@ -441,11 +441,40 @@ static int dump_flows_summary(lua_State* L)
     return 0;
 }
 
+static int dump_flow_memory_summary(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    const Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
+
+    if (!inspector)
+    {
+        LogRespond(ctrlcon, "Dump flows requires stream to be configured\n");
+        return -1;
+    }
+
+    unsigned top_n = luaL_optint(L, 1, 10);
+    if ( top_n < 1 or top_n > 1000 )
+    {
+        LogRespond(ctrlcon, "Invalid top_n value: %u.  Value must be between 1 - 1000\n", top_n);
+        return -1;
+    }
+
+    // walk all flows; the base class owns and frees the filter
+    DumpFlowsFilter* dff = new DumpFlowsFilterAnd(false);
+    DumpFlowMemSummary* cmd = new DumpFlowMemSummary(ctrlcon, dff, top_n);
+
+    LogRespond(ctrlcon, "== dumping flow memory summary\n");
+    main_broadcast_command(cmd, ctrlcon);
+    return 0;
+}
+
 static const Command stream_cmds[] =
 {
     { "dump_flows", dump_flows, nullptr, "dump the flow table in text format" },
     { "dump_flows_binary", dump_flows_binary, nullptr, "dump the flow table in binary format" },
     { "dump_flows_summary", dump_flows_summary, nullptr, "dump flow table summary" },
+    { "dump_flow_memory_summary", dump_flow_memory_summary, nullptr,
+      "summarize live per-flow memory usage (optional arg: top-N count)" },
     { nullptr, nullptr, nullptr, nullptr }
 };
 

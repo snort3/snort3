@@ -26,12 +26,36 @@
 
 #include <cassert>
 
+#include "flow.h"
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
 #include "pub_sub/auxiliary_ip_event.h"
 
 using namespace snort;
 using namespace std;
+
+size_t FlowStash::item_mem_usage(const StashItem& item)
+{
+    size_t total = sizeof(StashItem) + item.get_key().capacity();
+    if (item.get_type() == STASH_ITEM_TYPE_STRING)
+        total += sizeof(string) + item.get_string_capacity();
+    // For STASH_ITEM_TYPE_GENERIC_OBJECT we account for the wrapper only; the
+    // payload's own footprint is not tracked (no size_of() on StashGenericObject).
+    return total;
+}
+
+void FlowStash::reset()
+{
+    // Items from the stash are accounted for and dropped here. The vector's
+    // bucket capacity is intentionally retained: free_flow_data() runs
+    // on the flow-reuse path (Flow::restart) too, so keeping the
+    // capacity avoids re-allocation. The bucket array itself is not tracked.
+    for (const auto& up : container)
+        if (up)
+            owner_flow->sub_mem(item_mem_usage(*up));
+
+    container.clear();
+}
 
 bool FlowStash::get(const string& key, int32_t& val) const
 {
@@ -114,10 +138,14 @@ void FlowStash::internal_store(const string& key, T& val)
     {
         unique_ptr<StashItem>& lower_item = *lower;
         if (lower_item->get_key() == key)
+        {
+            owner_flow->sub_mem(item_mem_usage(*lower_item));
             lower_item.reset(new_item);
+        }
         else
             container.emplace(lower, new_item);
     }
+    owner_flow->add_mem(item_mem_usage(*new_item));
 }
 
 #define STASH_AUX_IP "aux_ip"

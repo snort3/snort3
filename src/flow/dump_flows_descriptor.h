@@ -317,13 +317,14 @@ public:
         return true;
     }
 };
-class DumpFlowsDescriptor
+// Wire format for binary flow dumps. This struct is serialized as a raw
+// byte image, so its layout is an external contract: any change to field
+// order, type, or size alters the on-wire format that downstream consumers
+// parse. Keep this struct stable; add console-only fields to the text
+// descriptor instead.
+struct DumpFlowsBinaryDescriptor
 {
-public:
-    DumpFlowsDescriptor() = default;
-    ~DumpFlowsDescriptor() = default;
-
-    uint32_t flow_id = 0; 
+    uint32_t flow_id = 0;
     snort::SfIp client_ip;
     snort::SfIp server_ip;
     uint16_t client_port = 0;
@@ -343,6 +344,23 @@ public:
     int remaining_time = 0;
     bool allowed_on_excess = false;
     bool in_allowlist = false;
+};
+
+// Size is ABI-dependent: 128 bytes on 64-bit, 116 on 32-bit. This assert is a
+// tripwire so a layout change can't slip through unnoticed.
+static_assert(sizeof(DumpFlowsBinaryDescriptor) == (sizeof(void*) == 8 ? 128 : 116),
+    "binary flow record format may have changed; ensure all consumers are updated");
+
+class DumpFlowsDescriptor
+{
+public:
+    DumpFlowsDescriptor() = default;
+    ~DumpFlowsDescriptor() = default;
+
+    DumpFlowsBinaryDescriptor bin;
+
+    // text-only fields below; these are never serialized to the binary dump
+    size_t flow_mem = 0;
 
     void print(std::fstream& text_stream) const
     {
@@ -351,64 +369,65 @@ public:
         char dip[INET6_ADDRSTRLEN];
         dip[0] = 0;
 
-        if ( !inet_ntop(client_ip.get_family(),  client_ip.get_ptr(), sip, sizeof(sip)) )
+        if ( !inet_ntop(bin.client_ip.get_family(),  bin.client_ip.get_ptr(), sip, sizeof(sip)) )
         {
             text_stream << "inet_ntop on src ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl;
             return;
         }
 
-        if ( !inet_ntop(server_ip.get_family(),  server_ip.get_ptr(), dip, sizeof(dip)) )
+        if ( !inet_ntop(bin.server_ip.get_family(),  bin.server_ip.get_ptr(), dip, sizeof(dip)) )
         {
-           text_stream << "inet_ntop on dst ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl; 
+           text_stream << "inet_ntop on dst ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl;
             return;
         }
 
         std::stringstream proto;
         std::stringstream out;
-        
-        out << "Flow ID: " << flow_id << " ";
-        switch ( static_cast<PktType>(pkt_type) )
+
+        out << "Flow ID: " << bin.flow_id << " ";
+        switch ( static_cast<PktType>(bin.pkt_type) )
         {
             case PktType::IP:
-                out << "Instance-ID: " << instance_number << " IP " << address_space_id << ": " << sip << " " << dip;
+                out << "Instance-ID: " << bin.instance_number << " IP " << bin.address_space_id << ": " << sip << " " << dip;
                 break;
 
             case PktType::ICMP:
-                out << "Instance-ID: " << instance_number << " ICMP " << address_space_id << ": " << sip 
-                    << " type " << client_port << " " << dip;
+                out << "Instance-ID: " << bin.instance_number << " ICMP " << bin.address_space_id << ": " << sip
+                    << " type " << bin.client_port << " " << dip;
                 break;
 
             case PktType::TCP:
-                out << "Instance-ID: " << instance_number << " TCP " << address_space_id << ": " << sip
-                    << "/" << client_port << " " << dip << "/" << server_port;
-                
-                proto << " state client " << stream_tcp_state_to_str(tcp_client_state)
-                    << " server " << stream_tcp_state_to_str(tcp_server_state);
-                
+                out << "Instance-ID: " << bin.instance_number << " TCP " << bin.address_space_id << ": " << sip
+                    << "/" << bin.client_port << " " << dip << "/" << bin.server_port;
+
+                proto << " state client " << stream_tcp_state_to_str(bin.tcp_client_state)
+                    << " server " << stream_tcp_state_to_str(bin.tcp_server_state);
+
                 break;
 
             case PktType::UDP:
-                out << "Instance-ID: " << instance_number << " UDP " << address_space_id << ": " << sip << "/" << client_port << " "
-                    << dip << "/" << server_port;
+                out << "Instance-ID: " << bin.instance_number << " UDP " << bin.address_space_id << ": " << sip << "/" << bin.client_port << " "
+                    << dip << "/" << bin.server_port;
                 break;
 
             default:
                 assert(false);
         }
 
-        std::string display_str = ( remaining_time < 0 ) ?  "s, timed out for " : "s, timeout in ";
-        out << " pkts/bytes client " << client_pkts << "/" << client_bytes
-            << " server " << server_pkts << "/" << server_bytes
-            << " idle " << idle_time << "s, uptime " << up_time << display_str;
-        std::string t = timeout_to_str(expiration_time);
+        std::string display_str = ( bin.remaining_time < 0 ) ?  "s, timed out for " : "s, timeout in ";
+        out << " pkts/bytes client " << bin.client_pkts << "/" << bin.client_bytes
+            << " server " << bin.server_pkts << "/" << bin.server_bytes
+            << " idle " << bin.idle_time << "s, uptime " << bin.up_time << display_str;
+        std::string t = timeout_to_str(bin.expiration_time);
         out << t;
 
         std::string allow_s;
-        if ( allowed_on_excess )
+        if ( bin.allowed_on_excess )
             allow_s = " (allowlist on excess)";
-        else if ( in_allowlist )
+        else if ( bin.in_allowlist )
             allow_s = " (allowlist)";
 
+        out << " flow_mem " << flow_mem << " bytes";
         text_stream << out.str() << proto.str() << allow_s << std::endl;
     }   
 };

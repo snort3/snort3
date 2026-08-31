@@ -146,6 +146,7 @@ public:
 class TpktFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(TpktFlowData)
     TpktFlowData();
     ~TpktFlowData() override;
 

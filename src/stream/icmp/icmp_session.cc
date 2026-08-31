@@ -188,10 +188,16 @@ static int ProcessIcmpUnreach(Packet* p)
 //-------------------------------------------------------------------------
 
 IcmpSession::IcmpSession(Flow* f) : Session(f)
-{ }
+{
+    if (flow)
+        flow->add_mem(sizeof(*this));
+}
 
 IcmpSession::~IcmpSession()
-{ }
+{
+    if (flow)
+        flow->sub_mem(sizeof(*this));
+}
 
 bool IcmpSession::setup(Packet*)
 {

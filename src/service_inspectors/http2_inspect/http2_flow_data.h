@@ -57,6 +57,12 @@ public:
     static unsigned inspector_id;
     static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
 
+    // infractions[]/events[] are allocated for the whole object lifetime
+    // and so are part of the fixed footprint the store accounts via
+    // size_of(). Transient frame buffers are not currently tracked.
+    FLOW_DATA_SIZE_OF_EXTRA(Http2FlowData,
+        2 * sizeof(Http2Infractions) + 2 * sizeof(Http2EventGen))
+
     // Used by http_inspect to store its stuff
     HttpFlowData* get_hi_flow_data();
     void set_hi_flow_data(HttpFlowData* flow);

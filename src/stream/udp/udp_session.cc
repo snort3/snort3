@@ -66,10 +66,16 @@ static void UdpSessionCleanup(const Flow* lwssn)
 //-------------------------------------------------------------------------
 
 UdpSession::UdpSession(Flow* f) : Session(f)
-{ }
+{
+    if (flow)
+        flow->add_mem(sizeof(*this));
+}
 
 UdpSession::~UdpSession()
-{ }
+{
+    if (flow)
+        flow->sub_mem(sizeof(*this));
+}
 
 bool UdpSession::setup(Packet* p)
 {

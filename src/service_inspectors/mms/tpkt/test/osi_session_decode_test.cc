@@ -43,7 +43,9 @@ Packet::~Packet() = default;
 FlowData::FlowData(unsigned u) : id(u) { }
 FlowData::~FlowData() = default;
 
+Flow::Flow() { }
 Flow::~Flow() { }
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() { }
 }
 

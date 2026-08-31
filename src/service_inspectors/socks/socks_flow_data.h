@@ -288,6 +288,7 @@ struct SocksAddress
 class SocksFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(SocksFlowData)
     SocksFlowData();
     ~SocksFlowData() noexcept override;
 

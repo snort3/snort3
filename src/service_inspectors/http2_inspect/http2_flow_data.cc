@@ -55,6 +55,7 @@ Http2FlowData::Http2FlowData(Flow* flow_) :
                         infractions[SRC_SERVER]) },
     data_cutter { Http2DataCutter(this, SRC_CLIENT), Http2DataCutter(this, SRC_SERVER) }
 {
+    // Memory accounting: see FLOW_DATA_SIZE_OF in the header.
     static Http2FlowStreamIntf h2_stream;
     if (hi != nullptr)
     {

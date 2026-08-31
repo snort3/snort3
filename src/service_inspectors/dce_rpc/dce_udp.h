@@ -189,6 +189,7 @@ struct DCE2_UdpSsnData
 class Dce2UdpFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(Dce2UdpFlowData)
     Dce2UdpFlowData();
     ~Dce2UdpFlowData() override;
 

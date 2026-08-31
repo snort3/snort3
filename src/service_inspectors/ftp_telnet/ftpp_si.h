@@ -100,6 +100,7 @@ struct TELNET_SESSION
 class TelnetFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(TelnetFlowData)
     TelnetFlowData();
     ~TelnetFlowData() override;
 
@@ -191,6 +192,7 @@ void FTPFreesession(FTP_SESSION*);
 class FtpFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(FtpFlowData)
     FtpFlowData();
     ~FtpFlowData() override;
 
@@ -248,6 +250,7 @@ inline void ftp_unlink_datassn(FTP_SESSION* ctrl)
 class FtpDataFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(FtpDataFlowData)
     FtpDataFlowData(snort::Packet*);
     ~FtpDataFlowData() override;
 

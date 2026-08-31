@@ -45,7 +45,10 @@ const SnortConfig* SnortConfig::get_conf()
 
 static StreamSplitter* next_splitter = nullptr;
 
+Flow::Flow() { }
 Flow::~Flow() = default;
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
+void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
 Packet::Packet(bool) { }
 Packet::~Packet() = default;

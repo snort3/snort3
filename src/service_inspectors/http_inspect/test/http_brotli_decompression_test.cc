@@ -63,7 +63,9 @@ uint32_t str_to_hash(const uint8_t*, size_t) { return 0; }
 FlowDataStore::~FlowDataStore() = default;
 FlowData* FlowDataStore::get(unsigned) const { return nullptr; }
 void FlowDataStore::set(FlowData*) { }
+Flow::Flow() { }
 Flow::~Flow() = default;
+void FlowStash::reset() { }
 
 unsigned DataBus::get_id(PubKey const&) { return 0; }
 void DataBus::publish(unsigned int, unsigned int, DataEvent&, Flow*) { }
@@ -343,6 +345,30 @@ TEST(brotli_decompression_test, high_expansion_overrun)
         false, infractions, &events);
     CHECK_FALSE(result.has_value());
     CHECK_EQUAL(0, dst_size);
+}
+
+// Verify per-flow memory accounting is symmetric: creating a stream bound to
+// a flow charges the wrapper plus the brotli decoder state, and destroying it
+// returns the flow to its starting usage. The other tests pass a null flow, so
+// they exercise only the no-op path; this one passes the fixture's real flow.
+TEST(brotli_decompression_test, mem_accounting_symmetry)
+{
+    const size_t baseline = flow->get_mem_usage();
+
+    auto* const tracked = HttpCompressStream::create(CMP_BROTLI,
+        params.decompression_param, infractions, &events, flow);
+
+    // wrapper footprint is charged at construction
+    CHECK(flow->get_mem_usage() >= baseline + sizeof(*tracked));
+
+    // decoder state is allocated lazily through the tracked allocator
+    const auto result = tracked->decompress(basic, std::size(basic), dst, dst_size,
+        true, infractions, &events);
+    CHECK(result.has_value());
+    CHECK(flow->get_mem_usage() > baseline + sizeof(*tracked));
+
+    delete tracked;
+    CHECK_EQUAL(baseline, flow->get_mem_usage());
 }
 
 int main(int argc, char** argv)

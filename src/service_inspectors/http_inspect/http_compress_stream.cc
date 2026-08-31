@@ -23,12 +23,16 @@
 
 #include "http_compress_stream.h"
 
+#include <cstddef>
+
+#include "flow/flow.h"
 #include "utils/util.h"
 
 #include "http_common.h"
 
 using namespace HttpEnums;
 using namespace HttpCommon;
+using namespace snort;
 
 bool HttpCompressStream::is_high_expansion(size_t consumed, size_t produced) const
 {
@@ -38,14 +42,63 @@ bool HttpCompressStream::is_high_expansion(size_t consumed, size_t produced) con
     return produced > consumed * max_expansion_ratio;
 }
 
-ZlibStream::ZlibStream(CompressId id, int32_t max_ratio)
-    : HttpCompressStream(id, max_ratio)
+// Each block carries a size_t header holding its own size; the returned pointer
+// is past the header. track_free() recovers the size from the header, so no
+// ptr->size map is needed. The header is max_align_t-wide to keep the returned
+// pointer aligned to snort_alloc()'s guarantee.
+static constexpr size_t alloc_header_size =
+    alignof(std::max_align_t) > sizeof(size_t) ? alignof(std::max_align_t) : sizeof(size_t);
+
+void* HttpCompressStream::track_alloc(size_t bytes)
+{
+    void* const base = snort_alloc(bytes + alloc_header_size);
+    *static_cast<size_t*>(base) = bytes;
+    if ( owner_flow )
+        owner_flow->add_mem(bytes + alloc_header_size);
+    return static_cast<uint8_t*>(base) + alloc_header_size;
+}
+
+void HttpCompressStream::track_free(void* address)
+{
+    if ( address == nullptr )
+        return;
+    void* const base = static_cast<uint8_t*>(address) - alloc_header_size;
+    const size_t bytes = *static_cast<size_t*>(base);
+    if ( owner_flow )
+        owner_flow->sub_mem(bytes + alloc_header_size);
+    snort_free(base);
+}
+
+void HttpCompressStream::account_fixed_footprint(size_t bytes)
+{
+    fixed_footprint = bytes;
+    if ( owner_flow )
+        owner_flow->add_mem(bytes);
+}
+
+HttpCompressStream::~HttpCompressStream()
+{
+    // Subclass destructors free their library state through track_free(), so by
+    // the time we get here only the fixed footprint remains to be released.
+    if ( owner_flow )
+        owner_flow->sub_mem(fixed_footprint);
+}
+
+void* ZlibStream::zlib_alloc(void* opaque, unsigned items, unsigned size)
+{ return static_cast<ZlibStream*>(opaque)->track_alloc((size_t)items * size); }
+
+void ZlibStream::zlib_free(void* opaque, void* address)
+{ static_cast<ZlibStream*>(opaque)->track_free(address); }
+
+ZlibStream::ZlibStream(CompressId id, int32_t max_ratio, Flow* flow)
+    : HttpCompressStream(id, max_ratio, flow)
     , compress_stream { nullptr }
     , gzip_header_bytes_processed { 0 }
     , gzip_state { GZIP_TBD }
     , gzip { id == CMP_GZIP }
 {
     assert(id == CMP_GZIP or id == CMP_DEFLATE);
+    account_fixed_footprint(sizeof(ZlibStream) + sizeof(z_stream));
 }
 
 bool ZlibStream::init()
@@ -53,9 +106,9 @@ bool ZlibStream::init()
     assert(compress_stream == nullptr);
 
     compress_stream = new z_stream;
-    compress_stream->zalloc = Z_NULL;
-    compress_stream->zfree = Z_NULL;
-    compress_stream->opaque = Z_NULL;
+    compress_stream->zalloc = zlib_alloc;
+    compress_stream->zfree = zlib_free;
+    compress_stream->opaque = this;
     compress_stream->next_in = Z_NULL;
     compress_stream->avail_in = 0;
 
@@ -305,24 +358,26 @@ void BrotliStream::on_metadata_chunk(void*, const uint8_t*, [[maybe_unused]] siz
     debug_logf(http_trace, TRACE_COMPRESS, nullptr, "Compress: brotli metadata chunk, size %zu\n", size);
 }
 
-void* BrotliStream::brotli_alloc(void*, size_t size)
+void* BrotliStream::brotli_alloc(void* opaque, size_t size)
 {
     debug_logf(http_trace, TRACE_COMPRESS, nullptr, "Compress: allocated %zu\n", size);
-    return snort_alloc(size);
+    return static_cast<BrotliStream*>(opaque)->track_alloc(size);
 }
 
-void BrotliStream::brotli_free(void*, void* address)
+void BrotliStream::brotli_free(void* opaque, void* address)
 {
     debug_logf(http_trace, TRACE_COMPRESS, nullptr, "Compress: freed memory\n");
-    snort_free(address);
+    static_cast<BrotliStream*>(opaque)->track_free(address);
 }
 
-BrotliStream::BrotliStream(int32_t max_ratio)
-    : HttpCompressStream(CMP_BROTLI, max_ratio)
+BrotliStream::BrotliStream(int32_t max_ratio, Flow* flow)
+    : HttpCompressStream(CMP_BROTLI, max_ratio, flow)
     , state { nullptr }
     , pending { 0 }
     , produced { 0 }
-{ }
+{
+    account_fixed_footprint(sizeof(BrotliStream));
+}
 
 BrotliStream::~BrotliStream()
 {
@@ -338,7 +393,7 @@ bool BrotliStream::init()
 {
     assert(state == nullptr);
 
-    state = BrotliDecoderCreateInstance(brotli_alloc, brotli_free, nullptr);
+    state = BrotliDecoderCreateInstance(brotli_alloc, brotli_free, this);
 
     if ( state == nullptr )
     {
@@ -492,14 +547,15 @@ std::optional<uint32_t> BrotliStream::decompress(const uint8_t* src, uint32_t sr
 
 HttpCompressStream* HttpCompressStream::create(CompressId compression,
     const HttpParaList::DecompressionParam& decompression_param,
-    HttpInfractions* const infractions, HttpEventGen* const events)
+    HttpInfractions* const infractions, HttpEventGen* const events, Flow* flow)
 {
     switch ( compression )
     {
     case CMP_DEFLATE:
     case CMP_GZIP:
     {
-        auto* const stream = new ZlibStream(compression, decompression_param.max_expansion_ratio);
+        auto* const stream = new ZlibStream(compression, decompression_param.max_expansion_ratio,
+            flow);
 
         if ( stream->init() )
             return stream;
@@ -517,7 +573,7 @@ HttpCompressStream* HttpCompressStream::create(CompressId compression,
             return nullptr;
         }
 
-        auto* const stream = new BrotliStream(decompression_param.max_expansion_ratio);
+        auto* const stream = new BrotliStream(decompression_param.max_expansion_ratio, flow);
 
         if ( stream->init() )
             return stream;

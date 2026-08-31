@@ -54,6 +54,7 @@ uint64_t HttpFlowData::instance_count = 0;
 HttpFlowData::HttpFlowData(Flow* flow, const HttpParaList* params_) :
     FlowData(inspector_id), params(params_)
 {
+    // Memory accounting: see FLOW_DATA_SIZE_OF in the header.
 #ifdef REG_TEST
     if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
     {

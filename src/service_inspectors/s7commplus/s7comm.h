@@ -54,6 +54,7 @@ struct S7commplusSessionData
 class S7commplusFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(S7commplusFlowData)
     S7commplusFlowData();
     ~S7commplusFlowData() override;
 

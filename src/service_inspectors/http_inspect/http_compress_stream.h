@@ -33,14 +33,17 @@
 #include "http_event.h"
 #include "http_module.h"
 
+namespace snort { class Flow; }
+
 class HttpCompressStream
 {
 public:
     static HttpCompressStream* create(HttpEnums::CompressId compression,
         const HttpParaList::DecompressionParam& decompression_param,
-        HttpInfractions* const infractions, HttpEventGen* const events);
+        HttpInfractions* const infractions, HttpEventGen* const events,
+        snort::Flow* flow = nullptr);
 
-    virtual ~HttpCompressStream() = default;
+    virtual ~HttpCompressStream();
     HttpCompressStream(const HttpCompressStream& other) = delete;
     HttpCompressStream& operator=(const HttpCompressStream& other) = delete;
     HttpCompressStream(HttpCompressStream&& other) = delete;
@@ -56,20 +59,33 @@ public:
     static void copy_raw(const uint8_t* src, uint32_t src_size, uint8_t* dst, uint32_t& dst_size);
 
 protected:
-    HttpCompressStream(HttpEnums::CompressId id, int32_t max_expansion_ratio)
-        : compression_id(id), max_expansion_ratio(max_expansion_ratio)
+    HttpCompressStream(HttpEnums::CompressId id, int32_t max_expansion_ratio, snort::Flow* flow)
+        : compression_id(id), max_expansion_ratio(max_expansion_ratio), owner_flow(flow)
     { }
 
     bool is_high_expansion(size_t consumed, size_t produced) const;
 
+    // Library-internal allocations (zlib inflate window, brotli decoder state)
+    // are routed through these via the libs' allocator hooks. Each block stores
+    // its size in a header so the free hook can recover the exact amount from
+    // the pointer alone.
+    void* track_alloc(size_t bytes);
+    void track_free(void* address);
+
+    // Subclass ctor records the wrapper object plus any fixed sub-allocation
+    // it owns directly (e.g. zlib's z_stream); the base dtor releases it.
+    void account_fixed_footprint(size_t bytes);
+
     HttpEnums::CompressId compression_id;
     const int32_t max_expansion_ratio;
+    snort::Flow* const owner_flow;
+    size_t fixed_footprint = 0;
 };
 
 class ZlibStream : public HttpCompressStream
 {
 public:
-    explicit ZlibStream(HttpEnums::CompressId id, int32_t max_ratio);
+    ZlibStream(HttpEnums::CompressId id, int32_t max_ratio, snort::Flow* flow);
     ZlibStream(const ZlibStream& other) = delete;
     ZlibStream& operator=(const ZlibStream& other) = delete;
     ZlibStream(ZlibStream&& other) = delete;
@@ -83,6 +99,9 @@ public:
         HttpInfractions* const infractions, HttpEventGen* const events) override;
 
 private:
+    static void* zlib_alloc(void* opaque, unsigned items, unsigned size);
+    static void zlib_free(void* opaque, void* address);
+
     uint8_t* process_gzip_header(const uint8_t* data, uint32_t length,
         HttpInfractions* const infractions, HttpEventGen* const events);
     bool gzip_header_check_done() const;
@@ -97,7 +116,7 @@ private:
 class BrotliStream : public HttpCompressStream
 {
 public:
-    explicit BrotliStream(int32_t max_ratio);
+    BrotliStream(int32_t max_ratio, snort::Flow* flow);
     BrotliStream(const BrotliStream& other) = delete;
     BrotliStream& operator=(const BrotliStream& other) = delete;
     BrotliStream(BrotliStream&& other) = delete;

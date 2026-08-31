@@ -270,6 +270,7 @@ private:
 class DnsFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(DnsFlowData)
     DnsFlowData();
     ~DnsFlowData() override;
 
@@ -285,6 +286,7 @@ public:
 class DnsUdpFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(DnsUdpFlowData)
     DnsUdpFlowData();
 
     static void init()

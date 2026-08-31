@@ -551,6 +551,7 @@ struct DCE2_SmbFsm
 class Dce2SmbFlowData : public snort::FlowData
 {
 public:
+    FLOW_DATA_SIZE_OF(Dce2SmbFlowData)
     Dce2SmbFlowData();
     ~Dce2SmbFlowData() override;
 
