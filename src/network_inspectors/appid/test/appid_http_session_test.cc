@@ -130,15 +130,15 @@ AppIdSession::~AppIdSession()
     delete &api;
 }
 
-void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*)
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, const char*)
 {
 }
 
-void AppIdSession::set_service_appid_data(AppId, AppidChangeBits&, char*)
+void AppIdSession::set_service_appid_data(AppId, AppidChangeBits&, const char*)
 {
 }
 
-void AppIdSession::set_payload_appid_data(AppId, char*)
+void AppIdSession::set_payload_appid_data(AppId, const char*)
 {
 }
 

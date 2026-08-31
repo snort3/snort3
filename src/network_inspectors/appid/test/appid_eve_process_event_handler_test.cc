@@ -84,7 +84,7 @@ void AppIdSession::set_ss_application_ids_payload(AppId, AppidChangeBits&)
     return;
 }
 
-void AppIdSession::set_client_appid_data(AppId, char*, bool)
+void AppIdSession::set_client_appid_data(AppId, const char*, bool)
 {
     set_client_id(APPID_UT_ID);
     return;

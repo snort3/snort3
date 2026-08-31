@@ -72,7 +72,7 @@ Packet* DetectionEngine::get_current_packet()
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, uint32_t) { }
-void AppIdSession::set_payload_appid_data(AppId, char*) { }
+void AppIdSession::set_payload_appid_data(AppId, const char*) { }
 void AppIdSession::set_ss_application_ids_payload(AppId, AppidChangeBits&) { }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
     AppId, AppidChangeBits&) { }

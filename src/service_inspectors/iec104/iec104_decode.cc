@@ -78,7 +78,7 @@ static uint32_t getApciType(const Packet* p)
     return curApciType;
 }
 
-bool Iec104Decode(Packet* p, Iec104FlowData* iec104fd)
+bool Iec104Decode(const Packet* p, Iec104FlowData* iec104fd)
 {
     if (p->dsize < IEC104_MIN_LEN)
     {

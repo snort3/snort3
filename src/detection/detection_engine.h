@@ -63,7 +63,7 @@ public:
     static void enable_offload();
     static bool offload(Packet*);
 
-    static void onload(Flow*);
+    static void onload(const Flow*);
     static void onload();
     static void idle();
 

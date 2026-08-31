@@ -32,7 +32,7 @@ class ModbusFlowData;
 /* Need 8 bytes for MBAP Header + Function Code */
 #define MODBUS_MIN_LEN 8
 
-bool ModbusDecode(snort::Packet*, ModbusFlowData* mfd);
+bool ModbusDecode(const snort::Packet*, ModbusFlowData* mfd);
 
 #endif
 

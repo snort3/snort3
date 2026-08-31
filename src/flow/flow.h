@@ -198,7 +198,7 @@ public:
     { return flow_data.get(id); }
     void free_flow_data(unsigned id)
     { flow_data.erase(id); }
-    void free_flow_data(FlowData* fd)
+    void free_flow_data(const FlowData* fd)
     {
         if ( fd )
             flow_data.erase(fd->get_id());
@@ -216,7 +216,7 @@ public:
     void set_expire(const Packet*, uint64_t timeout);
     bool expired(const Packet*) const;
     void set_ttl(Packet*, bool client);
-    void set_mpls_layer_per_dir(Packet*);
+    void set_mpls_layer_per_dir(const Packet*);
     Layer* get_mpls_layer_per_dir(bool);
     void swap_roles();
     void set_service(Packet*, const char* new_service);

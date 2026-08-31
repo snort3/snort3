@@ -337,7 +337,7 @@ unsigned FlowCache::prune_unis(PktType pkt_type)
         while ( (uni_list->get_count() > max_uni) && flow && (pruned < cleanup_flows) )
         {
             Flow* prune_me = flow;
-            flow = uni_list->get_prev(prune_me);
+            uni_list->move_to_prev(flow);
 
             if ( prune_me->was_blocked() )
                 continue;

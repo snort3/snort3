@@ -67,7 +67,7 @@ class S7commplusFlowData;
 #define S7COMMPLUS_RESERVED_FUNCTION_STR \
     "(spp_s7commplus): Reserved S7commplus function code in use."
 
-bool S7commplusDecode(snort::Packet*, S7commplusFlowData* mfd);
+bool S7commplusDecode(const snort::Packet*, S7commplusFlowData* mfd);
 
 #endif
 

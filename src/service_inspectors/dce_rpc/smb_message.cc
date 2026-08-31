@@ -1693,7 +1693,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     // Upgrade connection to SMBv2
                     debug_log(dce_smb_trace, p, "upgrading to smb2 session\n");
                     dce2SmbProtoConf* config = (dce2SmbProtoConf*)ssd->sd.config;
-                    Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(
+                    const Dce2SmbFlowData* fd = static_cast<const Dce2SmbFlowData*>(
                         p->flow->get_flow_data(Dce2SmbFlowData::inspector_id));
                     p->flow->free_flow_data(fd);
                     DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config, true);

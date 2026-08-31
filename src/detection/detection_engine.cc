@@ -341,7 +341,7 @@ void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 IpsContextData* DetectionEngine::get_data(unsigned id)
 { return Analyzer::get_switcher()->get_context()->get_context_data(id); }
 
-// cppcheck-suppress constParameterPointer ; preserve the installed API and ABI
+// cppcheck-suppress constParameterPointer ; mutable context data can be returned through this API
 IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
 {
     if ( context )
@@ -496,8 +496,7 @@ void DetectionEngine::idle()
     }
 }
 
-// cppcheck-suppress constParameterPointer ; preserve the installed API and ABI
-void DetectionEngine::onload(Flow* flow)
+void DetectionEngine::onload(const Flow* flow)
 {
     if ( flow->is_suspended() )
         pc.onload_waits++;

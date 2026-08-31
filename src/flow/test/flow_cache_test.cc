@@ -130,7 +130,7 @@ void Flow::trust() { }
 void Flow::free_flow_data() { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
-void Flow::set_mpls_layer_per_dir(Packet*) { }
+void Flow::set_mpls_layer_per_dir(const Packet*) { }
 FlowDataStore::~FlowDataStore() = default;
 void packet_gettimeofday(struct timeval* ) { }
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool) { }

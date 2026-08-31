@@ -250,8 +250,7 @@ public:
         my_version.clear();
     }
 
-    // The mutable version parameter is part of the installed plugin interface.
-    virtual void update(AppId id, char* app_version)
+    virtual void update(AppId id, const char* app_version)
     {
         set_id(id);
         set_version(app_version);

@@ -228,7 +228,7 @@ uint32_t AppInfoManager::getAttributeBits(AppId)
 // Stubs for AppIdSession
 void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*,AppidChangeBits&) {}
 void AppIdSession::check_app_detection_restart(AppidChangeBits&, const ThirdPartyAppIdContext*) {}
-void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, const char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return false;}

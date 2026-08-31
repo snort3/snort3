@@ -407,7 +407,7 @@ static void ModbusCheckReservedFuncs(const modbus_header_t* header, const Packet
     }
 }
 
-bool ModbusDecode(Packet* p, ModbusFlowData* mfd)
+bool ModbusDecode(const Packet* p, ModbusFlowData* mfd)
 {
     const modbus_header_t* header;
 

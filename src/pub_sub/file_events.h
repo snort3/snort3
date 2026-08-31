@@ -63,12 +63,13 @@ public:
         return timeout;
     }
 
-    FileInfo get_file_ctx()
+    // Returned references are event-owned and must not outlive this FileMPEvent.
+    const FileInfo& get_file_ctx() const
     {
         return file_ctx;
     }
 
-    FileHashKey get_hashkey()
+    const FileHashKey& get_hashkey() const
     {
         return hashkey;
     }

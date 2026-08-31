@@ -447,10 +447,10 @@ public:
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
 
     void examine_ssl_metadata(AppidChangeBits& change_bits, bool partial_inspect = false);
-    void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
-    void set_client_appid_data(AppId, char* version = nullptr, bool published=false);
-    void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
-    void set_payload_appid_data(AppId, char* version = nullptr);
+    void set_client_appid_data(AppId, AppidChangeBits& change_bits, const char* version = nullptr);
+    void set_client_appid_data(AppId, const char* version = nullptr, bool published=false);
+    void set_service_appid_data(AppId, AppidChangeBits& change_bits, const char* version = nullptr);
+    void set_payload_appid_data(AppId, const char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits,
         const ThirdPartyAppIdContext* tp_appid_ctxt);
     void check_ssl_detection_restart(AppidChangeBits& change_bits,

@@ -119,7 +119,7 @@ unsigned SnortConfig::get_reload_id() { return 0; }
 void FlowCache::unlink_uni(Flow*) { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
-void Flow::set_mpls_layer_per_dir(Packet*) { }
+void Flow::set_mpls_layer_per_dir(const Packet*) { }
 static unsigned test_disable_all_calls = 0;
 void DetectionEngine::disable_all(Packet*) { ++test_disable_all_calls; }
 ExpectCache::ExpectCache(uint32_t) { }

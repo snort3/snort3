@@ -31,7 +31,7 @@ static const uint8_t min_decode_len[HUFFMAN_LOOKUP_MAX + 1] =
 
 template <typename IntDec, typename EGen, typename Inf>
 bool VarLengthStringDecode<IntDec, EGen, Inf>::translate(const uint8_t* in_buff, const uint32_t in_len,
-    IntDec& decode_int, uint32_t& bytes_consumed, uint8_t* out_buff,
+    const IntDec& decode_int, uint32_t& bytes_consumed, uint8_t* out_buff,
     const uint32_t out_len, uint32_t& bytes_written,
     EGen* const events, Inf* const infractions, bool partial_header,
     uint8_t huffman_mask) const

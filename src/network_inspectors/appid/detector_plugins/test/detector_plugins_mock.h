@@ -302,6 +302,6 @@ void AppIdInspector::tear_down(snort::SnortConfig*, bool) { }
 
 ClientDetector::ClientDetector() { }
 
-void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) { }
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, const char*) { }
 int AppIdSession::add_flow_data_id(uint16_t, ServiceDetector*) { return 0; }
 #endif

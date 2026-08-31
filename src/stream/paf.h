@@ -51,12 +51,12 @@ SO_PUBLIC void paf_setup(PAF_State*);  // called at session start
 void paf_reset(PAF_State*);  // called for do overs
 void paf_clear(PAF_State*);  // called at session end
 
-inline uint32_t paf_position (PAF_State* ps)
+inline uint32_t paf_position (const PAF_State* ps)
 {
     return ps->seq;
 }
 
-inline uint32_t paf_initialized (PAF_State* ps)
+inline uint32_t paf_initialized (const PAF_State* ps)
 {
     return ( ps->paf != snort::StreamSplitter::START );
 }
@@ -68,7 +68,7 @@ SO_PUBLIC inline void paf_initialize(PAF_State* ps, uint32_t seq)
     ps->paf = snort::StreamSplitter::SEARCH;
 }
 
-inline uint32_t paf_active (PAF_State* ps)
+inline uint32_t paf_active (const PAF_State* ps)
 {
     return ( ps->paf != snort::StreamSplitter::ABORT );
 }

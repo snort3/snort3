@@ -86,6 +86,7 @@ const uint8_t* SMTP_GetAltBuffer(Packet* p, unsigned& len)
     return len ? buf.data : nullptr;
 }
 
+// cppcheck-suppress constParameterPointer ; packet context alternate buffer is modified
 int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
 {
     /* if we make a call to this it means we want to use the alt buffer

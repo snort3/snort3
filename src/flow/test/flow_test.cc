@@ -99,7 +99,7 @@ FlowHAState::FlowHAState() = default;
 
 void FlowHAState::reset() {}
 
-void DetectionEngine::onload(Flow*) {}
+void DetectionEngine::onload(const Flow*) {}
 
 Packet* DetectionEngine::set_next_packet(const Packet*, Flow*) { return nullptr; }
 

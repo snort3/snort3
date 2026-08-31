@@ -67,7 +67,8 @@ public:
             user_agent = u_a;
     }
 
-    const std::vector<std::string> get_alpn() const
+    // The returned reference is event-owned and must not outlive this EveProcessEvent.
+    const std::vector<std::string>& get_alpn() const
     {
         return alpn;
     }

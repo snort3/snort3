@@ -122,7 +122,7 @@ static bool S7commPlusProtocolDecode(S7commplusSessionData* session, const Packe
     return true;
 }
 
-bool S7commplusDecode(Packet* p, S7commplusFlowData* mfd)
+bool S7commplusDecode(const Packet* p, S7commplusFlowData* mfd)
 {
     const TpktHeader* tpkt_header;
     const CotpHeader* cotp_header;

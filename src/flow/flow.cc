@@ -408,8 +408,7 @@ void Flow::set_ttl(Packet* p, bool client)
     }
 }
 
-// cppcheck-suppress constParameterPointer ; preserve the installed Flow API signature
-void Flow::set_mpls_layer_per_dir(Packet* p)
+void Flow::set_mpls_layer_per_dir(const Packet* p)
 {
     const Layer* mpls_lyr = layer::get_mpls_layer(p);
 

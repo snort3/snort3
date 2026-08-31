@@ -36,7 +36,7 @@ class Iec104FlowData;
 /* Need 6 bytes for Start, Length, and 4 control field octets */
 #define IEC104_MIN_LEN 6
 
-bool Iec104Decode(snort::Packet*, Iec104FlowData* iec104fd);
+bool Iec104Decode(const snort::Packet*, Iec104FlowData* iec104fd);
 
 #endif
 

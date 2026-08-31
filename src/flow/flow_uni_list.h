@@ -71,9 +71,9 @@ public:
         return ( tail->prev != head ) ? tail->prev : nullptr;
     }
 
-    snort::Flow* get_prev(snort::Flow* flow)
+    void move_to_prev(snort::Flow*& flow) const
     {
-        return ( flow->prev != head ) ? flow->prev : nullptr;
+        flow = ( flow->prev != head ) ? flow->prev : nullptr;
     }
 
     unsigned get_count() const

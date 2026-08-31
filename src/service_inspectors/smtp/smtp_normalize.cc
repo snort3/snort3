@@ -168,4 +168,3 @@ int SMTP_NormalizeCmd(Packet* p, const uint8_t* ptr, const uint8_t* eolm, const 
 
     return 0;
 }
-

@@ -29,7 +29,7 @@ public:
     // huffman_mask for string literals in HPACK is always 0x80, thus defaulting
     // to 0x80
     bool translate(const uint8_t* in_buff, const uint32_t in_len,
-        IntDec& decode_int, uint32_t& bytes_consumed,
+        const IntDec& decode_int, uint32_t& bytes_consumed,
         uint8_t* out_buff, const uint32_t out_len, uint32_t& bytes_written,
         EGen* const events, Inf* const infractions,
         bool partial_header, uint8_t huffman_mask = 0x80) const;
