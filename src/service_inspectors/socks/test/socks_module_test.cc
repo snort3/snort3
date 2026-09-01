@@ -43,8 +43,8 @@ unsigned get_instance_id()
 unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 // THREAD_LOCAL variables that socks_module.cc references
 THREAD_LOCAL ProfileStats socksPerfStats;

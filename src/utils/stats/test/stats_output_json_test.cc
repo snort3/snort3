@@ -203,6 +203,117 @@ TEST_CASE("json stats output renders tables with mixed value types", "[stats_out
     CHECK(out.str() == expected);
 }
 
+TEST_CASE("json stats output renders a single-column table", "[stats_output_json]")
+{
+    Snapshot snapshot;
+    auto& section = snapshot.sections.emplace_back();
+    section.name = "Module Statistics";
+
+    auto& group = section.groups.emplace_back();
+    group.name = "appid";
+
+    auto& table = group.tables.emplace_back();
+    table.name = "flows";
+    table.columns = { "name" };
+    table.rows.emplace_back(std::vector<Value>{ std::string("tcp") });
+    table.rows.emplace_back(std::vector<Value>{ std::string("udp") });
+
+    std::ostringstream out;
+    render_json(out, snapshot);
+
+    const char* expected =
+        R"({ "sections": [ { "name": "Module Statistics", "groups": [ { "name": "appid", )"
+        R"("counters": [  ], "tables": [ { "name": "flows", "columns": [ )"
+        R"("name" ], "rows": [ [ "tcp" ], [ "udp" ] ] } ] } ] } ] })"
+        "\n";
+    CHECK(out.str() == expected);
+}
+
+TEST_CASE("json stats output skips empty tables among renderable tables", "[stats_output_json]")
+{
+    Snapshot snapshot;
+    auto& section = snapshot.sections.emplace_back();
+    section.name = "Module Statistics";
+
+    auto& group = section.groups.emplace_back();
+    group.name = "dynamic";
+
+    auto& empty_table = group.tables.emplace_back();
+    empty_table.name = "empty";
+    empty_table.columns = { "name", "count" };
+
+    auto& table = group.tables.emplace_back();
+    table.name = "active";
+    table.columns = { "name", "count" };
+    table.rows.emplace_back(std::vector<Value>{
+        std::string("row"),
+        static_cast<uint64_t>(1)
+    });
+
+    std::ostringstream out;
+    render_json(out, snapshot);
+
+    const char* expected =
+        R"({ "sections": [ { "name": "Module Statistics", "groups": [ { "name": "dynamic", )"
+        R"("counters": [  ], "tables": [ { "name": "active", "columns": [ )"
+        R"("name", "count" ], "rows": [ [ "row", 1 ] ] } ] } ] } ] })"
+        "\n";
+    CHECK(out.str() == expected);
+}
+
+TEST_CASE("json stats builder appends dynamic table data", "[stats_output_json]")
+{
+    Snapshot snapshot;
+    Builder builder(snapshot);
+
+    auto& section = builder.section("Appid Statistics");
+    auto& group = builder.group(section, "detected apps and services");
+    auto& table = builder.table(group, "detected apps and services",
+        { "Application", "Services", "Clients" }, true);
+
+    builder.row(table, {
+        std::string("http/2"),
+        static_cast<uint64_t>(1),
+        static_cast<uint64_t>(0)
+    });
+    builder.counter(group, "dynamic_rows", static_cast<uint64_t>(1));
+
+    std::ostringstream out;
+    render_json(out, snapshot);
+
+    const char* expected =
+        R"({ "sections": [ { "name": "Appid Statistics", "groups": [ { "name": "detected apps and services", )"
+        R"("counters": [ { "name": "dynamic_rows", "value": 1 } ], )"
+        R"("tables": [ { "name": "detected apps and services", "columns": [ )"
+        R"("Application", "Services", "Clients" ], "rows": [ [ "http/2", 1, 0 ] ] } ] } ] } ] })"
+        "\n";
+    CHECK(out.str() == expected);
+}
+
+TEST_CASE("json stats builder owns dynamic counter names", "[stats_output_json]")
+{
+    Snapshot snapshot;
+    Builder builder(snapshot);
+
+    auto& section = builder.section("Appid Statistics");
+    auto& group = builder.group(section, "dynamic counters");
+
+    std::string counter_name = "temporary name";
+    builder.counter(group, counter_name.c_str(), static_cast<uint64_t>(1));
+    counter_name = "mutated name";
+
+    std::ostringstream out;
+    render_json(out, snapshot);
+
+    CHECK(counter_name == "mutated name");
+
+    const char* expected =
+        R"({ "sections": [ { "name": "Appid Statistics", "groups": [ { "name": "dynamic counters", )"
+        R"("counters": [ { "name": "temporary name", "value": 1 } ] } ] } ] })"
+        "\n";
+    CHECK(out.str() == expected);
+}
+
 TEST_CASE("json stats output preserves rendered empty strings", "[stats_output_json]")
 {
     Snapshot snapshot;

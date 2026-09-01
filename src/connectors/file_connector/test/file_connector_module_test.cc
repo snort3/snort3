@@ -36,8 +36,8 @@ using namespace snort;
 THREAD_LOCAL SimpleStats file_connector_stats;
 THREAD_LOCAL ProfileStats file_connector_perfstats;
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 namespace snort
 {

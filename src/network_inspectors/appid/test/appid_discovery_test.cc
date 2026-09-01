@@ -171,7 +171,8 @@ void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}
 AppIdModule::~AppIdModule() = default;
 void AppIdModule::sum_stats(bool) {}
-void AppIdModule::show_dynamic_stats() {}
+void AppIdModule::collect_dynamic_stats(snort::stats::Builder&,
+    const snort::stats::DynamicStatsPolicy&) const {}
 bool AppIdModule::begin(char const*, int, SnortConfig*) { return true; }
 bool AppIdModule::end(char const*, int, SnortConfig*) { return true; }
 bool AppIdModule::set(char const*, Value&, SnortConfig*) { return true; }

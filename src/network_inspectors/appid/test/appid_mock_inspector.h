@@ -51,7 +51,8 @@ PegCount Module::get_global_count(char const*) const { return 0; }
 AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") { }
 AppIdModule::~AppIdModule() = default;
 void AppIdModule::sum_stats(bool) {}
-void AppIdModule::show_dynamic_stats() {}
+void AppIdModule::collect_dynamic_stats(snort::stats::Builder&,
+    const snort::stats::DynamicStatsPolicy&) const {}
 bool AppIdModule::begin(char const*, int, snort::SnortConfig*) { return true; }
 bool AppIdModule::end(char const*, int, snort::SnortConfig*) { return true; }
 bool AppIdModule::set(char const*, snort::Value&, snort::SnortConfig*) { return true; }

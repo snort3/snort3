@@ -179,8 +179,8 @@ namespace snort
 Analyzer* Analyzer::get_local_analyzer() { return nullptr; }
 bool Analyzer::process_rebuilt_packet(Packet*, const DAQ_PktHdr_t*, const uint8_t*, uint32_t) { return true; }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) {}
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) {}
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*) {}
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) {}
 
 // Mock IPS option symbols
 const BaseApi* ips_socks_version = nullptr;

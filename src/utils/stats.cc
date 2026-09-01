@@ -53,7 +53,7 @@
 #include "stats/output_json.h"
 #include "stats/output_text.h"
 #include "stats/response_buf.h"
-#include "stats/snapshot.h"
+#include "stats/utils.h"
 #include "util.h"
 
 #define USECS_PER_SEC 1000000.0
@@ -243,7 +243,6 @@ static void add_packet_section(stats::Snapshot& snapshot, const PacketManager::S
 {
     stats::Section section;
     section.name = "Packet Statistics";
-    section.groups.reserve(2);
 
     section.groups.emplace_back(collect_module_group(PluginManager::get_module("daq")));
 
@@ -283,7 +282,6 @@ static void add_module_section(stats::Snapshot& snapshot)
 
     auto mods = PluginManager::get_all_modules();
     mods.sort(module_less);
-    section.groups.reserve(mods.size());
 
     for ( auto* mod : mods )
     {
@@ -313,7 +311,6 @@ static void add_summary_section(stats::Snapshot& snapshot)
 {
     stats::Section section;
     section.name = "Summary Statistics";
-    section.groups.reserve(2);
 
     ProcessCount proc_snapshot;
     {
@@ -336,34 +333,50 @@ static void add_summary_section(stats::Snapshot& snapshot)
     snapshot.sections.emplace_back(std::move(section));
 }
 
-static stats::Snapshot collect_stats_snapshot(const PacketManager::Stats* packet_stats)
+static void add_dynamic_sections(stats::Snapshot& snapshot, const stats::RenderOptions& options)
+{
+    stats::Builder builder(snapshot);
+    stats::DynamicStatsPolicy policy;
+    policy.include_zeros = options.include_zeros;
+
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(module_less);
+
+    for ( auto* mod : mods )
+    {
+        if ( !ModuleManager::is_dynamic_stats_module(mod) )
+            continue;
+
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+        mod->collect_dynamic_stats(builder, policy);
+    }
+}
+
+static stats::Snapshot collect_stats_snapshot(const PacketManager::Stats* packet_stats,
+    const stats::RenderOptions& options)
 {
     stats::Snapshot snapshot;
-    snapshot.sections.reserve(3);
 
     add_packet_section(snapshot, packet_stats);
     add_module_section(snapshot);
-
-    // FIXIT-H: integrate dynamic stats into structured collection so JSON can render them.
-
+    add_dynamic_sections(snapshot, options);
     add_summary_section(snapshot);
 
     return snapshot;
 }
 
-static void render_text_snapshot(ControlConn* ctrlcon, const stats::Snapshot& snapshot)
+static void render_text_snapshot(ControlConn* ctrlcon, const stats::Snapshot& snapshot,
+    const stats::RenderOptions& options)
 {
-    // FIXIT-H: remove this text-only hook after dynamic stats are collected in the shared model.
-    stats::render_text(ctrlcon, snapshot, {}, [] {
-        ModuleManager::dump_stats("daq snort memory", true);
-    });
+    stats::render_text(ctrlcon, snapshot, options);
 }
 
-static void render_json_snapshot(ControlConn* ctrlcon, const stats::Snapshot& snapshot)
+static void render_json_snapshot(ControlConn* ctrlcon, const stats::Snapshot& snapshot,
+    const stats::RenderOptions& options)
 {
     StatsResponseBuf buffer(ctrlcon);
     std::ostream out(&buffer);
-    stats::render_json(out, snapshot);
+    stats::render_json(out, snapshot, options);
 }
 
 static void clear_dump_stats_state()
@@ -383,12 +396,13 @@ void DropStats(ControlConn* ctrlcon, bool already_accumulated,
     if ( !already_accumulated )
         ModuleManager::accumulate_dump_stats();
 
-    auto snapshot = collect_stats_snapshot(packet_stats);
+    stats::RenderOptions options;
+    auto snapshot = collect_stats_snapshot(packet_stats, options);
 
     if ( format == StatsOutputFormat::Json )
-        render_json_snapshot(ctrlcon, snapshot);
+        render_json_snapshot(ctrlcon, snapshot, options);
     else
-        render_text_snapshot(ctrlcon, snapshot);
+        render_text_snapshot(ctrlcon, snapshot, options);
 
     clear_dump_stats_state();
 }
@@ -442,7 +456,7 @@ static bool show_stat(
 }
 
 void show_stats(
-    PegCount* pegs, const PegInfo* info, unsigned n, const char* module_name)
+    const PegCount* pegs, const PegInfo* info, unsigned n, const char* module_name)
 {
     bool head = false;
 
@@ -451,7 +465,7 @@ void show_stats(
 }
 
 void show_stats(
-    PegCount* pegs, const PegInfo* info,
+    const PegCount* pegs, const PegInfo* info,
     const std::vector<unsigned>& peg_idxs, const char* module_name, FILE* fh)
 {
     bool head = false;

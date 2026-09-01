@@ -107,8 +107,7 @@ public:
     void sum_stats(bool) override;
     bool has_dynamic_stats() const override
     { return true; }
-    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
-    void show_dynamic_stats() override;
+    void collect_dynamic_stats(snort::stats::Builder&, const snort::stats::DynamicStatsPolicy&) const override;
 
     void set_trace(const snort::Trace*) const override;
     // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract

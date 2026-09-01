@@ -55,7 +55,7 @@ static bool has_renderable_rows(const Table& table, const RenderOptions&)
     return !table.rows.empty();
 }
 
-static bool has_renderable_counters(const Group& group, const RenderOptions& options)
+static bool has_renderable_content(const Group& group, const RenderOptions& options)
 {
     for ( const auto& counter : group.counters )
     {
@@ -142,7 +142,7 @@ static void render_section(JsonStream& json, const Section& section, const Rende
     json.open_array("groups");
     for ( const auto& group : section.groups )
     {
-        if ( has_renderable_counters(group, options) )
+        if ( has_renderable_content(group, options) )
             render_group(json, group, options);
     }
     json.close_array();

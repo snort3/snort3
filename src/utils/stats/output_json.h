@@ -21,7 +21,7 @@
 
 #include <iosfwd>
 
-#include "snapshot.h"
+#include "utils.h"
 
 namespace snort::stats
 {

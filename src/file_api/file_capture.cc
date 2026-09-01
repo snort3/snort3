@@ -34,10 +34,9 @@
 
 #include <cassert>
 
-#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/thread.h"
-#include "utils/stats.h"
+#include "utils/stats/snapshot.h"
 #include "utils/util.h"
 
 #include "file_mempool.h"
@@ -584,20 +583,20 @@ std::string FileCapture::store_file_async()
     return file_full_name;
 }
 
-/*Log file capture mempool usage*/
-void FileCapture::print_mem_usage()
+void FileCapture::collect_mem_usage(stats::Builder& builder, stats::Group& group)
 {
-    if (file_mempool)
-    {
-        int64_t block_size = get_block_size() + sizeof (FileCapture);
-        if (block_size & 7)
-            block_size += (8 - (block_size & 7));
-        LogCount("Max file buffer capacity", file_mempool->total_objects());
-        LogCount("Buffers in use", file_mempool->allocated());
-        LogCount("Buffers in free list", file_mempool->freed());
-        LogCount("Buffers in release list", file_mempool->released());
-        LogCount("Memory usage in bytes", file_mempool->allocated() * block_size);
-    }
+    if (!file_mempool)
+        return;
+
+    int64_t block_size = get_block_size() + sizeof(FileCapture);
+    if (block_size & 7)
+        block_size += (8 - (block_size & 7));
+
+    builder.counter(group, "Max file buffer capacity", file_mempool->total_objects());
+    builder.counter(group, "Buffers in use", file_mempool->allocated());
+    builder.counter(group, "Buffers in free list", file_mempool->freed());
+    builder.counter(group, "Buffers in release list", file_mempool->released());
+    builder.counter(group, "Memory usage in bytes", file_mempool->allocated() * block_size);
 }
 
 int64_t FileCapture::get_buffers_max()

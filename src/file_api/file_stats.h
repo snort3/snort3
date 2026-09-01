@@ -27,6 +27,12 @@
 #include "file_api.h"
 #include "file_config.h"
 
+namespace snort::stats
+{
+class Builder;
+struct DynamicStatsPolicy;
+}
+
 #define MAX_PROTOCOL_ORDINAL 8192  // FIXIT-L use std::vector and get_protocol_count()
 
 struct FileCounts
@@ -83,10 +89,9 @@ void file_stats_init();
 void file_stats_term();
 
 void file_stats_sum();
-void file_stats_print();
+void file_stats_collect(snort::stats::Builder&, const snort::stats::DynamicStatsPolicy&);
 void file_stats_clear();
 
 void file_counts_update_buffers();
 
 #endif
-

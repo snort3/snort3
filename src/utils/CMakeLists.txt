@@ -25,8 +25,9 @@ add_library ( utils OBJECT
     stats/output_text.h
     stats/response_buf.cc
     stats/response_buf.h
-    stats/snapshot.cc
     stats/snapshot.h
+    stats/utils.cc
+    stats/utils.h
     stats.cc
     stats.h
     util.cc
@@ -41,6 +42,10 @@ add_library ( utils OBJECT
 
 install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
+)
+
+install (FILES stats/snapshot.h
+    DESTINATION "${INCLUDE_INSTALL_PATH}/utils/stats"
 )
 
 add_subdirectory(stats/test)

@@ -71,8 +71,8 @@ IpsPolicy* get_ips_policy()
 RuleListNode* CreateRuleType(SnortConfig*, const char*, IpsAction::Type)
 { return nullptr; }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 extern "C" int addr_pton(const char*, struct addr*)
 { return -1; }

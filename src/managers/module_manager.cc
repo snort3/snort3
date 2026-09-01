@@ -1391,7 +1391,7 @@ void ModuleManager::get_accumulated_counts(Module* mod, unsigned instance_id, st
     out = mod->counts[instance_id];
 }
 
-void ModuleManager::dump_stats(const char* skip, bool dynamic)
+void ModuleManager::dump_stats(const char* skip)
 {
     auto mods = PluginManager::get_all_modules();
     mods.sort(comp_mods);
@@ -1403,18 +1403,10 @@ void ModuleManager::dump_stats(const char* skip, bool dynamic)
             if (is_dynamic_stats_module(mod) || mod->global_stats())
             {
                 lock_guard<mutex> lock(stats_mutex);
-                if ( dynamic )
-                    mod->show_dynamic_stats();
-                else
-                    mod->show_stats();
+                mod->show_stats();
             }
             else
-            {
-                if ( dynamic )
-                    mod->show_dynamic_stats();
-                else
-                    mod->show_stats();
-            }
+                mod->show_stats();
         }
     }
 }

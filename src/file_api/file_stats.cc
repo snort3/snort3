@@ -30,9 +30,11 @@
 
 #include "file_stats.h"
 
-#include "log/log_stats.h"
-#include "log/messages.h"
-#include "utils/stats.h"
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "utils/stats/snapshot.h"
 #include "utils/util.h"
 
 #include "file_capture.h"
@@ -85,7 +87,7 @@ void file_stats_clear()
         memset(file_stats, 0, sizeof(*file_stats));
 }
 
-void file_stats_print()
+void file_stats_collect(stats::Builder& builder, const stats::DynamicStatsPolicy& policy)
 {
     uint64_t processed_total[2];
     uint64_t processed_data_total[2];
@@ -99,26 +101,22 @@ void file_stats_print()
         check_total += file_totals.files_processed[i][1];
     }
 
-    if ( !check_total )
-        return;
-
     for (unsigned i = 0; i < FILE_ID_MAX; i++)
     {
         check_sig_total += file_totals.signatures_processed[i][0];
         check_sig_total += file_totals.signatures_processed[i][1];
     }
 
-    LogLabel("File Statistics");
-    LogLabel("file stats");
+    const bool include_signatures = FileService::is_file_signature_enabled() && check_sig_total;
 
-    char buff[128];
-    if (FileService::is_file_signature_enabled() && check_sig_total)
-        snprintf(buff, sizeof(buff), "%25.25s %-10s %-10s %-10s %-10s %-10s %-10s", "Type",
-            "TypeDn", "TypeUp", "SigDn", "SigUp", "BytesDn", "BytesUp");
+    std::vector<std::string> columns;
+    if (include_signatures)
+        columns = { "Type", "TypeDn", "TypeUp", "SigDn", "SigUp", "BytesDn", "BytesUp" };
     else
-        snprintf(buff, sizeof(buff), "%25.25s %-10s %-10s %-10s %-10s", "Type", "TypeDn", "TypeUp",
-            "BytesDn", "BytesUp");
-    LogText(buff);
+        columns = { "Type", "TypeDn", "TypeUp", "BytesDn", "BytesUp" };
+
+    std::vector<std::vector<stats::Value>> rows;
+    rows.reserve(FILE_ID_MAX);
 
     processed_total[0] = 0;
     processed_total[1] = 0;
@@ -127,73 +125,95 @@ void file_stats_print()
     processed_sig_total[0]  = 0;
     processed_sig_total[1]  = 0;
 
-    for (unsigned i = 0; i < FILE_ID_MAX; i++)
+    if ( check_total || policy.include_zeros )
     {
-        std::string type_name  = file_type_name(i);
-        bool status = false;
-
-        if (FileService::is_file_signature_enabled() && check_sig_total)
-            status = ( file_totals.files_processed[i][0] ||
-                file_totals.files_processed[i][1] ||
-                file_totals.signatures_processed[i][0] ||
-                file_totals.signatures_processed[i][1] );
-        else
-            status = ( file_totals.files_processed[i][0] ||
-                file_totals.files_processed[i][1] );
-
-        if (type_name.length() && status)
+        for (unsigned i = 0; i < FILE_ID_MAX; i++)
         {
-            type_name.append("(");
-            type_name.append(std::to_string(i));
-            type_name.append(")");
-            if (FileService::is_file_signature_enabled() && check_sig_total)
-            {
-                snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
-                    FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"),
-                    type_name.c_str(), file_totals.files_processed[i][0],
-                    file_totals.files_processed[i][1],
-                    file_totals.signatures_processed[i][0],
-                    file_totals.signatures_processed[i][1],
-                    file_totals.data_processed[i][0],
-                    file_totals.data_processed[i][1]);
-            }
+            std::string type_name  = file_type_name(i);
+            bool status = false;
+
+            if (include_signatures)
+                status = ( file_totals.files_processed[i][0] ||
+                    file_totals.files_processed[i][1] ||
+                    file_totals.signatures_processed[i][0] ||
+                    file_totals.signatures_processed[i][1] );
             else
+                status = ( file_totals.files_processed[i][0] ||
+                    file_totals.files_processed[i][1] );
+
+            if (type_name.length() && (status || policy.include_zeros))
             {
-                snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
-                    FMTu64("-10") " " FMTu64("-10"),
-                    type_name.c_str(),
-                    file_totals.files_processed[i][0],
-                    file_totals.files_processed[i][1],
-                    file_totals.data_processed[i][0],
-                    file_totals.data_processed[i][1]);
-            }
-            LogText(buff);
-            processed_total[0]      += file_totals.files_processed[i][0];
-            processed_total[1]      += file_totals.files_processed[i][1];
-            processed_data_total[0] += file_totals.data_processed[i][0];
-            processed_data_total[1] += file_totals.data_processed[i][1];
-            if (FileService::is_file_signature_enabled() && check_sig_total)
-            {
-                processed_sig_total[0]  += file_totals.signatures_processed[i][0];
-                processed_sig_total[1]  += file_totals.signatures_processed[i][1];
+                type_name.append("(");
+                type_name.append(std::to_string(i));
+                type_name.append(")");
+                if (include_signatures)
+                {
+                    rows.emplace_back(std::vector<stats::Value>{
+                        type_name,
+                        static_cast<uint64_t>(file_totals.files_processed[i][0]),
+                        static_cast<uint64_t>(file_totals.files_processed[i][1]),
+                        static_cast<uint64_t>(file_totals.signatures_processed[i][0]),
+                        static_cast<uint64_t>(file_totals.signatures_processed[i][1]),
+                        static_cast<uint64_t>(file_totals.data_processed[i][0]),
+                        static_cast<uint64_t>(file_totals.data_processed[i][1])
+                    });
+                }
+                else
+                {
+                    rows.emplace_back(std::vector<stats::Value>{
+                        type_name,
+                        static_cast<uint64_t>(file_totals.files_processed[i][0]),
+                        static_cast<uint64_t>(file_totals.files_processed[i][1]),
+                        static_cast<uint64_t>(file_totals.data_processed[i][0]),
+                        static_cast<uint64_t>(file_totals.data_processed[i][1])
+                    });
+                }
+                processed_total[0]      += file_totals.files_processed[i][0];
+                processed_total[1]      += file_totals.files_processed[i][1];
+                processed_data_total[0] += file_totals.data_processed[i][0];
+                processed_data_total[1] += file_totals.data_processed[i][1];
+                if (include_signatures)
+                {
+                    processed_sig_total[0]  += file_totals.signatures_processed[i][0];
+                    processed_sig_total[1]  += file_totals.signatures_processed[i][1];
+                }
             }
         }
     }
 
-    if (FileService::is_file_signature_enabled() && check_sig_total)
+    stats::Group group;
+    group.name = "file stats";
+
+    if ( !rows.empty() )
     {
-        snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
-            FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"),
-            "Total", processed_total[0], processed_total[1], processed_sig_total[0],
-            processed_sig_total[1], processed_data_total[0], processed_data_total[1]);
+        auto& table = builder.table(group, "file stats", std::move(columns));
+
+        for ( auto& row : rows )
+            builder.row(table, std::move(row));
+
+        if (include_signatures)
+        {
+            builder.row(table, {
+                std::string("Total"),
+                static_cast<uint64_t>(processed_total[0]),
+                static_cast<uint64_t>(processed_total[1]),
+                static_cast<uint64_t>(processed_sig_total[0]),
+                static_cast<uint64_t>(processed_sig_total[1]),
+                static_cast<uint64_t>(processed_data_total[0]),
+                static_cast<uint64_t>(processed_data_total[1])
+            });
+        }
+        else
+        {
+            builder.row(table, {
+                std::string("Total"),
+                static_cast<uint64_t>(processed_total[0]),
+                static_cast<uint64_t>(processed_total[1]),
+                static_cast<uint64_t>(processed_data_total[0]),
+                static_cast<uint64_t>(processed_data_total[1])
+            });
+        }
     }
-    else
-    {
-        snprintf(buff, sizeof(buff), "%25.25s " FMTu64("-10") " " FMTu64("-10") " "
-            FMTu64("-10") " " FMTu64("-10"),"Total", processed_total[0],
-            processed_total[1], processed_data_total[0], processed_data_total[1]);
-    }
-    LogText(buff);
 
 #if 0
     LogLabel("file type verdicts");  // FIXIT-RC should be fixed
@@ -304,6 +324,12 @@ void file_stats_print()
 
 #endif
     // these are global / shared by all threads
-    FileCapture::print_mem_usage();
-    FileService::print_cache_usage();
+    FileCapture::collect_mem_usage(builder, group);
+    FileService::collect_cache_usage(builder, group);
+
+    if ( group.tables.empty() && group.counters.empty() )
+        return;
+
+    auto& section = builder.section("File Statistics");
+    section.groups.emplace_back(std::move(group));
 }

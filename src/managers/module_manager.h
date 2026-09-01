@@ -80,7 +80,7 @@ public:
     static unsigned get_errors();
 
     static PegCount* get_stats(const char* name);
-    static void dump_stats(const char* skip = nullptr, bool dynamic = false);
+    static void dump_stats(const char* skip = nullptr);
     static void accumulate_dump_stats();
     static void collect_global_dump_stats(Module*);
     static void init_stats();

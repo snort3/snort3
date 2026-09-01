@@ -743,9 +743,10 @@ void AppIdModule::sum_stats(bool dump_stats)
     Module::sum_stats(dump_stats);
 }
 
-void AppIdModule::show_dynamic_stats()
+void AppIdModule::collect_dynamic_stats(stats::Builder& builder,
+    const stats::DynamicStatsPolicy& policy) const
 {
-    AppIdPegCounts::print();
+    AppIdPegCounts::collect_stats(builder, policy);
 }
 
 void AppIdModule::reset_stats()

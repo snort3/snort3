@@ -20,8 +20,10 @@
 #define STATS_SNAPSHOT_H
 
 #include <cstdint>
+#include <deque>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -62,33 +64,81 @@ struct Table
     std::string name;
     std::vector<std::string> columns;
     std::vector<std::vector<Value>> rows;
+    bool first_column_has_colon = false;
 };
 
 struct Group
 {
     std::string name;
     std::vector<Counter> counters;
-    std::vector<Table> tables;
+    std::deque<Table> tables;
 };
 
 struct Section
 {
     std::string name;
-    std::vector<Group> groups;
+    std::deque<Group> groups;
 };
 
 struct Snapshot
 {
-    std::vector<Section> sections;
+    std::deque<Section> sections;
 };
 
-struct RenderOptions
+struct DynamicStatsPolicy
 {
-    bool include_zeros = false;    // we could give the user the option to include zero-value counters in the output
+    bool include_zeros = false;
 };
 
-bool is_zero(const Counter& counter);
-bool should_render(const Counter& counter, const RenderOptions& options);
+class Builder
+{
+public:
+    explicit Builder(Snapshot& snapshot) : snapshot(snapshot) { }
+
+    Section& section(const char* name)
+    {
+        auto& section = snapshot.sections.emplace_back();
+        section.name = name ? name : "";
+        return section;
+    }
+
+    static Group& group(Section& parent_section, const char* name)
+    {
+        auto& stats_group = parent_section.groups.emplace_back();
+        stats_group.name = name ? name : "";
+        return stats_group;
+    }
+
+    static Table& table(Group& parent_group, const char* name, std::vector<std::string> columns,
+        bool first_column_has_colon = false)
+    {
+        auto& stats_table = parent_group.tables.emplace_back();
+        stats_table.name = name ? name : "";
+        stats_table.columns = std::move(columns);
+        stats_table.first_column_has_colon = first_column_has_colon;
+        return stats_table;
+    }
+
+    static void row(Table& stats_table, std::vector<Value> values)
+    { stats_table.rows.emplace_back(std::move(values)); }
+
+    static void counter(Group& parent_group, const char* name, Value value)
+    {
+        const std::string counter_name = name ? name : "";
+        counter(parent_group, counter_name, std::move(value));
+    }
+
+    static void counter(Group& parent_group, const std::string& name, Value value)
+    {
+        Counter counter;
+        counter.set_name(name);
+        counter.value = std::move(value);
+        parent_group.counters.emplace_back(std::move(counter));
+    }
+
+private:
+    Snapshot& snapshot;
+};
 
 } // namespace snort::stats
 

@@ -39,6 +39,12 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
+namespace snort::stats
+{
+class Builder;
+struct DynamicStatsPolicy;
+}
+
 struct AppIdStats
 {
     PegCount packets;
@@ -75,7 +81,6 @@ public:
     static void inc_referred_count(AppId id);
 
     static void sum_stats();
-    static void print();
+    static void collect_stats(snort::stats::Builder&, const snort::stats::DynamicStatsPolicy&);
 };
 #endif
-

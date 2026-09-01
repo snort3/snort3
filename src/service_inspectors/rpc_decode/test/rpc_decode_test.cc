@@ -181,10 +181,10 @@ THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 unsigned ThreadConfig::get_instance_max()
 { return 1; }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*)
 { }
 
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*)
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*)
 { }
 
 #include "service_inspectors/rpc_decode/rpc_decode.cc"

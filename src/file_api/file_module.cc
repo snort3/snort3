@@ -260,9 +260,10 @@ void FileIdModule::load_config(FileConfig*& dst)
     fc = nullptr;
 }
 
-void FileIdModule::show_dynamic_stats()
+void FileIdModule::collect_dynamic_stats(stats::Builder& builder,
+    const stats::DynamicStatsPolicy& policy) const
 {
-    file_stats_print();
+    file_stats_collect(builder, policy);
 }
 
 void FileIdModule::reset_stats()

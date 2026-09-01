@@ -120,7 +120,7 @@ int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&){}
 int dcerpc_validate(const uint8_t*, int){return 0; }
 AppIdDiscovery::~AppIdDiscovery() { }
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*) { }
 AppIdConfig config;
 AppIdContext ctxt(config);
 ServiceDetector::ServiceDetector() {}
@@ -216,7 +216,8 @@ AppIdFlowData* AppIdSession::get_flow_data(unsigned) const
 //void AppIdPegCounts::inc_payload_count(AppId, bool) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
-void AppIdModule::show_dynamic_stats() { }
+void AppIdModule::collect_dynamic_stats(snort::stats::Builder&,
+    const snort::stats::DynamicStatsPolicy&) const { }
 
 // Stubs for app_info_table.cc
 AppInfoTableEntry* AppInfoManager::get_app_info_entry(int)

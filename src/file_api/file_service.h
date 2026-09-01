@@ -34,6 +34,12 @@ class FileConfig;
 
 namespace snort
 {
+namespace stats
+{
+class Builder;
+struct Group;
+}
+
 class SO_PUBLIC FileService
 {
 public:
@@ -61,7 +67,7 @@ public:
     static bool is_file_service_enabled();
     static int64_t get_max_file_depth(FileConfig* = nullptr);
     static void set_max_file_depth(const SnortConfig*);
-    static void print_cache_usage();
+    static void collect_cache_usage(stats::Builder&, stats::Group&);
 
     static FileCache* get_file_cache() { return file_cache; }
     static DecodeConfig decode_conf;
@@ -78,4 +84,3 @@ private:
 };
 } // namespace snort
 #endif
-

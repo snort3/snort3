@@ -47,6 +47,12 @@ class FileInfo;
 struct FileCaptureTestAccess;
 #endif
 
+namespace stats
+{
+class Builder;
+struct Group;
+}
+
 struct FileCaptureBlock
 {
     uint32_t length;
@@ -83,8 +89,7 @@ public:
     // Store file to disk asynchronously
     std::string store_file_async();
 
-    // Log file capture mempool usage
-    static void print_mem_usage();
+    static void collect_mem_usage(stats::Builder&, stats::Group&);
 
     // Wait until all asynchronously stored files have been released
     static void flush();

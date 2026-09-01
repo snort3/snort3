@@ -39,6 +39,7 @@
 #include "log/messages.h"
 #include "main/thread_config.h"
 #include "trace/trace.h"
+#include "utils/stats/snapshot.h"
 
 #include "app_info_table.h"
 #include "appid_debug.h"
@@ -73,12 +74,17 @@ public:
         memcpy(stats, &all_zeroed_peg, sizeof(stats));
     }
 
-    void print(const char* app, char* buf, int buf_size)
+    void collect_row(stats::Builder& builder, stats::Table& table, const char* app) const
     {
-        snprintf(buf, buf_size, "%25.25s: " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10")
-            " " FMTu64("-10") " " FMTu64("-10") " " FMTu64("-10"), app,
-            stats[SERVICE_DETECTS], stats[CLIENT_DETECTS], stats[USER_DETECTS],
-            stats[PAYLOAD_DETECTS], stats[MISC_DETECTS], stats[REFERRED_DETECTS]);
+        builder.row(table, {
+            std::string(app),
+            static_cast<uint64_t>(stats[SERVICE_DETECTS]),
+            static_cast<uint64_t>(stats[CLIENT_DETECTS]),
+            static_cast<uint64_t>(stats[USER_DETECTS]),
+            static_cast<uint64_t>(stats[PAYLOAD_DETECTS]),
+            static_cast<uint64_t>(stats[MISC_DETECTS]),
+            static_cast<uint64_t>(stats[REFERRED_DETECTS])
+        });
     }
 };
 
@@ -117,7 +123,7 @@ static bool appid_peg_limit_warned = false;
 
 // appid_peg_ids is shared by all packet threads (readers) and the control
 // thread (writer, during detector/ODP reload). appid_peg_ids_mutex serializes
-// the readers -- init_pegs(), cleanup_pegs(), sum_stats(), print() --
+// the readers -- init_pegs(), cleanup_pegs(), sum_stats(), collect_stats() --
 // against the writers -- init_peg_info(), cleanup_peg_info(), add_app_peg_info().
 // Do NOT remove this lock: without it, a detector reload (add_app_peg_info
 // emplace/rehash) concurrent with packet-thread tinit/tterm corrupts the map
@@ -125,7 +131,7 @@ static bool appid_peg_limit_warned = false;
 //
 // LOCK ORDER (must hold to stay deadlock-free): always acquire
 // appid_peg_ids_mutex BEFORE dynamic_stats_mutex. sum_stats() and
-// print() take both; nothing may take them in the reverse order.
+// collect_stats() take both; nothing may take them in the reverse order.
 static std::shared_mutex appid_peg_ids_mutex;
 
 void AppIdPegCounts::init_pegs()
@@ -292,54 +298,57 @@ void AppIdPegCounts::inc_referred_count(AppId id)
         appid_thread_pegs->unknown_appids_peg.stats[DetectorPegs::REFERRED_DETECTS]++;
 }
 
-void AppIdPegCounts::print()
+void AppIdPegCounts::collect_stats(stats::Builder& builder, const stats::DynamicStatsPolicy& policy)
 {
     const std::shared_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     if (!appid_peg_ids)
         return;
 
     const std::lock_guard<std::mutex> _dyn_lock(dynamic_stats_mutex);
-    bool print = false;
     unsigned app_num = appid_peg_ids->size();
 
-    std::unordered_map<uint32_t, std::string*> tmp_sorting_map;
+    std::unordered_map<uint32_t, const std::string*> tmp_sorting_map;
 
-    for (auto& det_info : *appid_peg_ids)
+    for (const auto& det_info : *appid_peg_ids)
     {
         assert(det_info.second.second < SF_APPID_MAX);   // add_app_peg_info() bound
-        AppIdDynamicPeg* pegs = &appid_dynamic_sum[det_info.second.second];
-        if (!pegs->all_zeros())
-        {
-            print = true;
-        }
         tmp_sorting_map.emplace(det_info.second.second, &det_info.second.first);
     }
 
     AppIdDynamicPeg* unknown_pegs = &appid_dynamic_sum[SF_APPID_MAX];
-    if (!print && unknown_pegs->all_zeros())
-        return;
+    if (!policy.include_zeros && unknown_pegs->all_zeros())
+    {
+        bool has_non_zero_row = false;
+        for (uint32_t i = 0; i < app_num; i++)
+        {
+            AppIdDynamicPeg* pegs = &appid_dynamic_sum[i];
+            if (!pegs->all_zeros())
+            {
+                has_non_zero_row = true;
+                break;
+            }
+        }
 
-    LogLabel("Appid Statistics");
-    LogLabel("detected apps and services");
+        if (!has_non_zero_row)
+            return;
+    }
 
-    char buff[120];
-    snprintf(buff, sizeof(buff), "%25.25s: %-10s %-10s %-10s %-10s %-10s %-10s",
-        "Application", "Services", "Clients", "Users", "Payloads", "Misc", "Referred");
-    LogText(buff);
+    auto& section = builder.section("Appid Statistics");
+    auto& group = builder.group(section, "detected apps and services");
+    auto& table = builder.table(group, "detected apps and services",
+        { "Application", "Services", "Clients", "Users", "Payloads", "Misc", "Referred" }, true);
 
     for (uint32_t i = 0; i < app_num; i++)
     {
         AppIdDynamicPeg* pegs = &appid_dynamic_sum[i];
-        if (pegs->all_zeros())
+        if (!policy.include_zeros && pegs->all_zeros())
             continue;
 
-        pegs->print(tmp_sorting_map[i]->c_str(), buff, sizeof(buff));
-        LogText(buff);
+        auto app_name = tmp_sorting_map.find(i);
+        if (app_name != tmp_sorting_map.end() && app_name->second)
+            pegs->collect_row(builder, table, app_name->second->c_str());
     }
 
-    if (!unknown_pegs->all_zeros())
-    {
-        unknown_pegs->print("unknown", buff, sizeof(buff));
-        LogText(buff);
-    }
+    if (policy.include_zeros || !unknown_pegs->all_zeros())
+        unknown_pegs->collect_row(builder, table, "unknown");
 }

@@ -19,22 +19,17 @@
 #ifndef STATS_OUTPUT_TEXT_H
 #define STATS_OUTPUT_TEXT_H
 
-#include <functional>
-
-#include "snapshot.h"
+#include "utils.h"
 
 class ControlConn;
 
 namespace snort::stats
 {
 
-using DynamicStatsRenderer = std::function<void()>;
-
 void render_text(
     ControlConn* ctrlcon,
     const Snapshot& snapshot,
-    const RenderOptions& options = {},
-    const DynamicStatsRenderer& render_dynamic_stats = {});
+    const RenderOptions& options = {});
 
 } // namespace snort::stats
 

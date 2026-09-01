@@ -44,6 +44,7 @@
 #include "framework/module.h"
 #include "framework/pig_pen.h"
 #include "protocols/packet.h"
+#include "utils/stats/snapshot.h"
 
 #endif
 

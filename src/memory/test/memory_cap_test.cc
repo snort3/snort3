@@ -85,12 +85,12 @@ unsigned ThreadConfig::get_instance_max()
 
 }
 
-void show_stats(PegCount* counts, const PegInfo*, unsigned n, const char* module_name)
+void show_stats(const PegCount* counts, const PegInfo*, unsigned n, const char* module_name)
 {
     shown_counts.assign(counts, counts + n);
     shown_module = module_name ? module_name : "";
 }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(const PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
 #ifndef REG_TEST
 void Periodic::register_handler(PeriodicHook, void*, uint16_t, uint32_t) { }

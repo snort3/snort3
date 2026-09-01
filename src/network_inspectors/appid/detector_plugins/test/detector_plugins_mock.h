@@ -94,8 +94,8 @@ char* snort_strdup(const char* str)
 }
 // LCOV_EXCL_START
 DiscoveryFilter::~DiscoveryFilter(){}
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
+void show_stats(const PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 // LCOV_EXCL_STOP
 
 // Stubs for modules, config
@@ -187,7 +187,8 @@ void AppIdPegCounts::inc_payload_count(AppId) { }
 
 THREAD_LOCAL AppIdStats appid_stats;
 void AppIdModule::sum_stats(bool) { }
-void AppIdModule::show_dynamic_stats() { }
+void AppIdModule::collect_dynamic_stats(snort::stats::Builder&,
+    const snort::stats::DynamicStatsPolicy&) const { }
 
 // Stubs for appid_session.cc
 static bool test_service_strstr_enabled = false;

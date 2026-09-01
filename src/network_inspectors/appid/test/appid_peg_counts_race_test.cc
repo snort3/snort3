@@ -28,9 +28,9 @@
 //      vs init_pegs()/sum_stats()    (packet-thread tinit/tterm) reading the
 //      SAME appid_peg_ids map object -> rehash under a reader -> corrupt node.
 //
-//   2) concurrent_print_vs_writers  (residual race found during review)
-//      print()/show_dynamic_stats() (control thread) reads *appid_peg_ids AND
-//      appid_dynamic_sum with no lock, racing add_app_peg_info() (map) and
+//   2) concurrent_collect_vs_writers  (residual race found during review)
+//      collect_stats()/collect_dynamic_stats() (control thread) reads *appid_peg_ids
+//      AND appid_dynamic_sum with no lock, racing add_app_peg_info() (map) and
 //      sum_stats() (appid_dynamic_sum).
 //
 // HOW TO BUILD/RUN:
@@ -66,15 +66,14 @@
 //   * Without the fix: fails in plain, ASAN and TSAN builds (verified on
 //     Linux/gcc and FreeBSD/libc++), in both test cases independently.
 //   * With the fix (reader/writer lock restored on appid_peg_ids in
-//     add/init/sum, plus a print() guard, all in appid_peg_ids -> dynamic_stats
-//     lock order): clean.
+//     add/init/sum, plus a collect_stats() guard, all in appid_peg_ids ->
+//     dynamic_stats lock order): clean.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <atomic>
-#include <cstdio>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -84,6 +83,7 @@
 #include "network_inspectors/appid/app_info_table.h"    // SF_APPID_MAX
 #include "network_inspectors/appid/appid_peg_counts.h"
 #include "network_inspectors/appid/appid_debug.h"
+#include "utils/stats/snapshot.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/MemoryLeakWarningPlugin.h>
@@ -95,24 +95,9 @@ THREAD_LOCAL bool appid_trace_enabled = false;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 void appid_log(const snort::Packet*, const uint8_t, const char*, ...) { }
 
-// print() emits its output through snort::LogText(). While capture_log is set,
-// those lines accumulate in log_lines so a test can assert on what print()
-// produced. Kept as a directly-written file-scope buffer rather than a pointer
-// to a caller's local: the indirection made every write invisible to static
-// analysis, which then reported the captured lines as an always-empty container.
-static std::vector<std::string> log_lines;
-static bool capture_log = false;
-
 namespace snort
 {
-// Link stubs for symbols pulled in by appid_peg_counts.cc::print() and sf_ip.cc
-// (print's LogLabel/LogText are exercised by the print test but are no-ops here).
-void LogLabel(const char*, FILE*) { }
-void LogText(const char* text, FILE*)
-{
-    if (capture_log and text)
-        log_lines.push_back(text);
-}
+// Link stub for symbol pulled in by sf_ip.cc.
 char* snort_strdup(const char* s) { char* p = new char[strlen(s) + 1]; strcpy(p, s); return p; }
 }
 
@@ -120,10 +105,10 @@ namespace
 {
 constexpr AppId SEED_COUNT = 1000;
 constexpr unsigned READER_THREADS = 4;
-// appid_dynamic_sum[] has SF_APPID_MAX+1 fixed slots that print()/sum_stats index
+// appid_dynamic_sum[] has SF_APPID_MAX+1 fixed slots that collect_stats()/sum_stats index
 // by an app_id's dynamic index (== map size at insertion). Real AppIds are always
 // < SF_APPID_MAX, so keep the synthetic writer ids within that bound; otherwise the
-// map grows past the array and print() reads out of bounds (a SIGSEGV in
+// map grows past the array and collect_stats() reads out of bounds (a SIGSEGV in
 // all_zeros() observed on FreeBSD -O2).
 constexpr AppId APPID_ID_CAP = 39000;   // < SF_APPID_MAX (40000)
 // Because the id space is bounded, the writer makes a FINITE number of real
@@ -224,6 +209,67 @@ void run_sum_stats_reader(RaceSync& sync)
     run_reader_loop(sync, [] { AppIdPegCounts::sum_stats(); });
     AppIdPegCounts::cleanup_pegs();
 }
+
+snort::stats::Snapshot collect_appid_stats()
+{
+    snort::stats::Snapshot snapshot;
+    snort::stats::Builder builder(snapshot);
+    snort::stats::DynamicStatsPolicy policy;
+    AppIdPegCounts::collect_stats(builder, policy);
+    return snapshot;
+}
+
+const std::string* get_row_app_name(const std::vector<snort::stats::Value>& row)
+{
+    if (row.empty())
+        return nullptr;
+
+    return std::get_if<std::string>(&row[0]);
+}
+
+bool has_app_row(const snort::stats::Snapshot& snapshot, const std::string& app_name)
+{
+    for (const auto& section : snapshot.sections)
+    {
+        for (const auto& group : section.groups)
+        {
+            for (const auto& table : group.tables)
+            {
+                for (const auto& row : table.rows)
+                {
+                    const auto* name = get_row_app_name(row);
+                    if (name && *name == app_name)
+                        return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+unsigned count_app_rows_with_prefix(const snort::stats::Snapshot& snapshot, const std::string& prefix)
+{
+    unsigned count = 0;
+
+    for (const auto& section : snapshot.sections)
+    {
+        for (const auto& group : section.groups)
+        {
+            for (const auto& table : group.tables)
+            {
+                for (const auto& row : table.rows)
+                {
+                    const auto* name = get_row_app_name(row);
+                    if (name && name->rfind(prefix, 0) == 0)
+                        ++count;
+                }
+            }
+        }
+    }
+
+    return count;
+}
 }
 
 TEST_GROUP(appid_peg_counts_race)
@@ -263,25 +309,26 @@ TEST(appid_peg_counts_race, concurrent_add_vs_sum_stats)
     CHECK_TEXT(overlap >= MIN_OVERLAP_WRITES, overlap_msg.c_str());
 }
 
-// Race 2 (residual): print() reads *appid_peg_ids and appid_dynamic_sum with no
-// lock, racing add_app_peg_info() (map mutation) and sum_stats() (dynamic_sum
-// writes). Demonstrates why print()/show_dynamic_stats() also needs guarding.
-TEST(appid_peg_counts_race, concurrent_print_vs_writers)
+// Race 2 (residual): collect_stats() reads *appid_peg_ids and appid_dynamic_sum
+// with no lock, racing add_app_peg_info() (map mutation) and sum_stats()
+// (dynamic_sum writes). Demonstrates why collect_stats()/collect_dynamic_stats()
+// also needs guarding.
+TEST(appid_peg_counts_race, concurrent_collect_vs_writers)
 {
     seed_peg_ids();
 
     RaceSync sync;
 
-    // Summer writes appid_dynamic_sum via sum_stats() (races print()'s reads)
+    // Summer writes appid_dynamic_sum via sum_stats() (races collect_stats()'s reads)
     // and, like a terminating packet thread, walks the shared map.
     std::thread summer([&sync] { run_sum_stats_reader(sync); });
 
-    // Two participants join the barrier: the summer and the printer below.
+    // Two participants join the barrier: the summer and the collector below.
     std::thread writer([&sync] { run_writer(sync, 2); });
 
-    // Printer runs on this thread and reads both appid_peg_ids and
+    // Collector runs on this thread and reads both appid_peg_ids and
     // appid_dynamic_sum (both unlocked pre-fix).
-    run_reader_loop(sync, [] { AppIdPegCounts::print(); });
+    run_reader_loop(sync, [] { collect_appid_stats(); });
 
     writer.join();
     summer.join();
@@ -290,7 +337,7 @@ TEST(appid_peg_counts_race, concurrent_print_vs_writers)
 
     CHECK_TEXT(!sync.race_detected.load(std::memory_order_relaxed),
         "data race on appid_peg_ids/appid_dynamic_sum: a stats reader saw "
-             "state corrupted by a concurrent writer -- the print() guard and/or "
+             "state corrupted by a concurrent writer -- the collect_stats() guard and/or "
              "appid_peg_ids_mutex is missing");
 
     const long overlap = sync.overlap_writes.load(std::memory_order_relaxed);
@@ -306,7 +353,7 @@ TEST(appid_peg_counts_race, concurrent_print_vs_writers)
 // last slot reserved for the unknown-app aggregate. Nothing bounds how many apps a
 // detector package may register, so before add_app_peg_info() enforced the limit a
 // large enough ODP handed out indices past the end of that array and sum_stats()
-// and print() read and wrote out of bounds (ASAN: global-buffer-overflow).
+// and collect_stats() read and wrote out of bounds (ASAN: global-buffer-overflow).
 TEST(appid_peg_counts_race, registration_bounded_by_dynamic_sum_capacity)
 {
     // Previous cases leave totals in appid_dynamic_sum; start from a known state so
@@ -325,28 +372,15 @@ TEST(appid_peg_counts_race, registration_bounded_by_dynamic_sum_capacity)
     AppIdPegCounts::inc_service_count(over_limit_id);
     AppIdPegCounts::sum_stats();
 
-    log_lines.clear();
-    capture_log = true;
-    AppIdPegCounts::print();
-    capture_log = false;
+    const auto snapshot = collect_appid_stats();
 
     AppIdPegCounts::cleanup_pegs();
     AppIdPegCounts::cleanup_peg_info();
 
     const std::string over_limit_name = "app_" + std::to_string(over_limit_id);
-    bool counted_as_unknown = false;
-    bool over_limit_tracked = false;
-    for (const std::string& line : log_lines)
-    {
-        if (line.find("unknown") != std::string::npos)
-            counted_as_unknown = true;
-        if (line.find(over_limit_name) != std::string::npos)
-            over_limit_tracked = true;
-    }
-
-    CHECK_TEXT(counted_as_unknown, "a detection for an app past the tracking limit "
+    CHECK_TEXT(has_app_row(snapshot, "unknown"), "a detection for an app past the tracking limit "
         "was not counted in the unknown-app bucket");
-    CHECK_TEXT(!over_limit_tracked, "an app past the tracking limit was given a "
+    CHECK_TEXT(!has_app_row(snapshot, over_limit_name), "an app past the tracking limit was given a "
         "dynamic index, which indexes outside appid_dynamic_sum[]");
 }
 
@@ -375,28 +409,18 @@ TEST(appid_peg_counts_race, init_pegs_snapshots_every_registered_app)
 
     AppIdPegCounts::sum_stats();
 
-    log_lines.clear();
-    capture_log = true;
-    AppIdPegCounts::print();
-    capture_log = false;
+    const auto snapshot = collect_appid_stats();
 
     AppIdPegCounts::cleanup_pegs();
     AppIdPegCounts::cleanup_peg_info();
 
     // Every registered app must appear exactly once, so no id may share a slot
     // with another and none may be missing.
-    unsigned app_lines = 0;
-    unsigned unknown_lines = 0;
-    for (const std::string& line : log_lines)
-    {
-        if (line.find("snap_") != std::string::npos)
-            ++app_lines;
-        else if (line.find("unknown") != std::string::npos)
-            ++unknown_lines;
-    }
+    const unsigned app_lines = count_app_rows_with_prefix(snapshot, "snap_");
+    const unsigned unknown_lines = has_app_row(snapshot, "unknown") ? 1 : 0;
 
     const std::string count_msg = "expected " + std::to_string(APP_COUNT) +
-        " per-app lines from print(), got " + std::to_string(app_lines) +
+        " per-app rows from collect_stats(), got " + std::to_string(app_lines) +
         "; init_pegs() did not give every registered app its own dynamic slot";
     CHECK_TEXT(app_lines == APP_COUNT, count_msg.c_str());
     CHECK_TEXT(unknown_lines == 1, "a detection for an unregistered app was not "

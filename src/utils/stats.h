@@ -98,8 +98,8 @@ extern THREAD_LOCAL PacketCount pc;
 }
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n, bool dump_stats = false);
-void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
-void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char* module_name, FILE*);
+void show_stats(const PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
+void show_stats(const PegCount*, const PegInfo*, const std::vector<unsigned>&, const char* module_name, FILE*);
 
 void DropStats(
     ControlConn* ctrlcon = nullptr,

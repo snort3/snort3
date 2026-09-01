@@ -39,6 +39,8 @@ add_library ( file_api OBJECT
     file_stats.h
 )
 
+add_subdirectory(test)
+
 install (FILES ${FILE_API_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/file_api"
 )

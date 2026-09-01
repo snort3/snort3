@@ -16,38 +16,21 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef STATS_UTILS_H
+#define STATS_UTILS_H
 
 #include "snapshot.h"
 
-using namespace snort::stats;
-
-bool snort::stats::is_zero(const Counter& counter)
+namespace snort::stats
 {
-    if ( std::get_if<std::monostate>(&counter.value) )
-        return true;
 
-    if ( const auto* value = std::get_if<bool>(&counter.value) )
-        return !*value;
-
-    if ( const auto* value = std::get_if<int64_t>(&counter.value) )
-        return *value == 0;
-
-    if ( const auto* value = std::get_if<uint64_t>(&counter.value) )
-        return *value == 0;
-
-    if ( const auto* value = std::get_if<double>(&counter.value) )
-        return *value == 0.0;
-
-    if ( const auto* value = std::get_if<std::string>(&counter.value) )
-        return value->empty();
-
-    return true;
-}
-
-bool snort::stats::should_render(const Counter& counter, const RenderOptions& options)
+struct RenderOptions
 {
-    return options.include_zeros || !is_zero(counter);
-}
+    bool include_zeros = false;    // we could give the user the option to include zero-value counters in the output
+};
+
+bool should_render(const Counter& counter, const RenderOptions& options);
+
+} // namespace snort::stats
+
+#endif

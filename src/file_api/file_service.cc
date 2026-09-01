@@ -35,6 +35,7 @@
 #include "managers/inspector_manager.h"
 #include "mime/file_mime_process.h"
 #include "search_engines/search_tool.h"
+#include "utils/stats/snapshot.h"
 
 #include "file_cache.h"
 #include "file_capture.h"
@@ -71,10 +72,14 @@ void FileService::reset()
     file_capture_enabled = false;
 }
 
-void FileService::print_cache_usage()
+void FileService::collect_cache_usage(stats::Builder& builder, stats::Group& group)
 {
-    if (file_cache)
-        LogCount("File cache entries", file_cache->get_num_entries());
+    if (!file_cache)
+        return;
+
+    const auto entries = file_cache->get_num_entries();
+    if (entries > 0)
+        builder.counter(group, "File cache entries", static_cast<uint64_t>(entries));
 }
 
 void FileService::post_init()
