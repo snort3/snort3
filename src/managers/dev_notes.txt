@@ -24,6 +24,57 @@ If a pending tterm() has already run, packet processing clears the old
 gadget and resets flow->service to nullptr so binder and wizard can
 rediscover the service.
 
+Dropped inspectors that still own surviving flows can opt in to the
+ReloadSurvivorSubscriptions (RSS) framework so their DataBus handlers
+keep firing across reload generations.  During reconcile_map(), each
+newly-dropped inspector gets a chance to attach handlers to the
+matching policy in the new SnortConfig, matched by user_policy_id.
+A second pass walks the RSS registry to cover survivors from earlier
+reloads that are no longer in the previous InspectorVector but still
+need handlers rebound to the new DataBus.  If the matching policy no
+longer exists in the new config, handlers are not registered and the
+inspector drains normally instead.
+
+rss_list_survivors() hands reconcile_map() a raw Inspector* snapshot
+while holding the registry lock only briefly, then releases it.
+Without further synchronization a packet thread's finish_pending_tterm()
+could call tterm() on that same survivor while reconcile_map() is still
+reading/rebuilding its state on the main thread.  RSS closes this with
+a per-entry "reconciling" flag: rss_list_survivors() sets it on every entry
+it returns, and rss_await_quiescent() (which every object-level tterm()
+path calls before tterm()) refuses to proceed while it is set,
+returning false instead.  A scope-bound reconciliation guard owns the
+snapshot in reconcile_map() and clears every returned entry when the
+survivor sweep ends, including policy-lookup failures and early skips.
+The reconciling window therefore lasts for the duration of the sweep,
+not just the processing time for one survivor.
+finish_pending_tterm() treats a false rss_await_quiescent() as "not yet"
+and leaves the pending_tterm entry queued for the next drain call.  The
+one exception is InspectorManager::thread_term()'s full-shutdown path:
+since the thread is exiting and nothing will retry the drain afterward,
+it blocks on rss_await_quiescent() (finish_pending_tterm_blocking())
+instead of dropping the entry -- reconciliation delays completion until
+the active survivor sweep ends, while an in-flight callback may keep the
+wait running longer.  rss_await_quiescent()
+only drains in-flight dispatch leases; it does not prevent a later callback
+from starting.  A survivor handler that receives owner-identifying context
+must validate that context before accessing owner-specific state.  A handler
+without owner-identifying context must limit itself to state guaranteed to
+outlive the inspector's tterm(); an owner-agnostic handler that needs
+inspector-specific state must not be a survivor subscription.  Replacement
+leaves the new instance's normal handler and the outgoing instance's
+survivor handler on the same event, so a survivor handler runs once per
+surviving generation and must be idempotent.  Safety after tterm() alone
+does not justify surviving.  The handler
+subscriptions are retired later, in
+rss_release(), whose sole caller is ~Inspector once every thread slot
+is inactive.
+
+The same-API replacement and deferred cleanup paths retry while
+rss_await_quiescent() reports that reconciliation is active.  These waits are
+intentionally unbounded for correctness and should receive slow-wait
+diagnostics in a follow-up lifecycle story.
+
 If reload initializes a same-API inspector while an old same-API inspector
 is removed, the old inspector's tterm() may run before the new tinit() to
 avoid colliding thread-local state.  Other referenced removed inspectors
@@ -64,4 +115,3 @@ The ConnectorManager (and associated) classes manage the set of Connector
 objects.  One ConnectorCommon is created to encapsulate a vector of
 configuration objects.  At thread startup, these config objects are used
 to instantiate thread specific instances of each configured Connector.
-

@@ -42,6 +42,7 @@
 #include "filters/sfthreshold.h"
 #include "flow/ha_module.h"
 #include "framework/module.h"
+#include "framework/reload_survivor_subscriptions_impl.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache_module.h"
 #include "js_norm/js_norm_module.h"
@@ -592,6 +593,47 @@ void MPDataBusModule::sum_stats(bool dump_stats)
         }
     }
 }
+
+//-------------------------------------------------------------------------
+// reload_survivor module
+//-------------------------------------------------------------------------
+
+#define reload_survivor_help \
+    "reload survivor subscription registry statistics"
+
+class ReloadSurvivorSubscriptionsModule : public Module
+{
+public:
+    ReloadSurvivorSubscriptionsModule() :
+        Module("reload_survivor", reload_survivor_help) { }
+
+    const PegInfo* get_pegs() const override
+    { return snort::rss_pegs; }
+
+    PegCount* get_counts() const override
+    { return const_cast<PegCount*>(counts[get_instance_id()].data()); }
+
+    // dump/shutdown path calls prep_counts, not sum_stats(true); snapshot must happen here
+    void prep_counts(bool) override
+    {
+        if (get_instance_id() != 0)
+            return;
+
+        snort::rss_stats_to_pegcounts(snort::rss_stats, counts[0].data());
+    }
+
+    void reset_stats() override
+    {
+        snort::rss_stats.reset();
+        Module::reset_stats();
+    }
+
+    bool global_stats() const override
+    { return true; }
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+};
 
 //-------------------------------------------------------------------------
 // reference module
@@ -2324,6 +2366,7 @@ void add_independent_modules()
     PluginManager::add_module(new ProcessModule);
     PluginManager::add_module(new ProfilerModule);
     PluginManager::add_module(new ReferencesModule);
+    PluginManager::add_module(new ReloadSurvivorSubscriptionsModule);
     PluginManager::add_module(new SearchEngineModule);
     PluginManager::add_module(new SFDAQModule);
     PluginManager::add_module(new PayloadInjectorModule);

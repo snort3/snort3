@@ -162,6 +162,7 @@ struct ReloadCounts
     unsigned tear_down = 0;
     unsigned tinit = 0;
     unsigned tterm = 0;
+    unsigned survivor_handler_registrations = 0;
     bool last_shutdown = false;
     std::shared_ptr<bool> inspector_alive = std::make_shared<bool>(false);
     unsigned to_server_splitter_detaches = 0;
@@ -237,6 +238,9 @@ public:
 
     void tterm() override
     { ++counts->tterm; }
+
+    void register_reload_survivor_handlers(ReloadSurvivorSubscriptions&) override
+    { ++counts->survivor_handler_registrations; }
 
     StreamSplitter* get_splitter(bool to_server) override
     { return to_server ? &to_server_splitter : &to_client_splitter; }
@@ -467,6 +471,7 @@ TEST_GROUP(inspector_manager_reload_tests)
         InspectorManager::new_map();
         sc.reset(new SnortConfig);
         reload_plugin.reset(new ReloadPlugin("reload_test"));
+        snort::rss_capture.reset();
     }
 
     void teardown() override
@@ -545,7 +550,52 @@ TEST(inspector_manager_reload_tests, referenced_removed_service_defers_tterm_unt
     restore_old_map_for_teardown(reload_sc);
 }
 
-TEST(inspector_manager_reload_tests, flow_gadget_release_drains_pending_tterm)
+TEST(inspector_manager_reload_tests, removed_service_without_refs_drains_before_tterm)
+{
+    ReloadCounts old_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get());
+    CHECK(old_inspector);
+
+    auto reload_sc = start_removal_reload();
+    CHECK_EQUAL(0, old_counts.tterm);
+    CHECK_EQUAL(0, snort::rss_capture.await_quiescent_calls);
+
+    // This is the direct, no-flow-ref path in InspectorVector::thread_term.
+    // It must use the same drain-before-tterm helper as deferred cleanup.
+    InspectorManager::thread_term_removed();
+
+    CHECK_EQUAL(1, snort::rss_capture.await_quiescent_calls);
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, direct_tterm_defers_when_rss_drain_is_not_ready)
+{
+    ReloadCounts old_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get());
+    CHECK(old_inspector);
+
+    auto reload_sc = start_removal_reload();
+    snort::rss_capture.await_quiescent_defer_count = 1;
+
+    InspectorManager::thread_term_removed();
+
+    CHECK_EQUAL(2, snort::rss_capture.await_quiescent_calls);
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, flow_gadget_release_retries_quiescence_before_tterm)
 {
     ReloadCounts old_counts;
 
@@ -566,12 +616,19 @@ TEST(inspector_manager_reload_tests, flow_gadget_release_drains_pending_tterm)
     CHECK_EQUAL(0, old_counts.tterm);
     CHECK_EQUAL(2, get_thread_refs(old_inspector));
 
+    // Exercise the production path: releasing the last flow gadget reference
+    // drains the pending tterm.  The first quiescence attempt reports that a
+    // callback is still active, so tterm must remain deferred until the next
+    // manager drain.
+    snort::rss_capture.await_quiescent_defer_count = 1;
     flow.clear_gadget();
     const unsigned tterm_after_gadget_release = old_counts.tterm;
     const unsigned refs_after_gadget_release = get_thread_refs(old_inspector);
 
-    if ( !old_counts.tterm )
-        InspectorManager::thread_drain_pending_tterm();
+    CHECK_EQUAL(0, tterm_after_gadget_release);
+    CHECK_EQUAL(1, snort::rss_capture.await_quiescent_calls);
+
+    InspectorManager::thread_drain_pending_tterm();
 
     CHECK_EQUAL(1, old_counts.tterm);
     CHECK_EQUAL(0, get_thread_refs(old_inspector));
@@ -579,8 +636,8 @@ TEST(inspector_manager_reload_tests, flow_gadget_release_drains_pending_tterm)
     InspectorManager::thread_term();
     restore_old_map_for_teardown(reload_sc);
 
-    CHECK_EQUAL(1, tterm_after_gadget_release);
-    CHECK_EQUAL(0, refs_after_gadget_release);
+    CHECK_EQUAL(0, tterm_after_gadget_release);
+    CHECK_EQUAL(1, refs_after_gadget_release);
 }
 
 TEST(inspector_manager_reload_tests,
@@ -856,6 +913,35 @@ TEST(inspector_manager_reload_tests, full_thread_term_marks_pending_tterm_called
     set_thread_refs(old_inspector, 0);
 }
 
+// full-shutdown drain must block and retry await_quiescent(), not drop the
+// entry; see dev_notes.txt
+TEST(inspector_manager_reload_tests, full_thread_term_blocks_until_release_stops_deferring)
+{
+    ReloadCounts old_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get());
+    CHECK(old_inspector);
+
+    set_thread_refs(old_inspector, 1);
+    auto reload_sc = start_removal_reload();
+    InspectorManager::thread_term_removed();
+    CHECK_EQUAL(0, old_counts.tterm);
+    CHECK_EQUAL(2, get_thread_refs(old_inspector));
+
+    snort::rss_capture.await_quiescent_defer_count = 3;
+
+    restore_old_map_for_teardown(reload_sc);
+    InspectorManager::thread_term();
+
+    CHECK_EQUAL(4, snort::rss_capture.await_quiescent_calls);  // 3 deferred + 1 success
+    CHECK_EQUAL(1, old_counts.tterm);
+    CHECK_EQUAL(1, get_thread_refs(old_inspector));
+
+    set_thread_refs(old_inspector, 0);
+}
+
 TEST(inspector_manager_reload_tests, thread_init_finishes_same_api_pending_when_only_self_hold_remains)
 {
     ReloadCounts old_counts;
@@ -949,6 +1035,255 @@ TEST(inspector_manager_reload_tests, same_name_policy_replacement_acknowledges_c
 
     InspectorManager::thread_term();
     restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, register_reload_survivor_handlers_invoked_with_matching_policy)
+{
+    ReloadCounts old_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get());
+    CHECK(old_inspector);
+
+    // Hold a thread ref so the inspector survives reload and reconcile_map
+    // takes the deferred-tterm + RSS-construction path.
+    set_thread_refs(old_inspector, 1);
+    auto reload_sc = start_removal_reload();
+    CHECK_EQUAL(1, old_counts.tear_down);
+
+    // Dropped-inspector loop constructs one RSS bound to the new-SC policies;
+    // list_survivors() is empty here so the for_each loop adds nothing.
+    CHECK_EQUAL(1, snort::rss_capture.ctor_calls);
+
+    NetworkPolicy* expected_np = reload_sc->policy_map->get_user_network(10);
+    CHECK(expected_np);
+    POINTERS_EQUAL(expected_np, snort::rss_capture.last_np);
+
+    InspectionPolicy* expected_ip = expected_np->get_user_inspection_policy(11);
+    CHECK(expected_ip);
+    POINTERS_EQUAL(expected_ip, snort::rss_capture.last_ip);
+
+    POINTERS_EQUAL(old_inspector, snort::rss_capture.last_survivor);
+
+    // Drain refs and clean up like the deferred-tterm tests above.
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_term_removed();
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_drain_pending_tterm();
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, newly_removed_survivor_registered_once_per_reload)
+{
+    ReloadCounts old_counts;
+    ReloadCounts carried_counts;
+    ReloadInspector carried_survivor(&carried_counts);
+
+    reload_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get());
+    CHECK(old_inspector);
+
+    // Keep the inspector alive through the reload.  Seed the test resweep
+    // with the same inspector that the dropped-inspector pass registers;
+    // before the fix this makes reconcile_map() invoke the callback twice.
+    set_thread_refs(old_inspector, 1);
+    snort::rss_capture.survivors.push_back({ old_inspector, 10, 11 });
+    snort::rss_capture.survivors.push_back({ &carried_survivor, 10, 11 });
+
+    auto reload_sc = start_removal_reload();
+
+    CHECK_EQUAL(1, old_counts.survivor_handler_registrations);
+    CHECK_EQUAL(1, carried_counts.survivor_handler_registrations);
+    CHECK_EQUAL(2, snort::rss_capture.end_reconcile_calls);
+
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_term_removed();
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_drain_pending_tterm();
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, register_reload_survivor_handlers_skipped_when_policy_missing)
+{
+    const uint64_t baseline = snort::rss_stats.policy_resolution_failures.load();
+    ReloadCounts old_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get());
+    CHECK(old_inspector);
+
+    set_thread_refs(old_inspector, 1);
+
+    // Build a reload SC like start_removal_reload does, but break the
+    // user-id lookup for the inspector's InspectionPolicy in the new SC
+    // before reconcile runs.  This drives reconcile_map's
+    //     if ( new_np and new_ip )
+    // gate to false: new_np resolves, new_ip does not, so RSS construction
+    // is skipped and the inspector still gets dropped via deferred-tterm.
+    InspectorManager::new_map();
+    std::unique_ptr<SnortConfig> reload_sc(new SnortConfig);
+
+    NetworkPolicy* matching_np = reload_sc->policy_map->get_user_network(10);
+    CHECK(matching_np);
+    matching_np->user_inspection.erase(11);
+
+    InspectorManager::prepare_map();
+    InspectorManager::reconcile_map(reload_sc.get());
+
+    CHECK_EQUAL(0, snort::rss_capture.ctor_calls);
+    CHECK_EQUAL(1, old_counts.tear_down);
+    CHECK_EQUAL(baseline + 1, snort::rss_stats.policy_resolution_failures.load());
+
+    // Inspection-policy lookup is the one that failed here (network resolves).
+    CHECK(last_warning_message.find("resolve its inspection policy") != std::string::npos);
+
+    // Drain refs and clean up like the deferred-tterm tests above.
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_term_removed();
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_drain_pending_tterm();
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+// Companion to the case above: this time the *network* policy lookup is the
+// one that fails (survivor's np_user_id doesn't exist in the new config at
+// all), so the diagnostic must name "network", not "inspection".
+TEST(inspector_manager_reload_tests, policy_resolve_failure_warning_names_network_lookup)
+{
+    const uint64_t baseline = snort::rss_stats.policy_resolution_failures.load();
+
+    ReloadCounts dummy_counts;
+    ReloadInspector fake_survivor(&dummy_counts);
+    snort::rss_capture.survivors.push_back({ &fake_survivor, 999, 11 });
+
+    InspectorManager::new_map();
+    std::unique_ptr<SnortConfig> reload_sc(new SnortConfig);
+    CHECK(!reload_sc->policy_map->get_user_network(999));
+
+    InspectorManager::prepare_map();
+    InspectorManager::reconcile_map(reload_sc.get());
+
+    CHECK_EQUAL(0, snort::rss_capture.ctor_calls);
+    CHECK_EQUAL(baseline + 1, snort::rss_stats.policy_resolution_failures.load());
+    CHECK(last_warning_message.find("resolve its network policy") != std::string::npos);
+    CHECK(last_warning_message.find("resolve its inspection policy") == std::string::npos);
+
+    restore_old_map_for_teardown(reload_sc);
+}
+
+// A survivor from an earlier reload (absent from both prev_iv and curr_iv
+// now) must still get re-attached on every later reconcile_map -- the
+// dropped-inspector loop can't see it, only the for_each-survivor loop can.
+// Exercises that loop in isolation: prev_iv empty, rss_capture.survivors
+// seeded with a fake survivor matching an entry in the new SC's PolicyMap.
+TEST(inspector_manager_reload_tests, reconcile_map_reattaches_carried_survivors)
+{
+    // Empty prev_iv: no inspector instantiated.  The dropped-inspector
+    // loop in reconcile_map will iterate zero entries, so any RSS ctor
+    // call observed here is attributable to the for_each-survivor loop.
+    ReloadCounts dummy_counts;
+    ReloadInspector fake_survivor(&dummy_counts);
+
+    InspectorManager::new_map();
+    std::unique_ptr<SnortConfig> reload_sc(new SnortConfig);
+
+    snort::rss_capture.survivors.push_back({ &fake_survivor, 10, 11 });
+
+    InspectorManager::prepare_map();
+    InspectorManager::reconcile_map(reload_sc.get());
+
+    CHECK_EQUAL(1, snort::rss_capture.ctor_calls);
+
+    NetworkPolicy* expected_np = reload_sc->policy_map->get_user_network(10);
+    CHECK(expected_np);
+    POINTERS_EQUAL(expected_np, snort::rss_capture.last_np);
+
+    InspectionPolicy* expected_ip = expected_np->get_user_inspection_policy(11);
+    CHECK(expected_ip);
+    POINTERS_EQUAL(expected_ip, snort::rss_capture.last_ip);
+
+    POINTERS_EQUAL(&fake_survivor, snort::rss_capture.last_survivor);
+
+    restore_old_map_for_teardown(reload_sc);
+}
+
+// A carried-over survivor whose matching policy is GONE from the new SC
+// must be skipped by the for_each loop (no RSS construction).  This is
+// the "graceful drain" path: surviving flows continue to drain via
+// FLOW_NO_SERVICE on the new SC's default policy but no new survivor
+// handlers are attached.
+TEST(inspector_manager_reload_tests, reconcile_map_skips_carried_survivors_when_policy_missing)
+{
+    const uint64_t baseline = snort::rss_stats.policy_resolution_failures.load();
+    ReloadCounts dummy_counts;
+    ReloadInspector fake_survivor(&dummy_counts);
+
+    InspectorManager::new_map();
+    std::unique_ptr<SnortConfig> reload_sc(new SnortConfig);
+
+    // Remove the matching InspectionPolicy from the new SC so the
+    // for_each loop's new_ip resolution fails for the seeded survivor.
+    NetworkPolicy* matching_np = reload_sc->policy_map->get_user_network(10);
+    CHECK(matching_np);
+    matching_np->user_inspection.erase(11);
+
+    snort::rss_capture.survivors.push_back({ &fake_survivor, 10, 11 });
+
+    InspectorManager::prepare_map();
+    InspectorManager::reconcile_map(reload_sc.get());
+
+    CHECK_EQUAL(0, snort::rss_capture.ctor_calls);
+    CHECK_EQUAL(baseline + 1, snort::rss_stats.policy_resolution_failures.load());
+
+    restore_old_map_for_teardown(reload_sc);
+}
+
+// Many-reload validation for the carried-survivor resolve-failure path,
+// standing in for a sustained SIT-style run without needing real traffic:
+// the same survivor's policy stays missing across many reload cycles, so
+// RSS construction must never fire and every cycle must add exactly one
+// resolve failure -- proving the counter accumulates correctly rather
+// than double-counting or silently dropping cycles.
+TEST(inspector_manager_reload_tests, many_reloads_with_missing_policy_accumulate_resolve_failures)
+{
+    const uint64_t baseline = snort::rss_stats.policy_resolution_failures.load();
+    constexpr unsigned CYCLE_COUNT = 500;
+
+    ReloadCounts dummy_counts;
+    ReloadInspector fake_survivor(&dummy_counts);
+    snort::rss_capture.survivors.push_back({ &fake_survivor, 10, 11 });
+
+    for ( unsigned i = 0; i < CYCLE_COUNT; i++ )
+    {
+        InspectorManager::new_map();
+        std::unique_ptr<SnortConfig> reload_sc(new SnortConfig);
+
+        NetworkPolicy* matching_np = reload_sc->policy_map->get_user_network(10);
+        CHECK(matching_np);
+        matching_np->user_inspection.erase(11);
+
+        InspectorManager::prepare_map();
+        InspectorManager::reconcile_map(reload_sc.get());
+
+        CHECK_EQUAL(0, snort::rss_capture.ctor_calls);  // never once constructed
+        CHECK_EQUAL(baseline + i + 1, snort::rss_stats.policy_resolution_failures.load());
+        CHECK(last_warning_message.find("resolve its inspection policy") != std::string::npos);
+
+        // restore_old_map_for_teardown() only calls revert_map(), which
+        // leaves prev_iv non-null (fine for a one-shot test, since
+        // teardown() unconditionally cleans up after). A repeated loop
+        // needs restore_map()'s prev_iv=nullptr so new_map()'s
+        // assert(!prev_iv) holds on the next cycle.
+        reload_sc.reset();
+        InspectorManager::restore_map();
+    }
+    mock().setDataObject("snort_config", "const SnortConfig", sc.get());
 }
 
 int main(int argc, char** argv)

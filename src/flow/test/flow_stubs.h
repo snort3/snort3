@@ -76,7 +76,11 @@ void DataBus::publish(unsigned pub_id, unsigned event_id, Packet* packet, Flow* 
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 #endif
 
+#ifndef SURVIVOR_FLOW_DATA_TEST
 void InspectorManager::thread_drain_pending_tterm_if_pending(const Inspector*) { }
+
+void Flow::pin_survivor_flow_data(Inspector&) { }
+#endif
 
 Packet::Packet(bool)
 {

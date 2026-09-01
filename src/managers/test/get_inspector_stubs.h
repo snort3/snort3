@@ -20,6 +20,10 @@
 #ifndef GET_INSPECTOR_STUBS_H
 #define GET_INSPECTOR_STUBS_H
 
+#include <cstdarg>
+#include <cstdio>
+#include <string>
+
 #include "detection/detection_engine.h"
 #include "flow/expect_flow.h"
 #include "flow/flow.h"
@@ -30,6 +34,8 @@
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "managers/plugin_manager.h"
+#include "framework/reload_survivor_subscriptions.h"
+#include "framework/reload_survivor_subscriptions_impl.h"
 #include "network_inspectors/binder/bind_module.h"
 #include "profiler/rule_profiler_defs.h"
 #include "profiler/time_profiler_defs.h"
@@ -58,7 +64,20 @@ namespace snort
 void LogMessage(const char*, ...) { }
 void LogLabel(const char*, FILE*) { }
 void ParseError(const char*, ...) { }
-void WarningMessage(const char*, ...) { }
+
+// captures the rendered text so tests can assert on message content, not
+// just that a warning fired
+static std::string last_warning_message;
+
+void WarningMessage(const char* format, ...)
+{
+    char buf[512];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    last_warning_message = buf;
+}
 
 DataBus::DataBus() { }
 DataBus::~DataBus() { }
@@ -72,6 +91,82 @@ void DataBus::publish(unsigned, unsigned event_id, Packet* packet, Flow*)
         test_data_bus_publish_hook(event_id, packet);
 }
 unsigned DataBus::get_id(const PubKey&) { return 0; }
+
+// test-only recorder: ReloadSurvivorSubscriptions ctor stashes (np, ip, survivor);
+// list_survivors() returns the seeded vector so tests can drive the resweep pass
+struct RssCapture
+{
+    unsigned ctor_calls = 0;
+    unsigned end_reconcile_calls = 0;
+    NetworkPolicy* last_np = nullptr;
+    InspectionPolicy* last_ip = nullptr;
+    Inspector* last_survivor = nullptr;
+
+    std::vector<RssSurvivorView> survivors;
+
+    // release() defers (returns false) for the first release_defer_count calls
+    unsigned release_defer_count = 0;
+    unsigned release_calls = 0;
+
+    // await_quiescent() defers (returns false) for the first
+    // await_quiescent_defer_count calls
+    unsigned await_quiescent_defer_count = 0;
+    unsigned await_quiescent_calls = 0;
+
+    void reset()
+    {
+        ctor_calls = 0;
+        end_reconcile_calls = 0;
+        last_np = nullptr;
+        last_ip = nullptr;
+        last_survivor = nullptr;
+        survivors.clear();
+        release_defer_count = 0;
+        release_calls = 0;
+        await_quiescent_defer_count = 0;
+        await_quiescent_calls = 0;
+    }
+};
+static RssCapture rss_capture;
+
+ReloadSurvivorSubscriptions::ReloadSurvivorSubscriptions(
+    NetworkPolicy& np_, InspectionPolicy& ip_, Inspector& survivor_)
+    : np(np_), ip(ip_), survivor(survivor_)
+{
+    ++rss_capture.ctor_calls;
+    rss_capture.last_np = &np_;
+    rss_capture.last_ip = &ip_;
+    rss_capture.last_survivor = &survivor_;
+}
+
+bool rss_release(Inspector&)
+{
+    ++rss_capture.release_calls;
+    if ( rss_capture.release_calls <= rss_capture.release_defer_count )
+        return false;
+    return true;
+}
+
+bool rss_await_quiescent(Inspector&)
+{
+    ++rss_capture.await_quiescent_calls;
+    if ( rss_capture.await_quiescent_calls <= rss_capture.await_quiescent_defer_count )
+        return false;
+    return true;
+}
+
+void rss_on_bus_destroyed(const DataBus*) { }
+void rss_end_reconcile(Inspector&)
+{ ++rss_capture.end_reconcile_calls; }
+
+std::vector<RssSurvivorView>
+rss_list_survivors()
+{
+    std::vector<RssSurvivorView> out = rss_capture.survivors;
+    return out;
+}
+
+RssStats rss_stats;
 
 void Flow::set_service(Packet* packet, const char* new_service)
 {
@@ -95,6 +190,8 @@ void Flow::release_gadget()
     old_gadget->rem_ref();
     InspectorManager::thread_drain_pending_tterm_if_pending(old_gadget);
 }
+
+void Flow::pin_survivor_flow_data(Inspector&) { }
 
 void DetectionEngine::disable_content(Packet*) { }
 

@@ -39,11 +39,12 @@ class Session;
 
 namespace snort
 {
+class ReloadSurvivorSubscriptions;
 struct SnortConfig;
 struct Packet;
 
 // this is the current version of the api
-#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 4)
+#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 5)
 
 struct InspectionBuffer
 {
@@ -191,6 +192,9 @@ public:
     void copy_thread_storage(Inspector*);
 
     virtual void install_reload_handler(SnortConfig*)
+    { }
+
+    SO_PRIVATE virtual void register_reload_survivor_handlers(ReloadSurvivorSubscriptions&)
     { }
 
     virtual const uint8_t* adjust_log_packet(Packet*, uint16_t&)

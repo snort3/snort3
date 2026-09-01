@@ -92,6 +92,7 @@ public:
     static void thread_term_removed();
     static void thread_drain_pending_tterm();
     static void thread_drain_pending_tterm_if_pending(const Inspector*);
+    static bool is_pending_tterm(const Inspector*);
     static void thread_reinit(const SnortConfig*);
 
     static void execute(Packet*);

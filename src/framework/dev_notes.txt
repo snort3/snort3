@@ -13,3 +13,112 @@ plugins.
 PacketConstraints allow you to match packets and flows against a 6-tuple.
 ( ip_proto; src_ip; dst_ip; src_port; dst_port; tenant)
 
+ReloadSurvivorSubscriptions (RSS) lets an Inspector that remains alive
+after its originating configuration is replaced keep receiving DataBus
+events until its surviving flow references drain.
+
+DataBus lifetime, in reload and termination
+  DataBus instances are owned by a SnortConfig and its policies at
+  global, network, and inspection scope. A reload builds a new
+  SnortConfig with new policies and new buses; the old ones are
+  destroyed once the reload is verified. Termination destroys buses
+  for good, with no next generation. Either way, a DataBus that a handler
+  is subscribed to can disappear out from under it. Ordinary subscriptions
+  don't survive that disappearance; they were never meant to. RSS
+  specifically reattaches to the matching inspection-policy bus in the
+  new config, not the network or global one.
+
+How Inspectors and other modules interact with DataBus
+  An Inspector subscribes on a policy's bus and gets torn down on
+  reload like everything else in the old config. That's normally fine:
+  publish and subscribe are scoped to one config generation. It
+  becomes a problem when an Inspector outlives its original
+  configuration: the Inspector continues handling existing flows, but
+  its handlers were attached to a DataBus that has been destroyed. If
+  those events matter after reload, opt into RSS; if they don't, do
+  nothing and let normal teardown happen.
+
+  RSS is Inspector-only. Other DataHandler subclasses (loggers, file_api
+  handlers) subscribe and publish through the same DataBus, and they get
+  the same DataHandler::live flag everyone does, but there is no reload-
+  survival path for them: register_reload_survivor_handlers() is a
+  virtual on Inspector, and the RSS registry is keyed by Inspector*. A
+  non-Inspector handler's subscriptions are torn down and, if still
+  needed, resubscribed by whatever owns it, same as before RSS existed.
+
+Plugin-facing vs framework-internal surface
+  reload_survivor_subscriptions.h is installed and holds only what a plugin
+  needs: the class, Factory, and subscribe(), which is the sole SO_PUBLIC
+  member.  Everything else -- the pegs, RssSurvivorView, SurvivorFlowData
+  and the rss_*() lifecycle entry points -- lives in
+  reload_survivor_subscriptions_impl.h, which is not installed.  The
+  lifecycle calls are free functions rather than static members precisely
+  so they can live in the uninstalled header; a class cannot be split
+  across headers.  Keeping the constructor unexported means supported
+  plugins receive the object by reference and use only subscribe(); the
+  private members are not part of the intended plugin ABI surface.
+
+What an Inspector should do (and must not do)
+  To survive a reload, override register_reload_survivor_handlers() and
+  call RSS::subscribe() from inside it. Do this only for handlers the
+  Inspector actually needs after a rebind/reload; RSS is not a way to
+  avoid normal per-config subscribe/unsubscribe.
+  Must not: call rss_release() or rss_await_quiescent() synchronously from
+  inside a handle() callback, on any survivor. This deadlocks the drain
+  that's waiting for that same callback to return. subscribe() is safe to
+  re-enter: the handler factory runs outside the registry lock.
+  Must not: assume the bus a handler was attached to is still the "live"
+  one. RSS re-attaches to whichever bus is current; a handler should
+  not cache bus identity across a reload boundary.
+
+RSS dispatch overlap and tterm()
+  RSS does not serialize dispatch against object-level Inspector::tterm().
+  InspectorManager calls rss_await_quiescent() before that tterm(); the
+  call drains callbacks already in flight but does not close the survivor
+  subscription, so a later callback may still start.
+
+  If an event carries a Flow or other owner-identifying context, a survivor
+  handler must validate that it belongs to the handler's inspector before
+  accessing owner-specific state.  An event without such context cannot be
+  owner-checked; its handler must use only state guaranteed to outlive
+  tterm().  An owner-agnostic handler that needs inspector-specific state
+  should not be registered as a survivor subscription.
+
+  Replacement leaves the new instance's normal handler and the outgoing
+  instance's survivor handler on the same event, so a survivor handler runs
+  once per surviving generation and must be idempotent.  Safety after
+  tterm() alone does not justify surviving.
+
+  RSS subscriptions are retired later by rss_release(), called from the
+  Inspector destructor after all thread references are inactive.
+
+DataBus event handling when an inspector is added, removed, or replaced
+  Added: a new instance subscribes normally on the current bus; no RSS
+  involvement.
+  Removed: if the old instance still has flow refs, InspectorManager::
+  reconcile_map() re-attaches it via register_reload_survivor_handlers()
+  to the new config's matching policy, across two passes: once for
+  inspectors just dropped in this reload, and once for survivors still
+  pending from an earlier one. If the old policy no longer resolves in
+  the new config, reconcile_map() warns and lets the inspector drain
+  normally instead.
+  Replaced/reconfigured: the new instance subscribes normally for new
+  traffic; the old instance is handled exactly like the removed case,
+  via RSS, until its existing flows drain.
+
+  Separately, a flow can rebind its gadget mid-flow (Flow::set_gadget/
+  clear_gadget) onto a different inspector while the outgoing one is
+  still pending teardown. SurvivorFlowData pins that outgoing Inspector
+  on the flow so the rebind can't drop its last ref while RSS handlers
+  for it are still expected to fire; the pin releases once the flow
+  itself is freed. This is a packet-time mechanism, distinct from the
+  reload-time add/remove/replace handling above.
+
+When to override register_reload_survivor_handlers()
+  Only inspectors whose *flows* can outlive a reload need this: inspectors
+  that attach state to Flow and expect their DataBus handlers to keep
+  firing on that flow's traffic after the config generation that created
+  them is gone. Most inspectors don't need it: if an inspector's flow
+  state and subscriptions are both scoped to one config generation, normal
+  teardown already does the right thing, and adding an override here just
+  adds surface area for a reload race with no benefit.

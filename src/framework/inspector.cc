@@ -23,6 +23,7 @@
 
 #include "inspector.h"
 
+#include "framework/reload_survivor_subscriptions_impl.h"
 #include "main/thread_config.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
@@ -57,6 +58,10 @@ Inspector::Inspector()
 
 Inspector::~Inspector()
 {
+    bool released = rss_release(*this);
+    assert(released);
+    UNUSED(released);
+
     for (unsigned i = 0; i < 1 + ThreadConfig::get_instance_max(); ++i )
         assert(0 == ref_count[i]);
 

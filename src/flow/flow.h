@@ -163,6 +163,8 @@ struct LwState
     char ignore_direction;
 };
 
+class Inspector;
+
 // this struct is organized by member size for compactness
 class SO_PUBLIC Flow
 {
@@ -354,7 +356,10 @@ public:
     void set_gadget(Inspector* ins)
     {
         if (gadget)
+        {
+            pin_survivor_flow_data(*gadget);
             release_gadget();
+        }
         gadget = ins;
         if (gadget)
             gadget->add_ref();
@@ -362,6 +367,8 @@ public:
 
     void clear_gadget()
     {
+        if (gadget)
+            pin_survivor_flow_data(*gadget);
         release_gadget();
         if (assistant_gadget != nullptr)
             clear_assistant_gadget();
@@ -591,6 +598,7 @@ public:  // FIXIT-M privatize if possible
 
 private:
     void clean();
+    void pin_survivor_flow_data(Inspector&);
     void release_gadget();
     std::atomic_ullong inspection_duration{0};
     uint16_t inspected_packet_count{0};

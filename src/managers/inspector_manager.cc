@@ -25,6 +25,8 @@
 
 #include <cstring>
 #include <list>
+#include <thread>
+#include <unordered_set>
 #include <vector>
 
 #include "binder/bind_module.h"
@@ -33,6 +35,8 @@
 #include "flow/expect_flow.h"
 #include "flow/flow.h"
 #include "flow/session.h"
+#include "framework/reload_survivor_subscriptions.h"
+#include "framework/reload_survivor_subscriptions_impl.h"
 #include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/shell.h"
@@ -216,6 +220,29 @@ struct PendingTterm
     PendingTtermState state = PendingTtermState::WaitingForTterm;
 };
 
+// un-marks every entry rss_list_survivors() marked reconciling, on any exit
+class ReconciliationGuard
+{
+public:
+    ReconciliationGuard() : survivors(rss_list_survivors())
+    { }
+
+    ~ReconciliationGuard()
+    {
+        for ( const auto& survivor : survivors )
+            rss_end_reconcile(*survivor.survivor);
+    }
+
+    ReconciliationGuard(const ReconciliationGuard&) = delete;
+    ReconciliationGuard& operator=(const ReconciliationGuard&) = delete;
+
+    const std::vector<RssSurvivorView>& get() const
+    { return survivors; }
+
+private:
+    std::vector<RssSurvivorView> survivors;
+};
+
 // Pending tterm entries keep removed inspectors alive until deferred thread cleanup runs.
 static THREAD_LOCAL std::list<PendingTterm>* pending_tterm = nullptr;
 
@@ -237,13 +264,27 @@ static PendingTterm* find_pending_tterm(const snort::Inspector* pin)
     return nullptr;
 }
 
-static void call_pending_tterm(PendingTterm& pending)
+// drain in-flight callbacks before tterm(); false means "not yet"
+static bool call_tterm(Inspector& inspector)
+{
+    if ( !rss_await_quiescent(inspector) )
+        return false;
+
+    inspector.tterm();
+    return true;
+}
+
+static bool call_pending_tterm(PendingTterm& pending)
 {
     if ( !pending_tterm_called(pending) )
     {
-        pending.pin->tterm();
+        if ( !call_tterm(*pending.pin) )
+            return false;
+
         pending.state = PendingTtermState::TtermCalled;
     }
+
+    return true;
 }
 
 static PendingTterm* defer_tterm(snort::Inspector* pin)
@@ -264,13 +305,23 @@ static PendingTterm* defer_tterm(snort::Inspector* pin)
 
 static std::list<PendingTterm>::iterator finish_pending_tterm(std::list<PendingTterm>::iterator it)
 {
-    call_pending_tterm(*it);
+    if ( !call_pending_tterm(*it) )
+        return std::next(it);
 
     it->pin->rem_ref();
     return pending_tterm->erase(it);
 }
 
-static bool is_pending_tterm(const snort::Inspector* pin)
+// shutdown-only variant
+static void finish_pending_tterm_blocking(const std::list<PendingTterm>::iterator& it)
+{
+    while ( !call_pending_tterm(*it) )
+        std::this_thread::yield();
+
+    it->pin->rem_ref();
+}
+
+bool InspectorManager::is_pending_tterm(const snort::Inspector* pin)
 {
     if ( !pending_tterm )
         return false;
@@ -360,7 +411,10 @@ struct InspectorVector
                             it = finish_pending_tterm(it);
                         else
                         {
-                            call_pending_tterm(*it);
+                            // old tterm() must precede the new tinit(); a
+                            // non-survivor quiesces on the first try
+                            while ( !call_pending_tterm(*it) )
+                                std::this_thread::yield();
                             ++it;
                         }
                     }
@@ -395,8 +449,10 @@ struct InspectorVector
                 }
 
                 set_network_policy(insd.np);
-                insd.pin->tterm();
-                mark_pending_tterm_called(insd.pin);
+                if ( call_tterm(*insd.pin) )
+                    mark_pending_tterm_called(insd.pin);
+                else
+                    defer_tterm(insd.pin);
             }
         }
 
@@ -455,7 +511,8 @@ static void thread_term_removed_same_api(const InspectorData& incoming)
         PendingTterm* pending = defer_tterm(insd.pin);
 
         set_network_policy(insd.np);
-        call_pending_tterm(*pending);
+        while ( !call_pending_tterm(*pending) )
+            std::this_thread::yield();
         pending->state = PendingTtermState::TtermCalledWaitingForRemovedMap;
         did_tterm = true;
     }
@@ -538,6 +595,8 @@ void InspectorManager::reconcile_map(SnortConfig* sc)
     assert(curr_iv);
     assert(prev_iv);
 
+    std::unordered_set<Inspector*> registered_this_reload;
+
     for ( const auto& nit : curr_iv->im )
     {
         const auto oit = prev_iv->im.find(nit.first);
@@ -566,7 +625,73 @@ void InspectorManager::reconcile_map(SnortConfig* sc)
             if ( !insd.needs_tinit )
             {
                 insd.needs_tterm = true;
+
+                NetworkPolicy* new_np = nullptr;
+                InspectionPolicy* new_ip = nullptr;
+
+                if ( sc and sc->policy_map and insd.np )
+                    new_np = sc->policy_map->get_user_network(insd.np->user_policy_id);
+
+                if ( new_np and insd.ip )
+                    new_ip = new_np->get_user_inspection_policy(insd.ip->user_policy_id);
+
+                if ( new_np and new_ip )
+                {
+                    ReloadSurvivorSubscriptions rss(*new_np, *new_ip, *insd.pin);
+                    registered_this_reload.insert(insd.pin);
+                    insd.pin->register_reload_survivor_handlers(rss);
+                }
+                else if ( !insd.np )
+                {
+                    snort::rss_stats.policy_resolution_failures.fetch_add(1, std::memory_order_relaxed);
+                    WarningMessage("RSS: survivor '%s' has no network policy binding "
+                        "(global-scope inspector removed from the new config); "
+                        "handlers not registered\n",
+                        insd.pin->get_api() ? insd.pin->get_name() : insd.name.c_str());
+                }
+                else
+                {
+                    snort::rss_stats.policy_resolution_failures.fetch_add(1, std::memory_order_relaxed);
+                    WarningMessage("RSS: survivor '%s' (network policy " STDu64
+                        ", inspection policy " STDu64 ") could not resolve its %s policy in the "
+                        "new config; handlers not registered\n",
+                        insd.pin->get_api() ? insd.pin->get_name() : insd.name.c_str(),
+                        insd.np->user_policy_id,
+                        insd.ip ? insd.ip->user_policy_id : 0,
+                        !new_np ? "network" : "inspection");
+                }
+
                 insd.pin->tear_down(sc, false);
+            }
+        }
+    }
+
+    if ( sc and sc->policy_map )
+    {
+        ReconciliationGuard reconciliation;
+
+        for ( const auto& sv : reconciliation.get() )
+        {
+            if ( registered_this_reload.find(sv.survivor) != registered_this_reload.end() )
+                continue;
+
+            NetworkPolicy* new_np = sc->policy_map->get_user_network(sv.np_user_id);
+            InspectionPolicy* new_ip = new_np ?
+                new_np->get_user_inspection_policy(sv.ip_user_id) : nullptr;
+
+            if ( !new_np or !new_ip )
+            {
+                snort::rss_stats.policy_resolution_failures.fetch_add(1, std::memory_order_relaxed);
+                WarningMessage("RSS: survivor '%s' (network policy " STDu64
+                    ", inspection policy " STDu64 ") could not resolve its %s policy in the "
+                    "new config; handlers not registered\n",
+                    sv.survivor->get_api() ? sv.survivor->get_name() : "<unknown>",
+                    sv.np_user_id, sv.ip_user_id, !new_np ? "network" : "inspection");
+            }
+            else
+            {
+                ReloadSurvivorSubscriptions rss(*new_np, *new_ip, *sv.survivor);
+                sv.survivor->register_reload_survivor_handlers(rss);
             }
         }
     }
@@ -1117,7 +1242,10 @@ void InspectorManager::thread_term()
     if ( pending_tterm )
     {
         for ( auto it = pending_tterm->begin(); it != pending_tterm->end(); )
-            it = finish_pending_tterm(it);
+        {
+            finish_pending_tterm_blocking(it);
+            it = pending_tterm->erase(it);
+        }
 
         delete pending_tterm;
         pending_tterm = nullptr;

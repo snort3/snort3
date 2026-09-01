@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include "framework/reload_survivor_subscriptions_impl.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
@@ -78,6 +79,8 @@ DataBus::DataBus() = default;
 
 DataBus::~DataBus()
 {
+    rss_on_bus_destroyed(this);
+
     for ( const auto& p : pub_sub )
     {
         for ( const auto* h : p )
@@ -121,6 +124,11 @@ void DataBus::subscribe_network(const PubKey& key, unsigned eid, DataHandler* h)
 void DataBus::subscribe_global(const PubKey& key, unsigned eid, DataHandler* h, SnortConfig& sc)
 {
     sc.global_dbus->_subscribe(key, eid, h);
+}
+
+void DataBus::subscribe(InspectionPolicy& ip, const PubKey& key, unsigned eid, DataHandler* h)
+{
+    ip.dbus._subscribe(key, eid, h);
 }
 
 // notify subscribers of event
@@ -221,5 +229,10 @@ void DataBus::_publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f) const
     const SubList& subs = pub_sub[idx];
 
     for ( auto* h : subs )
-        h->handle(e, f);
+    {
+        if ( h->live.load(std::memory_order_acquire) )
+            h->handle(e, f);
+        else
+            rss_stats.dead_handler_skips.fetch_add(1, std::memory_order_relaxed);
+    }
 }

@@ -166,6 +166,8 @@ namespace snort
         old_gadget->rem_ref();
     }
 
+    void Flow::pin_survivor_flow_data(Inspector&) { }
+
     // Mock Flow constructor/destructor
     Flow::Flow() { }
     Flow::~Flow() = default;

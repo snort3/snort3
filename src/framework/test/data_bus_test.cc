@@ -72,6 +72,9 @@ void set_network_policy(NetworkPolicy*)
 void set_inspection_policy(InspectionPolicy*)
 { }
 
+void WarningMessage(const char*, ...)
+{ }
+
 THREAD_LOCAL PacketCount pc;
 }
 

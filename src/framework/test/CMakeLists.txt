@@ -1,10 +1,14 @@
 
 add_cpputest( data_bus_test
-    SOURCES ../data_bus.cc
+    SOURCES ../data_bus.cc ../reload_survivor_subscriptions.cc
 )
 
 add_cpputest( mp_data_bus_test
     SOURCES ../mp_data_bus.cc
+)
+
+add_cpputest( reload_survivor_subscriptions_test
+    SOURCES ../data_bus.cc ../reload_survivor_subscriptions.cc
 )
 
 # libapi_def.a is actually a text file with the preprocessed header source
