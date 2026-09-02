@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.12.5.0 2026-08-28 18:29:11 EDT TST
+Revision 3.13.0.0 2026-09-01 17:44:05 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -47,11 +47,12 @@ Table of Contents
     2.28. profiler
     2.29. rate_filter
     2.30. references
-    2.31. search_engine
-    2.32. side_channel
-    2.33. snort
-    2.34. suppress
-    2.35. trace
+    2.31. reload_survivor
+    2.32. search_engine
+    2.33. side_channel
+    2.34. snort
+    2.35. suppress
+    2.36. trace
 
 3. Codec Modules
 
@@ -1540,7 +1541,41 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-2.31. search_engine
+2.31. reload_survivor
+
+--------------
+
+Help: reload survivor subscription registry statistics
+
+Type: basic
+
+Usage: global
+
+Peg counts:
+
+  * reload_survivor.rss_survivors_installed: successful RSS handler
+    subscribes (sum)
+  * reload_survivor.rss_release_retired: RSS handler subscriptions
+    retired via release() (sum)
+  * reload_survivor.rss_bus_destroyed: on_bus_destroyed() invocations
+    across all bus teardowns (sum)
+  * reload_survivor.rss_policy_resolve_fail: old policy unresolvable
+    in new config on any inspector removal (sum)
+  * reload_survivor.rss_list_returned: total SurvivorView entries
+    returned by list_survivors() (sum)
+  * reload_survivor.rss_bus_stripped: handler entries stripped in
+    on_bus_destroyed() (sum)
+  * reload_survivor.rss_dead_pub_skips: publishes skipped due to dead
+    RSS handler (sum)
+  * reload_survivor.rss_survivors_active: live RSS handler
+    registrations (now)
+  * reload_survivor.rss_registry_tracked: distinct survivor
+    inspectors tracked in RSS registry (now)
+  * reload_survivor.rss_dedup_conflicts: subscribe() key reused with
+    a different (publisher, event) (sum)
+
+
+2.32. search_engine
 
 --------------
 
@@ -1601,7 +1636,7 @@ Peg counts:
   * search_engine.qualified_events: total qualified events (sum)
 
 
-2.32. side_channel
+2.33. side_channel
 
 --------------
 
@@ -1624,7 +1659,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-2.33. snort
+2.34. snort
 
 --------------
 
@@ -1934,7 +1969,7 @@ Peg counts:
     failed due to attribute table full (sum)
 
 
-2.34. suppress
+2.35. suppress
 
 --------------
 
@@ -1954,7 +1989,7 @@ Configuration:
     according to track
 
 
-2.35. trace
+2.36. trace
 
 --------------
 
@@ -6438,6 +6473,8 @@ Commands:
   * stream.dump_flows(): dump the flow table in text format
   * stream.dump_flows_binary(): dump the flow table in binary format
   * stream.dump_flows_summary(): dump flow table summary
+  * stream.dump_flow_memory_summary(): summarize live per-flow memory
+    usage (optional arg: top-N count)
 
 Rules:
 
@@ -6548,6 +6585,10 @@ Peg counts:
     tracking inspector configured (sum)
   * stream.no_flow_paf_no_flow: packets without flow: PAF payload but
     no flow exists (sum)
+  * stream.released_max_flow_mem: peak memory used by a single flow
+    in bytes (life-of-flow high-water mark, sampled at release) (max)
+  * stream.released_total_flow_mem: cumulative memory of all flows
+    sampled at release/retire (excludes still-active flows) (sum)
   * stream.allowlist_flows: number of flows moved to the allowlist
     (now)
   * stream.current_flows: current number of flows in cache (now)
@@ -13796,6 +13837,26 @@ libraries see the Getting Started section of the manual.
     (sum)
   * rate_filter.no_memory: number of times rate filter ran out of
     memory (sum)
+  * reload_survivor.rss_bus_destroyed: on_bus_destroyed() invocations
+    across all bus teardowns (sum)
+  * reload_survivor.rss_bus_stripped: handler entries stripped in
+    on_bus_destroyed() (sum)
+  * reload_survivor.rss_dead_pub_skips: publishes skipped due to dead
+    RSS handler (sum)
+  * reload_survivor.rss_dedup_conflicts: subscribe() key reused with
+    a different (publisher, event) (sum)
+  * reload_survivor.rss_list_returned: total SurvivorView entries
+    returned by list_survivors() (sum)
+  * reload_survivor.rss_policy_resolve_fail: old policy unresolvable
+    in new config on any inspector removal (sum)
+  * reload_survivor.rss_registry_tracked: distinct survivor
+    inspectors tracked in RSS registry (now)
+  * reload_survivor.rss_release_retired: RSS handler subscriptions
+    retired via release() (sum)
+  * reload_survivor.rss_survivors_active: live RSS handler
+    registrations (now)
+  * reload_survivor.rss_survivors_installed: successful RSS handler
+    subscribes (sum)
   * reputation.aux_ip_blocked: number of auxiliary ip packets blocked
     (sum)
   * reputation.aux_ip_monitored: number of auxiliary ip packets
@@ -14121,6 +14182,10 @@ libraries see the Getting Started section of the manual.
     memcap (sum)
   * stream.pdu_timeout_prunes: number of PDU flows pruned due to
     timeout (sum)
+  * stream.released_max_flow_mem: peak memory used by a single flow
+    in bytes (life-of-flow high-water mark, sampled at release) (max)
+  * stream.released_total_flow_mem: cumulative memory of all flows
+    sampled at release/retire (excludes still-active flows) (sum)
   * stream.reload_allowed_deletes: number of allowed flows deleted by
     config reloads (sum)
   * stream.reload_blocked_deletes: number of blocked flows deleted by
@@ -17851,6 +17916,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * stream.dump_flows(): dump the flow table in text format
   * stream.dump_flows_binary(): dump the flow table in binary format
   * stream.dump_flows_summary(): dump flow table summary
+  * stream.dump_flow_memory_summary(): summarize live per-flow memory
+    usage (optional arg: top-N count)
   * trace.set(output, ntuple, timestamp, constraints, modules): set
     trace configuration
   * trace.clear(): clear trace configuration
@@ -18201,6 +18268,8 @@ and are not applicable elsewhere.
     hyperscan regex; uses pcre syntax
   * reject (ips_action): manage the data and the counters for the
     reject action
+  * reload_survivor (basic): reload survivor subscription registry
+    statistics
   * rem (ips_option): rule option to convey an arbitrary comment in
     the rule body
   * replace (ips_option): rule option to overwrite payload data; use

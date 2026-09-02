@@ -1,3 +1,10 @@
+2026-09-01: 3.13.0.0
+
+* api: make selected public APIs const-correct
+* flow: add per-flow memory tracking and reporting
+* framework: preserve DataBus subscriptions across reload survivors
+* stats: support JSON format for dynamic stats
+
 2026-08-28: 3.12.5.0
 
 * appid: add tls host info logs
