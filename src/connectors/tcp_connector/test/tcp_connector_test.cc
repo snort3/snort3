@@ -625,6 +625,30 @@ TEST(tcp_connector_tinit_tterm_call, receive)
     CHECK(conn_msg.get_length() == 0);
 }
 
+TEST(tcp_connector_tinit_tterm_call, receive_pending_message)
+{
+    const uint32_t cmsg_len = 99;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
+    uint8_t* message = new uint8_t[size];
+
+    for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++)
+        message[i] = i;
+
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
+    hdr->version = TCP_FORMAT_VERSION;
+    hdr->connector_msg_length = cmsg_len;
+    s_rec_message = message;
+    s_rec_message_size = size;
+    s_poll_data_available = true;
+
+    tcpc->process_receive();
+    CHECK(s_rec_message_size == 0);
+
+    // Leave the received message queued; fixture teardown must release it.
+    delete[] message;
+}
+
 TEST(tcp_connector_no_tinit_tterm_call, receive_wrong_version)
 {
     const uint32_t cmsg_len = 10;

@@ -202,6 +202,15 @@ TcpConnector::TcpConnector(const TcpConnectorConfig& tcp_connector_config, int s
 TcpConnector::~TcpConnector()
 {
     stop_receive_thread();
+
+    while (ConnectorMsg** slot = receive_ring->read())
+    {
+        ConnectorMsg* received_msg = *slot;
+        *slot = nullptr;
+        receive_ring->pop();
+        delete received_msg;
+    }
+
     delete receive_ring;
     close(sock_fd);
 }
