@@ -185,7 +185,7 @@ bool GtpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& dd)
     else
         dd.decode_flags |= DECODE_GTP;
 
-    if (raw.len > 0)
+    if (raw.len > len)
     {
         codec.codec_flags |= CODEC_ENCAP_LAYER;
         uint8_t ip_ver = *(raw.data + len) & 0xF0;
