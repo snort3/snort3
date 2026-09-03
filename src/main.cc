@@ -918,9 +918,9 @@ static void reap_commands()
 }
 
 // FIXIT-L return true if something was done to avoid sleeping
-static bool house_keeping()
+static bool house_keeping(bool check_signals = true)
 {
-    if (pthreads_started)
+    if (check_signals && pthreads_started)
         signal_check();
 
     reap_commands();
@@ -1253,6 +1253,9 @@ static void snort_main()
     }
 
     main_loop();
+
+    // Packet-thread shutdown may leave work after the main loop's last service pass.
+    house_keeping(false);
 
     delete pig_poke;
     delete[] pigs;
