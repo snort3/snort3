@@ -23,17 +23,17 @@
 #include "config.h"
 #endif
 
-#include <CppUTest/CommandLineTestRunner.h>
-#include <CppUTest/TestHarness.h>
-
 #include "../socks_splitter.h"
 #include "../socks_flow_data.h"
 #include "stream/stream_splitter.h"
 
+#include <CppUTest/CommandLineTestRunner.h>
+#include <CppUTest/TestHarness.h>
+
 namespace snort
 {
     class Flow;
-    class Packet;
+    struct Packet;
 }
 
 class FlushBucket;
@@ -44,7 +44,7 @@ using namespace snort;
 
 namespace snort
 {
-    class Packet
+    struct Packet
     {
     public:
         Flow* flow = nullptr;

@@ -671,12 +671,12 @@ TEST(http2_hpack_dynamic_table_size, clamp_down_evicts_entries)
     table.update_size(entry_size + 1);
     CHECK_EQUAL(entry_size + 1, table.get_max_size());
     CHECK(table.get_entry(62) != nullptr);
-    CHECK_EQUAL(nullptr, table.get_entry(63));
+    POINTERS_EQUAL(nullptr, table.get_entry(63));
 
     // Clamp below a single entry: the whole table is evicted.
     table.update_size(entry_size - 1);
     CHECK_EQUAL(entry_size - 1, table.get_max_size());
-    CHECK_EQUAL(nullptr, table.get_entry(62));
+    POINTERS_EQUAL(nullptr, table.get_entry(62));
 }
 
 int main(int argc, char** argv)
