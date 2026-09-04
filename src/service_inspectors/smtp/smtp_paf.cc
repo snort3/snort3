@@ -43,7 +43,8 @@ enum SmtpDataCMD
     SMTP_PAF_NOOP_CMD,
     SMTP_PAF_VRFY_CMD,
     SMTP_PAF_QUIT_CMD,
-    SMTP_PAF_XEXCH50_CMD
+    SMTP_PAF_XEXCH50_CMD,
+    SMTP_PAF_XLINK2STATE_CMD
 };
 
 struct SmtpPAFToken
@@ -67,6 +68,7 @@ const SmtpPAFToken smtp_paf_tokens[] =
     { "VRFY",         4, SMTP_PAF_VRFY_CMD, true },
     { "QUIT",         4, SMTP_PAF_QUIT_CMD, false },
     { "XEXCH50",      7, SMTP_PAF_XEXCH50_CMD, true },
+    { "X-LINK2STATE", 12, SMTP_PAF_XLINK2STATE_CMD, false },
     { nullptr,           0, 0, false }
 };
 
@@ -97,19 +99,82 @@ static inline void reset_data_states(SmtpPafData* pfdata)
     pfdata->length = 0;
 }
 
-static inline bool smtp_check_codes(char c)
+static inline bool smtp_check_codes(uint8_t c)
 {
-    // Check that first character in message isn't a letter
-    return !isupper(c) && !islower(c);
+    return isdigit(c);
+}
+
+static inline bool process_response(SmtpRespSearchInfo* resp_info, uint8_t val)
+{
+    switch (resp_info->resp_state)
+    {
+    case SMTP_PAF_RESP_START:
+    case SMTP_PAF_RESP_VALIDATE:
+        if (val == '\n')
+        {
+            resp_info->resp_invalid = true;
+            resp_info->resp_state = SMTP_PAF_RESP_START;
+            resp_info->resp_pos = 0;
+            return true;
+        }
+        else if (!smtp_check_codes(val))
+        {
+            resp_info->resp_invalid = true;
+            resp_info->resp_state = SMTP_PAF_RESP_SCAN;
+        }
+        else
+        {
+            resp_info->resp_pos++;
+            resp_info->resp_state =
+                (resp_info->resp_pos >= 3) ? SMTP_PAF_RESP_SCAN : SMTP_PAF_RESP_VALIDATE;
+        }
+        return false;
+
+    case SMTP_PAF_RESP_SCAN:
+        if (val == '\n')
+        {
+            resp_info->resp_state = SMTP_PAF_RESP_START;
+            resp_info->resp_pos = 0;
+            return true;
+        }
+        return false;
+    }
+
+    return false;
 }
 
 static inline StreamSplitter::Status smtp_paf_server(SmtpPafData* pfdata,
     const uint8_t* data, uint32_t len, uint32_t* fp)
 {
-    const char* pch;
+    uint32_t i;
 
-    bool valid_status_code = smtp_check_codes(data[0]);
-    if (!valid_status_code)
+    for (i = 0; i < len; i++)
+    {
+        uint8_t ch = data[i];
+
+        if (process_response(&(pfdata->resp_info), ch))
+        {
+            if (pfdata->resp_info.resp_invalid)
+            {
+                pfdata->server_bytes_seen += i + 1;
+                if (pfdata->server_bytes_seen > SMTP_MAX_OCTETS)
+                {
+                    reset_data_states(pfdata);
+                    return StreamSplitter::ABORT;
+                }
+            }
+            else
+            {
+                pfdata->server_bytes_seen = 0;
+            }
+
+            pfdata->resp_info.resp_invalid = false;
+            *fp = i + 1;
+            return StreamSplitter::FLUSH;
+        }
+    }
+
+    if (pfdata->resp_info.resp_invalid)
     {
         pfdata->server_bytes_seen += len;
         if (pfdata->server_bytes_seen > SMTP_MAX_OCTETS)
@@ -117,18 +182,8 @@ static inline StreamSplitter::Status smtp_paf_server(SmtpPafData* pfdata,
             reset_data_states(pfdata);
             return StreamSplitter::ABORT;
         }
-    } else {
-        pfdata->server_bytes_seen = 0;
     }
 
-
-    pch = (const char*)memchr (data, '\n', len);
-
-    if (pch != nullptr)
-    {
-        *fp = (uint32_t)(pch - (const char*)data) + 1;
-        return StreamSplitter::FLUSH;
-    }
     return StreamSplitter::SEARCH;
 }
 
@@ -229,6 +284,13 @@ static inline void validate_command(SmtpCmdSearchInfo* search_info,  uint8_t val
                 }
             }
         }
+        else if (search_info->search_id == SMTP_PAF_XEXCH50_CMD &&
+            search_info->search_state == &smtp_paf_tokens[SMTP_PAF_XEXCH50_CMD].name[1] &&
+            val == '-')
+        {
+            search_info->search_id = SMTP_PAF_XLINK2STATE_CMD;
+            search_info->search_state = &smtp_paf_tokens[SMTP_PAF_XLINK2STATE_CMD].name[2];
+        }
         else
         {
             search_info->search_state = nullptr;
@@ -288,6 +350,12 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
             pfdata->smtp_state = SMTP_PAF_DATA_STATE;
             reset_data_states(pfdata);
             pfdata->end_of_data = false;
+        }
+        else if ((pfdata->cmd_info.cmd_state == SMTP_PAF_CMD_START) or
+            (pfdata->cmd_info.cmd_state == SMTP_PAF_CMD_INVALID) or
+            ((pfdata->cmd_info.cmd_state == SMTP_PAF_CMD_DETECT) and pfdata->cmd_info.search_state))
+        {
+            pfdata->cmd_info.invalid_cmd = true;
         }
 
         pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_START;
@@ -376,7 +444,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
             {
                 if (pfdata->cmd_info.invalid_cmd)
                 {
-                    pfdata->client_bytes_seen += len;
+                    pfdata->client_bytes_seen += i + 1;
                     if (pfdata->client_bytes_seen > SMTP_MAX_OCTETS)
                     {
                         reset_data_states(pfdata);
@@ -387,6 +455,8 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
                 {
                     pfdata->client_bytes_seen = 0;
                 }
+                pfdata->cmd_info.invalid_cmd = false;
+
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
@@ -428,18 +498,21 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
         }
     }
 
-    if (pfdata->cmd_info.invalid_cmd)
+    if (pfdata->smtp_state == SMTP_PAF_CMD_STATE)
     {
-    	pfdata->client_bytes_seen += len;
-        if (pfdata->client_bytes_seen > SMTP_MAX_OCTETS)
+        if (pfdata->cmd_info.invalid_cmd)
         {
-        	reset_data_states(pfdata);
-        	return StreamSplitter::ABORT;
-    	}
-    }
-	else
-    {
-    	pfdata->client_bytes_seen = 0;
+            pfdata->client_bytes_seen += len;
+            if (pfdata->client_bytes_seen > SMTP_MAX_OCTETS)
+            {
+                reset_data_states(pfdata);
+                return StreamSplitter::ABORT;
+            }
+        }
+        else
+        {
+            pfdata->client_bytes_seen = 0;
+        }
     }
 
     if ( scanning_boundary(&pfdata->data_info, boundary_start, fp) )

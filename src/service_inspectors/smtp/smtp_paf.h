@@ -52,6 +52,20 @@ struct SmtpCmdSearchInfo
     bool invalid_cmd;
 };
 
+enum SmtpPafRespState
+{
+    SMTP_PAF_RESP_START,
+    SMTP_PAF_RESP_VALIDATE,
+    SMTP_PAF_RESP_SCAN
+};
+
+struct SmtpRespSearchInfo
+{
+    SmtpPafRespState resp_state;
+    uint32_t resp_pos;
+    bool resp_invalid;
+};
+
 // State tracker for SMTP PAF
 struct SmtpPafData
 {
@@ -59,6 +73,7 @@ struct SmtpPafData
     uint32_t length;
     SmtpPafState smtp_state;
     SmtpCmdSearchInfo cmd_info;
+    SmtpRespSearchInfo resp_info;
     MimeDataPafInfo data_info;
     uint32_t server_bytes_seen;
     uint32_t client_bytes_seen;
