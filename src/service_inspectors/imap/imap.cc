@@ -1066,4 +1066,45 @@ TEST_CASE("imap_body_len_valid", "[imap]")
     delete p.context;
     delete flow;
 }
+
+TEST_CASE("imap_paf_client bare lf flood aborts", "[imap]")
+{
+    ImapSplitter splitter(false);
+    const uint8_t lf = '\n';
+    uint32_t fp = 0;
+    unsigned flushes = 0;
+    StreamSplitter::Status status = StreamSplitter::SEARCH;
+
+    for ( unsigned i = 0; i <= IMAP_MAX_OCTETS + 1; i++ )
+    {
+        status = splitter.scan(nullptr, &lf, 1, PKT_FROM_CLIENT, &fp);
+        if ( status != StreamSplitter::FLUSH )
+            break;
+        flushes++;
+    }
+
+    REQUIRE((status == StreamSplitter::ABORT));
+    REQUIRE((flushes == IMAP_MAX_OCTETS));
+}
+
+TEST_CASE("imap_paf_client valid short commands never abort", "[imap]")
+{
+    const char* cmds[] = { "a NOOP\r\n", "a LOGOUT\r\n", nullptr };
+
+    for ( unsigned c = 0; cmds[c]; c++ )
+    {
+        ImapSplitter splitter(false);
+        const uint8_t* line = (const uint8_t*)cmds[c];
+        uint32_t line_len = strlen(cmds[c]);
+        uint32_t fp = 0;
+
+        for ( uint32_t sent = 0; sent < (IMAP_MAX_OCTETS * 2); sent += line_len )
+        {
+            StreamSplitter::Status status =
+                splitter.scan(nullptr, line, line_len, PKT_FROM_CLIENT, &fp);
+            REQUIRE((status == StreamSplitter::FLUSH));
+            REQUIRE((fp == line_len));
+        }
+    }
+}
 #endif

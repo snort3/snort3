@@ -82,6 +82,10 @@ struct ImapPafData
     bool end_of_data;
     uint32_t server_bytes_seen;
     uint32_t client_bytes_seen;
+    ImapClientState client_state;
+    bool client_is_valid_command;
+    bool client_found_space;
+    bool client_is_valid_base64;
 };
 
 class ImapSplitter : public snort::StreamSplitter
