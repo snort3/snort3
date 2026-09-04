@@ -30,6 +30,7 @@
 using namespace snort;
 
 extern POPToken pop_known_cmds[];
+extern POPToken pop_resps[];
 
 static inline PopPafData* get_state(Flow* flow, bool c2s)
 {
@@ -174,30 +175,65 @@ static inline void reset_data_states(PopPafData* pfdata)
     pfdata->cmd_continued = false;
     pfdata->end_state = PAF_DATA_END_UNKNOWN;
     pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
+    pfdata->resp_state = POP_RESP_SEARCH;
+    pfdata->resp_next_letter = nullptr;
+    pfdata->resp_invalid = false;
 }
 
 /*
- *  Checks if the current data is a valid response.
- *  According to RFC 1939, every response begins with either
+ *  Classifies the first byte of a new response line by walking pop_resps[]
+ *  the same way process_command() walks pop_known_cmds[] for client
+ *  commands.  According to RFC 1939, every response begins with either
  *     +OK
- *     -ERR.
- *
- *  RETURNS:
- *           true - if the character is a + or -
- *           false - if the character is anything else
+ *     -ERR
+ *  Anything else - including a bare LF - can never be a real response, so
+ *  it is treated like -ERR: forced into the single-line state, where the
+ *  invalid-byte budget (server_bytes_seen) applies.
  */
-static inline bool valid_response(PopPafData* pfdata, const uint8_t data)
+static void init_resp_search(PopPafData* pfdata, const uint8_t ch)
 {
-    if (data == '+')
+    for (const POPToken* tok = &pop_resps[0]; tok->name; tok++)
     {
-        return true;
-    } else if (data == '-')
-    {
-        //-ERR is always single line
-        pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
-        return true;
+        if (ch == (uint8_t)tok->name[0])
+        {
+            pfdata->resp_next_letter = &tok->name[1];
+            pfdata->resp_state = POP_RESP_MATCH;
+
+            if (tok->search_id == RESP_ERR)
+                pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
+
+            return;
+        }
     }
-    return false;
+
+    pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
+    pfdata->resp_invalid = true;
+    pfdata->resp_state = POP_RESP_SCAN;
+}
+
+/*
+ *  Continues matching the current response line against the token chosen
+ *  by init_resp_search().  Once the token is fully matched, or a byte fails
+ *  to match, moves to POP_RESP_SCAN: anything may follow a confirmed "+OK"
+ *  or "-ERR", and an already-invalid line needs no further checking.
+ */
+static inline void resp_search_for_token(PopPafData* pfdata, const uint8_t ch)
+{
+    char val = *(pfdata->resp_next_letter);
+
+    if (val == '\0')
+    {
+        pfdata->resp_state = POP_RESP_SCAN;
+        return;
+    }
+
+    if (toupper(ch) == toupper(val))
+        pfdata->resp_next_letter++;
+    else
+    {
+        pfdata->resp_invalid = true;
+        pfdata->resp_state = POP_RESP_SCAN;
+    }
 }
 
 /*
@@ -294,25 +330,25 @@ static StreamSplitter::Status pop_paf_server(PopPafData* pfdata,
     uint32_t i;
     uint32_t boundary_start = 0;
 
-    // if a negative response was received, it will be a one line response.
-    if (!pfdata->cmd_continued && !valid_response(pfdata, *data))
-    {
-        pfdata->server_bytes_seen += len;
-        if (pfdata->server_bytes_seen > POP_MAX_OCTETS)
-        {
-            pfdata->server_bytes_seen = 0;
-            reset_data_states(pfdata);
-            return StreamSplitter::ABORT;
-        }
-    }
-    else 
-    {
-        pfdata->server_bytes_seen = 0;
-    }
-
     for (i = 0; i < len; i++)
     {
         uint8_t ch = data[i];
+
+        if (!pfdata->tls_data)
+        {
+            switch (pfdata->resp_state)
+            {
+            case POP_RESP_SEARCH:
+                init_resp_search(pfdata, ch);
+                break;
+            case POP_RESP_MATCH:
+                resp_search_for_token(pfdata, ch);
+                break;
+            case POP_RESP_SCAN:
+            default:
+                break;
+            }
+        }
 
         // find the termination sequence based upon the current state
         switch (pfdata->pop_state)
@@ -343,12 +379,28 @@ static StreamSplitter::Status pop_paf_server(PopPafData* pfdata,
 
         case POP_PAF_SINGLE_LINE_STATE:
         default:
+        {
+            bool line_invalid = !pfdata->tls_data && pfdata->resp_invalid;
             if ( find_data_end_single_line(pfdata, ch, false) )
             {
+                if (line_invalid)
+                {
+                    pfdata->server_bytes_seen += i + 1;
+                    if (pfdata->server_bytes_seen > POP_MAX_OCTETS)
+                    {
+                        pfdata->server_bytes_seen = 0;
+                        reset_data_states(pfdata);
+                        return StreamSplitter::ABORT;
+                    }
+                }
+                else
+                    pfdata->server_bytes_seen = 0;
+
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
             break;
+        }
         }
     }
 
@@ -358,6 +410,26 @@ static StreamSplitter::Status pop_paf_server(PopPafData* pfdata,
         return StreamSplitter::LIMIT;
 
     return StreamSplitter::SEARCH;
+}
+
+static inline StreamSplitter::Status flush_client_cmd_line(PopPafData* pfdata,
+    bool invalid, uint32_t flush_point, uint32_t* fp)
+{
+    if (invalid)
+    {
+        pfdata->client_bytes_seen += flush_point;
+        if (pfdata->client_bytes_seen > POP_MAX_OCTETS)
+        {
+            pfdata->client_bytes_seen = 0;
+            reset_client_cmd_info(pfdata);
+            return StreamSplitter::ABORT;
+        }
+    }
+    else
+        pfdata->client_bytes_seen = 0;
+
+    *fp = flush_point;
+    return StreamSplitter::FLUSH;
 }
 
 /*
@@ -375,6 +447,13 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
     {
         uint8_t ch = data[i];
 
+        if (pfdata->tls_data)
+        {
+            if (find_data_end_single_line(pfdata, ch, true))
+                return flush_client_cmd_line(pfdata, false, i + 1, fp);
+            continue;
+        }
+
         switch (pfdata->cmd_state.status)
         {
         case POP_CMD_SEARCH:
@@ -387,36 +466,22 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
             // fallthrough
 
         case POP_CMD_FIN:
+        {
+            bool invalid = (pfdata->cmd_state.status == POP_CMD_INVALID);
             if (find_data_end_single_line(pfdata, ch, true) )
-            {
-                // reset command parsing data
-                pfdata->client_bytes_seen = 0;
-                *fp = i + 1;
-                return StreamSplitter::FLUSH;
-            }
+                return flush_client_cmd_line(pfdata, invalid, i + 1, fp);
             break;
+        }
 
         case POP_CMD_INVALID:
             if (find_data_end_single_line(pfdata, ch, true))
-            {
-                pfdata->client_bytes_seen += len;
-                if(pfdata->client_bytes_seen > POP_MAX_OCTETS)
-                {
-                    pfdata->client_bytes_seen = 0;
-                    reset_client_cmd_info(pfdata);
-                    return StreamSplitter::ABORT;
-                }
-                *fp = i + 1;
-                return StreamSplitter::FLUSH;
-            }
+                return flush_client_cmd_line(pfdata, true, i + 1, fp);
             break;
         case POP_CMD_ARG:
             if (find_data_end_single_line(pfdata, ch, true))
             {
-                pfdata->client_bytes_seen = 0;
                 set_server_state(ssn, POP_PAF_MULTI_LINE_STATE);
-                *fp = i + 1;
-                return StreamSplitter::FLUSH;
+                return flush_client_cmd_line(pfdata, false, i + 1, fp);
             }
             else if (isdigit(ch))
             {
@@ -425,11 +490,14 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
         }
     }
 
-    pfdata->client_bytes_seen += len;
-    if(pfdata->client_bytes_seen > POP_MAX_OCTETS) 
+    if (!pfdata->tls_data)
     {
-        reset_client_cmd_info(pfdata);
-        return StreamSplitter::ABORT;
+        pfdata->client_bytes_seen += len;
+        if(pfdata->client_bytes_seen > POP_MAX_OCTETS)
+        {
+            reset_client_cmd_info(pfdata);
+            return StreamSplitter::ABORT;
+        }
     }
 
     return StreamSplitter::SEARCH;
@@ -447,7 +515,7 @@ PopSplitter::PopSplitter(bool c2s) : StreamSplitter(c2s)
 }
 
 
-/* Function: pop_paf()
+/* Function: PopSplitter::scan()
 
    Purpose: POP PAF callback.
             Inspects pop traffic.  Checks client traffic for the current command
@@ -456,12 +524,11 @@ PopSplitter::PopSplitter(bool c2s) : StreamSplitter(c2s)
             finding set termination sequence.
 
    Arguments:
-     void * - stream5 session pointer
-     void ** - DNP3 state tracking structure
-     const uint8_t * - payload data to inspect
+     Packet* - packet carrying the flow this data belongs to
+     const uint8_t* - payload data to inspect
      uint32_t - length of payload data
      uint32_t - flags to check whether client or server
-     uint32_t * - pointer to set flush point
+     uint32_t* - pointer to set flush point
 
    Returns:
     StreamSplitter::Status - StreamSplitter::FLUSH if flush point found, StreamSplitter::SEARCH otherwise
@@ -483,4 +550,13 @@ bool pop_is_data_end(Flow* ssn)
 {
     const PopPafData* s = get_state(ssn, false);
     return s ? s->end_of_data : false;
+}
+
+void pop_paf_set_tls_data(Flow* ssn)
+{
+    if (PopPafData* client_state = get_state(ssn, true))
+        client_state->tls_data = true;
+
+    if (PopPafData* server_state = get_state(ssn, false))
+        server_state->tls_data = true;
 }

@@ -39,6 +39,10 @@
 #include "pop_module.h"
 #include "pop_paf.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 // Indices in the buffer array exposed by InspectApi
@@ -382,6 +386,7 @@ static const uint8_t* POP_HandleCommand(const Packet* p, POPData* pop_ssn, const
             IsSSL(ptr, end - ptr, p->packet_flags))
         {
             pop_ssn->state = STATE_TLS_DATA;
+            pop_paf_set_tls_data(p->flow);
 
             /* Ignore data */
             return end;
@@ -532,6 +537,7 @@ static void POP_ProcessServerPacket(Packet* p, POPData* pop_ssn)
                 (IsSSL(ptr, end - ptr, p->packet_flags)))
             {
                 pop_ssn->state = STATE_TLS_DATA;
+                pop_paf_set_tls_data(p->flow);
                 return;
             }
             else if (pop_ssn->session_flags & POP_FLAG_CHECK_SSL)
@@ -614,6 +620,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
             if (IsTlsServerHello(p->data, p->data + p->dsize))
             {
                 pop_ssn->state = STATE_TLS_DATA;
+                pop_paf_set_tls_data(p->flow);
             }
             else if ( !p->test_session_flags(SSNFLAG_MIDSTREAM)
                 && !Stream::missed_packets(p->flow, SSN_DIR_BOTH))
@@ -899,4 +906,110 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 };
 #else
 const BaseApi* sin_pop = &pop_api.base;
+#endif
+
+#ifdef UNIT_TEST
+TEST_CASE("pop_paf_server bare lf flood aborts", "[pop]")
+{
+    PopSplitter splitter(false);
+    const uint8_t lf = '\n';
+    uint32_t fp = 0;
+    StreamSplitter::Status status = StreamSplitter::SEARCH;
+
+    for ( unsigned i = 0; i <= POP_MAX_OCTETS + 1; i++ )
+    {
+        status = splitter.scan(nullptr, &lf, 1, PKT_FROM_SERVER, &fp);
+        if ( status != StreamSplitter::FLUSH )
+            break;
+    }
+
+    REQUIRE((status == StreamSplitter::ABORT));
+}
+
+TEST_CASE("pop_paf_server minimal fake response flood aborts", "[pop]")
+{
+    const char* lines[] = { "+\n", "-\n", "+NO\n", "-ER\n", nullptr };
+
+    for ( unsigned l = 0; lines[l]; l++ )
+    {
+        PopSplitter splitter(false);
+        const uint8_t* line = (const uint8_t*)lines[l];
+        uint32_t line_len = strlen(lines[l]);
+        uint32_t fp = 0;
+        StreamSplitter::Status status = StreamSplitter::SEARCH;
+
+        for ( uint32_t sent = 0; sent <= (POP_MAX_OCTETS + line_len); sent += line_len )
+        {
+            status = splitter.scan(nullptr, line, line_len, PKT_FROM_SERVER, &fp);
+            if ( status != StreamSplitter::FLUSH )
+                break;
+        }
+
+        REQUIRE((status == StreamSplitter::ABORT));
+    }
+}
+
+TEST_CASE("pop_paf_server valid replies never abort", "[pop]")
+{
+    const char* lines[] = { "+OK\n", "+OK done\n", "-ERR bad\n", nullptr };
+
+    for ( unsigned l = 0; lines[l]; l++ )
+    {
+        PopSplitter splitter(false);
+        const uint8_t* line = (const uint8_t*)lines[l];
+        uint32_t line_len = strlen(lines[l]);
+        uint32_t fp = 0;
+
+        for ( uint32_t sent = 0; sent < (POP_MAX_OCTETS * 2); sent += line_len )
+        {
+            StreamSplitter::Status status =
+                splitter.scan(nullptr, line, line_len, PKT_FROM_SERVER, &fp);
+            REQUIRE((status == StreamSplitter::FLUSH));
+            REQUIRE((fp == line_len));
+        }
+    }
+}
+
+TEST_CASE("pop_paf_client bare lf flood aborts", "[pop]")
+{
+    PopSplitter splitter(false);
+    Packet p;
+    const uint8_t lf = '\n';
+    uint32_t fp = 0;
+    unsigned flushes = 0;
+    StreamSplitter::Status status = StreamSplitter::SEARCH;
+
+    for ( unsigned i = 0; i <= POP_MAX_OCTETS + 1; i++ )
+    {
+        status = splitter.scan(&p, &lf, 1, PKT_FROM_CLIENT, &fp);
+        if ( status != StreamSplitter::FLUSH )
+            break;
+        flushes++;
+    }
+
+    REQUIRE((status == StreamSplitter::ABORT));
+    REQUIRE((flushes == POP_MAX_OCTETS));
+}
+
+TEST_CASE("pop_paf_client valid short commands never abort", "[pop]")
+{
+    const char* cmds[] = { "NOOP\n", "STAT\n", "QUIT\n", nullptr };
+
+    for ( unsigned c = 0; cmds[c]; c++ )
+    {
+        PopSplitter splitter(false);
+        Packet p;
+        const uint8_t* line = (const uint8_t*)cmds[c];
+        uint32_t line_len = strlen(cmds[c]);
+        uint32_t fp = 0;
+
+        for ( uint32_t sent = 0; sent < (POP_MAX_OCTETS * 2); sent += line_len )
+        {
+            StreamSplitter::Status status =
+                splitter.scan(&p, line, line_len, PKT_FROM_CLIENT, &fp);
+            REQUIRE((status == StreamSplitter::FLUSH));
+            REQUIRE((fp == line_len));
+        }
+    }
+}
 #endif

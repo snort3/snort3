@@ -28,6 +28,7 @@
 #include "stream/stream_splitter.h"
 
 #define POP_MAX_OCTETS 5120
+
 // Structure used to record expected server termination sequence
 enum PopExpectedResp
 {
@@ -43,6 +44,15 @@ enum PopParseCmdState
     POP_CMD_FIN,            // Found space. Finished parsing Command
     POP_CMD_ARG,            // Parsing command with multi-line response iff arg given
     POP_CMD_INVALID         //Command is not recognized so finish parsing and update threshold counter
+};
+
+// Tracks classification of the current server response line against the
+// expected +OK/-ERR token
+enum PopRespSearchState
+{
+    POP_RESP_SEARCH,        // haven't seen the first byte of this line yet
+    POP_RESP_MATCH,         // matching remaining bytes of the chosen token
+    POP_RESP_SCAN           // token resolved (matched fully or invalidated); just consume the rest of the line
 };
 
 // saves data when parsing client commands
@@ -63,7 +73,11 @@ struct PopPafData
     bool cmd_continued;              // data continued from previous packet?
     uint32_t client_bytes_seen;
     uint32_t server_bytes_seen;
+    PopRespSearchState resp_state;    // where we are in classifying the current response line
+    const char* resp_next_letter;    // pointer into the matched response token (+OK/-ERR)
+    bool resp_invalid;
     bool end_of_data;
+    bool tls_data;
 };
 
 class PopSplitter : public snort::StreamSplitter
@@ -86,6 +100,8 @@ public:
 
 // Function: Callback to check if POP data end is reached
 bool pop_is_data_end(snort::Flow* ssn);
+
+void pop_paf_set_tls_data(snort::Flow* ssn);
 
 #endif
 
