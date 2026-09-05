@@ -892,12 +892,24 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( is(v, "--daq-batch-size") )
         sc->daq_config->set_batch_size(v.get_uint32());
 
+    // else if ( is(v, "--daq-dir") )
+    // {
+    //     stringstream ss { v.get_string() };
+    //     string path;
+
+    //     while ( getline(ss, path, ':') )
+    //         sc->daq_config->add_module_dir(path.c_str());
+    // }
     else if ( is(v, "--daq-dir") )
     {
         stringstream ss { v.get_string() };
         string path;
 
+    #ifdef _WIN32
+        while ( getline(ss, path, ';') )
+    #else
         while ( getline(ss, path, ':') )
+    #endif
             sc->daq_config->add_module_dir(path.c_str());
     }
     else if ( is(v, "--daq-mode") )

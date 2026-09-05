@@ -104,7 +104,8 @@ public:
     {
         LogMessage("Retry queue interval is: %u ms\n", interval_ms);
         assert(interval_ms > 0);
-        interval = { static_cast<time_t>(interval_ms / 1000), static_cast<suseconds_t>((interval_ms % 1000) * 1000) };
+        interval.tv_sec = static_cast<decltype(interval.tv_sec)>(interval_ms / 1000);
+        interval.tv_usec = static_cast<decltype(interval.tv_usec)>((interval_ms % 1000) * 1000);
     }
 
     ~RetryQueue()
@@ -592,7 +593,8 @@ void Analyzer::idle()
     struct timeval now, increment;
     unsigned int timeout = SnortConfig::get_conf()->daq_config->timeout;
     packet_gettimeofday(&now);
-    increment = { static_cast<time_t>(timeout / 1000), static_cast<suseconds_t>((timeout % 1000) * 1000) };
+    increment.tv_sec = static_cast<decltype(increment.tv_sec)>(timeout / 1000);
+    increment.tv_usec = static_cast<decltype(increment.tv_usec)>((timeout % 1000) * 1000);
     timeradd(&now, &increment, &now);
     packet_time_update(&now);
 

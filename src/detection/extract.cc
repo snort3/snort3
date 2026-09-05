@@ -345,7 +345,7 @@ uint32_t getNumberTailingZerosInBitmask(uint32_t bitmask)
     if (bitmask == 0)
         return 32;
 
-    return (ffs(bitmask)-1);
+    return (__builtin_ffs(bitmask) - 1);
 }
 
 uint8_t numBytesInBitmask(uint32_t bitmask_value)

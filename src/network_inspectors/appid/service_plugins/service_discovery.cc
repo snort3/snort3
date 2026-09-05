@@ -61,7 +61,9 @@
 #include "service_rexec.h"
 #include "service_rlogin.h"
 #include "service_rfb.h"
+#ifndef _WIN32
 #include "service_rpc.h"
+#endif
 #include "service_rshell.h"
 #include "service_rsync.h"
 #include "service_rtmp.h"
@@ -108,7 +110,9 @@ void ServiceDiscovery::initialize(AppIdInspector& inspector)
     new RexecServiceDetector(this);
     new RfbServiceDetector(this);
     new RloginServiceDetector(this);
+#ifndef _WIN32
     new RpcServiceDetector(this);
+#endif
     new RshellServiceDetector(this);
     new RsyncServiceDetector(this);
     new RtmpServiceDetector(this);
@@ -392,10 +396,10 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
             get_port_based_services(proto,
                 (dir == APP_ID_FROM_RESPONDER) ? p->ptrs.sp : p->ptrs.dp, asd);
         }
-        asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::PATTERN;
+        asd.service_search_state = SESSION_SERVICE_SEARCH_STATE::SEARCH_PATTERN;
     }
 
-    if ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PATTERN)
+    if ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::SEARCH_PATTERN)
     {
         /* If we haven't found anything yet, try to see if we get any hits
          * first with UDP reversed services before moving onto pattern matches. */
@@ -529,7 +533,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
     {
         /* See if we've got more detector(s) to add to the candidate list. */
         if ( ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PORT )
-            || ( ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PATTERN )
+            || ( ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::SEARCH_PATTERN )
             && (dir == APP_ID_FROM_RESPONDER ) ) )
         {
             get_next_service(p, dir, asd);

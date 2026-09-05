@@ -509,7 +509,11 @@ static DAQ_RecvStatus hext_read_message(HextContext* hc, HextMsgDesc* desc)
         if (ferror(hc->fp))
         {
             char error_msg[1024] = {0};
+            #ifdef _WIN32
+            if (strerror_s(error_msg, sizeof(error_msg), errno) == 0)
+            #else
             if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+            #endif
                 SET_ERROR(hc->modinst, "%s: can't read from file (%s)\n", DAQ_NAME, error_msg);
             else
                 SET_ERROR(hc->modinst, "%s: can't read from file: %d\n", DAQ_NAME, errno);
@@ -533,7 +537,11 @@ static int hext_setup(HextContext* hc)
     else if (!(hc->fp = fopen(hc->filename, "r")))
     {
         char error_msg[1024] = {0};
+        #ifdef _WIN32
+        if (strerror_s(error_msg, sizeof(error_msg), errno) == 0)
+        #else
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+        #endif
             SET_ERROR(hc->modinst, "%s: can't open file (%s)\n", DAQ_NAME, error_msg);
         else
             SET_ERROR(hc->modinst, "%s: can't open file: %d\n", DAQ_NAME, errno);

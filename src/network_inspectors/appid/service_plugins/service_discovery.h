@@ -51,11 +51,15 @@ struct Packet;
  * at the beginning of the flow, then independently do service discovery, and
  * synchronize findings at the end of service discovery by the flow.
  */
+
+#ifdef SEARCH_PATTERN
+#undef SEARCH_PATTERN
+#endif
 enum SESSION_SERVICE_SEARCH_STATE
 {
     START = 0,
     PORT,
-    PATTERN,
+    SEARCH_PATTERN,
     PENDING
 };
 

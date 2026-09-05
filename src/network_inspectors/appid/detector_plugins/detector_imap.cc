@@ -26,6 +26,7 @@
 #include "detector_imap.h"
 
 #include <array>
+#include <cstdint>
 
 #include "app_info_table.h"
 #include "search_engines/search_tool.h"
@@ -52,7 +53,7 @@ static const uint8_t LOGIN[] = "LOGIN ";
 static const uint8_t SELECT[] = "SELECT ";
 /*static const uint8_t EXAMINE[] = "EXAMINE "; */
 static const uint8_t CREATE[] = "CREATE ";
-static const uint8_t DELETE[] = "DELETE ";
+static const uint8_t IMAP_DELETE[] = "IMAP_DELETE ";
 static const uint8_t RENAME[] = "RENAME ";
 static const uint8_t SUBSCRIBE[] = "SUBSCRIBE ";
 static const uint8_t UNSUBSCRIBE[] = "UNSUBSCRIBE ";
@@ -464,7 +465,7 @@ static AppIdFlowContentPattern imap_client_patterns[] =
     { LOGOUT2, sizeof(LOGOUT2) - 1, -1, 1, 0 },
     { SELECT, sizeof(SELECT) - 1, -1, 1, 0 },
     { CREATE, sizeof(CREATE) - 1, -1, 1, 0 },
-    { DELETE, sizeof(DELETE) - 1, -1, 1, 0 },
+    { IMAP_DELETE, sizeof(IMAP_DELETE) - 1, -1, 1, 0 },
     { RENAME, sizeof(RENAME) - 1, -1, 1, 0 },
     { SUBSCRIBE, sizeof(SUBSCRIBE) - 1, -1, 1, 0 },
     { UNSUBSCRIBE, sizeof(UNSUBSCRIBE) - 1, -1, 1, 0 },
@@ -549,12 +550,12 @@ void ImapClientDetector::do_custom_reload()
 
 static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
-    unsigned long idx = (unsigned long)id;
+    uintptr_t idx = reinterpret_cast<uintptr_t>(id);
     if ( (int)imap_client_patterns[idx].length != match_end_pos )
         return 0;
 
     unsigned long* pat_idx = (unsigned long*)data;
-    *pat_idx = (unsigned long)id;
+    *pat_idx = static_cast<unsigned long>(reinterpret_cast<uintptr_t>(id));
     return 1;
 }
 

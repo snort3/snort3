@@ -243,8 +243,27 @@ bool ProfilerNodeMap::open(std::string& fname, uint64_t max_file_size, bool appe
                 existed = true;
 
                 // Only change permission for file owned by root
+                // if ((0 == pt.st_uid) || (0 == pt.st_gid))
+                // {
+                //     if (fchmod(fileno(tracker_fd), mode) != 0)
+                //     {
+                //         WarningMessage("Profiler: Unable to change mode of "
+                //             "stats file '%s' to mode:%u: %s.\n",
+                //             file_name, mode, get_error(errno));
+                //     }
+
+                //     const SnortConfig* sc = SnortConfig::get_conf();
+
+                //     if (fchown(fileno(tracker_fd), sc->get_uid(), sc->get_gid()) != 0)
+                //     {
+                //         WarningMessage("Profiler: Unable to change permissions of "
+                //             "stats file '%s' to user:%d and group:%d: %s.\n",
+                //             file_name, sc->get_uid(), sc->get_gid(), get_error(errno));
+                //     }
+                // }
                 if ((0 == pt.st_uid) || (0 == pt.st_gid))
                 {
+                #ifndef _WIN32
                     if (fchmod(fileno(tracker_fd), mode) != 0)
                     {
                         WarningMessage("Profiler: Unable to change mode of "
@@ -260,7 +279,9 @@ bool ProfilerNodeMap::open(std::string& fname, uint64_t max_file_size, bool appe
                             "stats file '%s' to user:%d and group:%d: %s.\n",
                             file_name, sc->get_uid(), sc->get_gid(), get_error(errno));
                     }
+                #endif
                 }
+
             }
 
             fclose(tracker_fd);

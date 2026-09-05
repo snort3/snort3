@@ -40,7 +40,7 @@ static unsigned lines = 1, comments = 0;
 static unsigned keys = 0, rules = 0;
 static unsigned lists = 0, strings = 0;
 
-enum TokenType
+enum StreamTokenType
 {
     TT_NONE,
     TT_PUNCT,
@@ -83,7 +83,7 @@ static uint8_t to_hex(char c)
         return 10 + c - 'a';
 }
 
-static TokenType get_token(
+static StreamTokenType get_token(
     istream& is, string& s, const char* punct, int esc)
 {
     static int prev = EOF;
@@ -395,7 +395,7 @@ struct State
 {
     int num;
     int next;
-    TokenType type;
+    StreamTokenType type;
     FsmAction action;
     const char* match;
     const char* punct;
@@ -450,7 +450,7 @@ static const State fsm[] =
     { 16, 14, TT_PUNCT,   FSM_NOP, ":",        ";"     },
 };
 
-static const State* get_state(int num, TokenType type, const string& tok)
+static const State* get_state(int num, StreamTokenType type, const string& tok)
 {
     const unsigned sz = sizeof(fsm)/sizeof(fsm[0]);
 
@@ -615,7 +615,7 @@ static int get_escape(const string& s)
 void parse_stream(istream& is, SnortConfig* sc)
 {
     string tok;
-    TokenType type;
+    StreamTokenType type;
     int esc = 1;
 
     int num = 0;

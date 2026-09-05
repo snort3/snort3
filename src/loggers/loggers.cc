@@ -37,7 +37,9 @@ extern const BaseApi* alert_full[];
 extern const BaseApi* alert_json[];
 extern const BaseApi* alert_syslog[];
 extern const BaseApi* alert_talos[];
+#ifndef _WIN32
 extern const BaseApi* alert_unixsock[];
+#endif
 extern const BaseApi* log_hext[];
 extern const BaseApi* log_pcap[];
 extern const BaseApi* eh_unified2[];
@@ -56,8 +58,9 @@ void load_loggers()
     PluginManager::load_plugins(alert_json);
     PluginManager::load_plugins(alert_syslog);
     PluginManager::load_plugins(alert_talos);
+    #ifndef _WIN32
     PluginManager::load_plugins(alert_unixsock);
-
+#endif
     // loggers
     PluginManager::load_plugins(log_hext);
     PluginManager::load_plugins(log_pcap);

@@ -23,7 +23,8 @@
 
 #include "trough.h"
 
-#include <fnmatch.h>
+// #include <fnmatch.h>
+#include "helpers/wildcard_match.h"
 #include <sys/stat.h>
 
 #include <algorithm>
@@ -104,7 +105,8 @@ bool Trough::add_pcaps_list_file(const std::string& list_filename, const std::st
         }
         else if (S_ISREG(sb.st_mode))
         {
-            if (filter.empty() || (fnmatch(filter.c_str(), pcap_name.c_str(), 0) == 0))
+            // if (filter.empty() || (fnmatch(filter.c_str(), pcap_name.c_str(), 0) == 0))
+            if (filter.empty() || wildcard_match(filter.c_str(), pcap_name.c_str()))
                 pcap_queue.emplace_back(pcap_name);
         }
         else

@@ -84,7 +84,7 @@ void TcpEventLogger::log_tcp_events()
 {
     while ( tcp_events )
     {
-        uint32_t idx = ffs(tcp_events);
+        uint32_t idx = __builtin_ffs(tcp_events);
         if ( idx )
         {
             DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[idx].sid);

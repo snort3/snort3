@@ -62,13 +62,13 @@ add_library (main OBJECT
 
 add_custom_command (
     OUTPUT lua_bootstrap.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} bootstrap > lua_bootstrap.h
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} bootstrap > lua_bootstrap.h
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap.lua
 )
 
 add_custom_command (
     OUTPUT lua_finalize.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} finalize > lua_finalize.h
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} finalize > lua_finalize.h
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/finalize.lua
 )
 

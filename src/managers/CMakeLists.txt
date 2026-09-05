@@ -53,7 +53,7 @@ add_custom_command (
 
 add_custom_command (
     OUTPUT lua_coreinit.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/../lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} coreinit > lua_coreinit.h
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../lua_wrap.sh ${CMAKE_CURRENT_SOURCE_DIR} coreinit > lua_coreinit.h
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/coreinit.lua
 )
 

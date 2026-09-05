@@ -39,7 +39,7 @@
 using namespace snort;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
-inline void appid_log(const Packet* p, const uint8_t log_level, const char* format, ...)
+void appid_log(const Packet* p, const uint8_t log_level, const char* format, ...)
 {
     va_list args;
     va_start(args, format);

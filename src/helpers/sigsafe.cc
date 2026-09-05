@@ -267,7 +267,11 @@ void SigSafePrinter::printf(const char *format, ...)
 int SigSafePrinter::flush()
 {
     if (fd >= 0)
-        return fsync(fd);
+        #ifdef _WIN32
+        return 0;
+        #else
+                return fsync(fd);
+        #endif
     return 0;
 }
 

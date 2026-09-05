@@ -22,14 +22,67 @@
 #include "config.h"
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
-
+#endif
 #include "appid_config.h"
 #include "appid_debug.h"
 
 #include "trace/trace_api.h"
 
 #include "tp_lib_handler.h"
+
+#ifdef _WIN32
+
+static char tp_dl_error[256];
+
+static void* tp_dlopen(const char* path)
+{
+    HMODULE handle = LoadLibraryA(path);
+
+    if (!handle)
+    {
+        snprintf(tp_dl_error, sizeof(tp_dl_error),
+            "Windows error %lu", (unsigned long)GetLastError());
+    }
+
+    return (void*)handle;
+}
+
+static void* tp_dlsym(void* handle, const char* symbol)
+{
+    FARPROC proc = GetProcAddress((HMODULE)handle, symbol);
+
+    if (!proc)
+    {
+        snprintf(tp_dl_error, sizeof(tp_dl_error),
+            "Windows error %lu", (unsigned long)GetLastError());
+    }
+
+    return (void*)proc;
+}
+
+static void tp_dlclose(void* handle)
+{
+    if (handle)
+        FreeLibrary((HMODULE)handle);
+}
+
+static const char* tp_dlerror()
+{
+    return tp_dl_error;
+}
+
+#else
+
+#define tp_dlopen dlopen
+#define tp_dlsym dlsym
+#define tp_dlclose dlclose
+#define tp_dlerror dlerror
+
+#endif
 
 using namespace std;
 using namespace snort;
@@ -39,11 +92,11 @@ uint32_t ThirdPartyAppIdContext::next_version = 0;
 
 bool TPLibHandler::load_callback(const char* const path)
 {
-    dlerror();
-    self->tp_so_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
+    tp_dlerror();
+    self->tp_so_handle = tp_dlopen(path);
     if (self->tp_so_handle == nullptr)
     {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Failed to load 3rd party AppID library: %s - %s\n", path, dlerror());
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Failed to load 3rd party AppID library: %s - %s\n", path, tp_dlerror());
         return false;
     }
 
@@ -66,13 +119,13 @@ bool TPLibHandler::load_callback(const char* const path)
 
     for (index = bindings; index->lib_sym; index++)
     {
-        *(void**)index->local_sym  = dlsym(self->tp_so_handle, index->lib_sym);
+        *(void**)index->local_sym  = tp_dlsym(self->tp_so_handle, index->lib_sym);
         if (*(index->local_sym) == nullptr)
         {
-            char* error;
+            const char* error;
             APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "AppId: Failed to resolve symbol: %s %s\n", index->lib_sym,
-                (error = dlerror()) ? error : "");
-            dlclose(self->tp_so_handle);
+                (error = tp_dlerror()) ? error : "");
+            tp_dlclose(self->tp_so_handle);
             self->tp_so_handle = nullptr;
             return false;
         }
@@ -111,7 +164,7 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     if (tp_appid_ctxt == nullptr)
     {
         APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Failed to create third party appId context.\n");
-        dlclose(self->tp_so_handle);
+        tp_dlclose(self->tp_so_handle);
         self->tp_so_handle = nullptr;
         return nullptr;
     }
@@ -124,7 +177,7 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
             tp_appid_ctxt->module_name().empty() ? "empty" : tp_appid_ctxt->module_name().c_str());
 
         delete tp_appid_ctxt;
-        dlclose(self->tp_so_handle);
+        tp_dlclose(self->tp_so_handle);
         self->tp_so_handle = nullptr;
         return nullptr;
     }

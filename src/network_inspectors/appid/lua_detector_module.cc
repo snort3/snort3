@@ -25,7 +25,10 @@
 
 #include "lua_detector_module.h"
 
+// #include <glob.h>
+#ifndef _WIN32
 #include <glob.h>
+#endif
 #include <libgen.h>
 
 #include <cassert>
@@ -41,6 +44,10 @@
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 using namespace snort;
 using namespace std;
@@ -611,7 +618,10 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
 {
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/*", path);
+    // glob_t globs;
+    #ifndef _WIN32
     glob_t globs;
+    #endif
 
     #ifdef REG_TEST
     if (!is_custom)
@@ -641,13 +651,75 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
     }
     #endif
 
-    memset(&globs, 0, sizeof(globs));
-    int rval = glob(pattern, 0, nullptr, &globs);
-    if (rval == 0 )
+    // memset(&globs, 0, sizeof(globs));
+    // int rval = glob(pattern, 0, nullptr, &globs);
+    // if (rval == 0 )
+    // {
+    //     if (lua_gettop(L))
+    //     {
+    //         APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector load\n",
+    //             lua_gettop(L));
+    //         lua_settop(L, 0);
+    //     }
+
+    //     for (unsigned n = 0; n < globs.gl_pathc; n++)
+    //     {
+    //         process_detector_file(globs.gl_pathv[n], is_custom);
+    //     }
+
+    //     globfree(&globs);
+    // }
+    // else if (rval == GLOB_NOMATCH)
+    //     ParseWarning(WARN_CONF, "appid: no lua detectors found in directory '%s'", pattern);
+    // else
+    //     ParseWarning(WARN_CONF,
+    //         "appid: error reading lua detectors directory '%s'. Error Code: %d",
+    //         pattern, rval);
+    #ifdef _WIN32
+    WIN32_FIND_DATAA find_data;
+    HANDLE find_handle = FindFirstFileA(pattern, &find_data);
+
+    if (find_handle != INVALID_HANDLE_VALUE)
     {
         if (lua_gettop(L))
         {
-            APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector load\n",
+            APPID_LOG(nullptr, TRACE_WARNING_LEVEL,
+                "appid: leak of %d lua stack elements before detector load\n",
+                lua_gettop(L));
+            lua_settop(L, 0);
+        }
+
+        do
+        {
+            if (strcmp(find_data.cFileName, ".") == 0 ||
+                strcmp(find_data.cFileName, "..") == 0)
+                continue;
+
+            if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                continue;
+
+            std::string full_path = std::string(path) + "/" + find_data.cFileName;
+            process_detector_file(const_cast<char*>(full_path.c_str()), is_custom);
+
+        } while (FindNextFileA(find_handle, &find_data));
+
+        FindClose(find_handle);
+    }
+    else
+    {
+        ParseWarning(WARN_CONF,
+            "appid: no lua detectors found in directory '%s'", pattern);
+    }
+#else
+    memset(&globs, 0, sizeof(globs));
+    int rval = glob(pattern, 0, nullptr, &globs);
+
+    if (rval == 0)
+    {
+        if (lua_gettop(L))
+        {
+            APPID_LOG(nullptr, TRACE_WARNING_LEVEL,
+                "appid: leak of %d lua stack elements before detector load\n",
                 lua_gettop(L));
             lua_settop(L, 0);
         }
@@ -660,11 +732,13 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
         globfree(&globs);
     }
     else if (rval == GLOB_NOMATCH)
-        ParseWarning(WARN_CONF, "appid: no lua detectors found in directory '%s'", pattern);
+        ParseWarning(WARN_CONF,
+            "appid: no lua detectors found in directory '%s'", pattern);
     else
         ParseWarning(WARN_CONF,
             "appid: error reading lua detectors directory '%s'. Error Code: %d",
             pattern, rval);
+#endif
 }
 
 void ControlLuaDetectorManager::initialize_lua_detectors()

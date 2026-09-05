@@ -26,6 +26,7 @@
 #include "detector_pop3.h"
 
 #include <array>
+#include <cstdint>
 
 #include "app_info_table.h"
 
@@ -246,12 +247,12 @@ void Pop3ClientDetector::do_custom_reload()
 
 static int pop3_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
-    unsigned long idx = (unsigned long)id;
+    uintptr_t idx = reinterpret_cast<uintptr_t>(id);
     if ( (int)pop3_client_patterns[idx].length != match_end_pos )
         return 0;
 
     unsigned long* pat_idx = (unsigned long*)data;
-    *pat_idx = (unsigned long)id;
+    *pat_idx = static_cast<unsigned long>(reinterpret_cast<uintptr_t>(id));
     return 1;
 }
 

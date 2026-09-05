@@ -59,6 +59,10 @@ struct PatternMatchData
     int offset;              // pattern search start offset
     unsigned depth;          // pattern search depth
 
+    #ifdef RELATIVE
+    #undef RELATIVE
+    #endif
+
     enum
     {
         NEGATED  = 0x01,

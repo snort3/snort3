@@ -157,10 +157,18 @@ static int file_setup(FileContext* fc)
     {
         fc->fid = STDIN_FILENO;
     }
+    #ifdef _WIN32
+    else if ( (fc->fid = open(fc->filename, O_RDONLY)) < 0 )
+    #else
     else if ( (fc->fid = open(fc->filename, O_RDONLY|O_NONBLOCK)) < 0 )
+    #endif
     {
         char error_msg[1024] = {0};
+        #ifdef _WIN32
+        if (strerror_s(error_msg, sizeof(error_msg), errno) == 0)
+        #else
         if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+        #endif
             SET_ERROR(fc->modinst, "%s: can't open file (%s)", DAQ_NAME, error_msg);
         else
             SET_ERROR(fc->modinst, "%s: can't open file: %d", DAQ_NAME, errno);
@@ -236,7 +244,11 @@ static DAQ_RecvStatus file_read_message(FileContext* fc, FileMsgDesc* desc)
         if (errno != EINTR)
         {
             char error_msg[1024] = {0};
+            #ifdef _WIN32
+            if (strerror_s(error_msg, sizeof(error_msg), errno) == 0)
+            #else
             if (strerror_r(errno, error_msg, sizeof(error_msg)) == 0)
+            #endif
                 SET_ERROR(fc->modinst, "%s: can't read from file (%s)", DAQ_NAME, error_msg);
             else
                 SET_ERROR(fc->modinst, "%s: can't read from file: %d", DAQ_NAME, errno);

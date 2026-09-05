@@ -201,7 +201,6 @@ add_executable( snort
     $<TARGET_OBJECTS:target_based>
     $<TARGET_OBJECTS:tcp_connector>
     $<TARGET_OBJECTS:unixdomain_connector>
-    $<TARGET_OBJECTS:mp_unix_transport>
     $<TARGET_OBJECTS:time>
     $<TARGET_OBJECTS:trace>
     $<TARGET_OBJECTS:mp_transports>
@@ -225,6 +224,11 @@ target_link_libraries( snort
     ${EXTERNAL_LIBRARIES}
     ${EXTRA_LIBRARIES}
 )
+
+if (WIN32)
+    target_link_libraries(snort ws2_32)
+    target_link_options(snort PRIVATE -Wl,--export-all-symbols)
+endif ()
 
 # Solaris requires libnsl and libsocket for various network-related library functions
 if ( CMAKE_SYSTEM_NAME STREQUAL SunOS )

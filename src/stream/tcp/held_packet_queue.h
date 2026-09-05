@@ -75,7 +75,8 @@ public:
 
     void set_timeout(uint32_t ms)
     {
-        timeout = { static_cast<time_t>(ms) / 1000, static_cast<suseconds_t>((ms % 1000) * 1000) };
+        timeout.tv_sec = static_cast<decltype(timeout.tv_sec)>(ms / 1000);
+        timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((ms % 1000) * 1000);
     }
 
     // Return the timeout in milliseconds.

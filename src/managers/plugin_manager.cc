@@ -23,7 +23,13 @@
 
 #include "plugin_manager.h"
 
+// #include <dlfcn.h>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 #include <sys/stat.h>
 
 #include <atomic>
@@ -68,6 +74,56 @@
 #include "script_manager.h"
 #include "so_manager.h"
 #include "trace_logger_manager.h"
+
+#ifdef _WIN32
+
+static char plugin_dl_error[256];
+
+static void* plugin_dlopen(const char* file)
+{
+    HMODULE handle = LoadLibraryA(file);
+
+    if (!handle)
+    {
+        snprintf(plugin_dl_error, sizeof(plugin_dl_error),
+            "Windows error %lu", (unsigned long)GetLastError());
+    }
+
+    return (void*)handle;
+}
+
+static void* plugin_dlsym(void* handle, const char* symbol)
+{
+    FARPROC proc = GetProcAddress((HMODULE)handle, symbol);
+
+    if (!proc)
+    {
+        snprintf(plugin_dl_error, sizeof(plugin_dl_error),
+            "Windows error %lu", (unsigned long)GetLastError());
+    }
+
+    return (void*)proc;
+}
+
+static void plugin_dlclose(void* handle)
+{
+    if (handle)
+        FreeLibrary((HMODULE)handle);
+}
+
+static const char* plugin_dlerror()
+{
+    return plugin_dl_error;
+}
+
+#else
+
+#define plugin_dlopen dlopen
+#define plugin_dlsym dlsym
+#define plugin_dlclose dlclose
+#define plugin_dlerror dlerror
+
+#endif
 
 using namespace snort;
 using namespace std;
@@ -175,7 +231,7 @@ Plugin::~Plugin()
         return;
 
     else if ( in_main_thread() and do_dlclose() )
-        dlclose(handle);
+        plugin_dlclose(handle);
 
     else
     {
@@ -295,7 +351,8 @@ static void load_apis(
             // assure we can dlclose on each plugin independently
             // dlclose won't actually close until all plugins in lib are closed
             // coverity[resource_leak]
-            dlopen(file, RTLD_NOW|RTLD_LOCAL);
+            // plugin_dlopen(file, RTLD_NOW|RTLD_LOCAL);
+            plugin_dlopen(file);
         }
     }
 }
@@ -304,20 +361,21 @@ static bool load_lib(const char* file, bool reload)
 {
     void* handle;
 
-    if ( !(handle = dlopen(file, RTLD_NOW|RTLD_LOCAL)) )
+    // if ( !(handle = plugin_dlopen(file, RTLD_NOW|RTLD_LOCAL)) )
+    if ( !(handle = plugin_dlopen(file)) )
     {
-        if ( const char* err = dlerror() )
+        if ( const char* err = plugin_dlerror() )
             ParseWarning(WARN_PLUGINS, "%s (%s)", err, file);
         return false;
     }
-    const BaseApi** api = (const BaseApi**)dlsym(handle, "snort_plugins");
+    const BaseApi** api = (const BaseApi**)plugin_dlsym(handle, "snort_plugins");
 
     if ( !api )
     {
-        if ( const char* err = dlerror() )
+        if ( const char* err = plugin_dlerror() )
             ParseWarning(WARN_PLUGINS, "%s (%s)", err, file);
 
-        dlclose(handle);
+        plugin_dlclose(handle);
         return false;
     }
     load_apis(api, handle, file, reload);
@@ -498,7 +556,7 @@ void PluginManager::empty_trash()
     else
     {
         for ( auto h : trash )
-            dlclose(h);
+            plugin_dlclose(h);
     }
     trash.clear();
 }

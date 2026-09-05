@@ -12,6 +12,10 @@ target_link_libraries( u2boat
     ${PCAP_LIBRARIES}
 )
 
+if (WIN32)
+    target_link_libraries(u2boat ws2_32)
+endif ()
+
 install (TARGETS u2boat
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

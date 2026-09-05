@@ -38,8 +38,14 @@
 #endif
 
 #ifndef __APPLE__
-# define htonll(a) ( 1 == htonl(1) ? (a) : bswap_64(a) )
-# define ntohll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
+# ifdef _WIN32
+#  include <stdlib.h>
+#  define htonll(a) ( 1 == htonl(1) ? (a) : _bswap64(a) )
+#  define ntohll(a) ( 1 == ntohl(1) ? (a) : _bswap64(a) )
+# else
+#  define htonll(a) ( 1 == htonl(1) ? (a) : bswap_64(a) )
+#  define ntohll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
+# endif
 #endif
 
 #if defined(WORDS_BIGENDIAN)

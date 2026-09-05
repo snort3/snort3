@@ -29,6 +29,7 @@
 
 #include "log/messages.h"
 #include "main/thread_config.h"
+#include "profiler/profiler.h"
 
 using namespace snort;
 using namespace std;
@@ -64,6 +65,11 @@ static const PegInfo unixdomain_connector_pegs[] =
 
 extern THREAD_LOCAL SimpleStats unixdomain_connector_stats;
 extern THREAD_LOCAL ProfileStats unixdomain_connector_perfstats;
+
+#ifdef _WIN32
+THREAD_LOCAL SimpleStats unixdomain_connector_stats;
+THREAD_LOCAL ProfileStats unixdomain_connector_perfstats;
+#endif
 
 //-------------------------------------------------------------------------
 // unixdomain_connector module
