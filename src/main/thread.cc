@@ -157,7 +157,12 @@ const char* get_instance_file(std::string& file, const char* name)
 
         // Explicitly set mode to avoid umask issues (fixes random 0750/0700)
         mode_t old_mask = umask(0);
+        // if ( mkdir(file.c_str(), 0770) == -1 and errno != EEXIST )
+        #ifdef _WIN32
+        if ( mkdir(file.c_str()) == -1 and errno != EEXIST )
+        #else
         if ( mkdir(file.c_str(), 0770) == -1 and errno != EEXIST )
+        #endif
             ParseError("Failed to create directory %s - %s",
                 file.c_str(), get_error(errno));
         umask(old_mask);

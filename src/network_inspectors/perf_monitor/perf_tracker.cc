@@ -98,7 +98,12 @@ bool PerfTracker::open(bool append)
         bool existed = false;
 
         // Open file securely and create if it doesn't exist
+        // int flags = O_NOFOLLOW | O_CREAT | (append ? O_APPEND : O_TRUNC) | O_RDWR;
+        #ifdef _WIN32
+        int flags = O_CREAT | (append ? O_APPEND : O_TRUNC) | O_RDWR;
+        #else
         int flags = O_NOFOLLOW | O_CREAT | (append ? O_APPEND : O_TRUNC) | O_RDWR;
+        #endif
         mode_t old_umask = umask(022); // Ensure file is world-readable
         int fd = ::open(file_name, flags, mode);
         umask(old_umask);
@@ -115,6 +120,25 @@ bool PerfTracker::open(bool append)
             existed = true;
 
             // Only change ownership if file is owned by root
+            // if (pt.st_uid == 0 || pt.st_gid == 0)
+            // {
+            //     const SnortConfig* sc = SnortConfig::get_conf();
+
+            //     if (fchmod(fd, mode) != 0)
+            //     {
+            //         WarningMessage("perfmonitor: Unable to change mode of "
+            //             "stats file '%s' to mode:%u: %s.\n",
+            //             file_name, mode, get_error(errno));
+            //     }
+
+            //     if (fchown(fd, sc->get_uid(), sc->get_gid()) != 0)
+            //     {
+            //         WarningMessage("perfmonitor: Unable to change permissions of "
+            //             "stats file '%s' to user:%d and group:%d: %s.\n",
+            //             file_name, sc->get_uid(), sc->get_gid(), get_error(errno));
+            //     }
+            // }
+            #ifndef _WIN32
             if (pt.st_uid == 0 || pt.st_gid == 0)
             {
                 const SnortConfig* sc = SnortConfig::get_conf();
@@ -133,6 +157,7 @@ bool PerfTracker::open(bool append)
                         file_name, sc->get_uid(), sc->get_gid(), get_error(errno));
                 }
             }
+            #endif
         }
 
         // Convert file descriptor to FILE*

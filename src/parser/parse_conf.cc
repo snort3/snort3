@@ -171,7 +171,13 @@ const char* get_config_file(const char* arg, std::string& file)
 {
     assert(arg);
 
-    bool absolute = (arg[0] == '/');
+    // bool absolute = (arg[0] == '/');
+    #ifdef _WIN32
+    bool absolute = (arg[0] == '/' || arg[0] == '\\' ||
+        (arg[0] && arg[1] == ':'));
+    #else
+        bool absolute = (arg[0] == '/');
+    #endif
 
     if ( absolute )
     {

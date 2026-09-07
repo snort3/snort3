@@ -29,6 +29,7 @@
 
 #include "log/messages.h"
 #include "main/thread_config.h"
+#include "profiler/profiler.h"
 
 using namespace snort;
 using namespace std;
@@ -58,6 +59,11 @@ static const PegInfo tcp_connector_pegs[] =
 
 extern THREAD_LOCAL SimpleStats tcp_connector_stats;
 extern THREAD_LOCAL ProfileStats tcp_connector_perfstats;
+
+#ifdef _WIN32
+THREAD_LOCAL SimpleStats tcp_connector_stats;
+THREAD_LOCAL ProfileStats tcp_connector_perfstats;
+#endif
 
 //-------------------------------------------------------------------------
 // tcp_connector module

@@ -25,7 +25,6 @@
 
 #include "appid_config.h"
 
-#include <glob.h>
 #include <climits>
 
 #include "log/messages.h"

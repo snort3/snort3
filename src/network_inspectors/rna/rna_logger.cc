@@ -40,8 +40,15 @@
 #endif
 
 // FIXIT-M workaround for OS X, logger should be using sfip anyway
+// #ifndef s6_addr32
+// #define s6_addr32 __u6_addr.__u6_addr32
+// #endif
 #ifndef s6_addr32
+#ifdef _WIN32
+#define s6_addr32 u.Word
+#else
 #define s6_addr32 __u6_addr.__u6_addr32
+#endif
 #endif
 
 using namespace snort;

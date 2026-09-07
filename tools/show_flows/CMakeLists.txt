@@ -12,6 +12,10 @@ target_link_libraries( show_flows
     ${PCAP_LIBRARIES}
 )
 
+if (WIN32)
+    target_link_libraries(show_flows ws2_32)
+endif ()
+
 install (TARGETS show_flows
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

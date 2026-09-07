@@ -48,10 +48,19 @@ typedef uint16_t Port;
 
 #ifndef SO_PUBLIC
 #if defined _WIN32 || defined __CYGWIN__
+// #  ifdef __GNUC__
+// #    define SO_PUBLIC
+// #    define SO_PRIVATE
+// #  else
+// #    define SO_PUBLIC __declspec(dllimport)
+// #    define SO_PRIVATE
+// #  endif
 #  ifdef __GNUC__
-#    define SO_PUBLIC __attribute__((dllimport))
+#    define SO_PUBLIC
+#    define SO_PRIVATE
 #  else
 #    define SO_PUBLIC __declspec(dllimport)
+#    define SO_PRIVATE
 #  endif
 #  define DLL_LOCAL
 #else

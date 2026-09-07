@@ -23,7 +23,8 @@
 
 #include "directory.h"
 
-#include <fnmatch.h>
+// #include <fnmatch.h>
+#include "helpers/wildcard_match.h"
 #include <sys/stat.h>
 
 #include <cerrno>
@@ -102,7 +103,8 @@ const char* Directory::next()
         {
             continue;
         }
-        else if ( !filter.empty() && fnmatch(filter.c_str(), de->d_name, 0) )
+        // else if ( !filter.empty() && fnmatch(filter.c_str(), de->d_name, 0) )
+        else if ( !filter.empty() && !wildcard_match(filter.c_str(), de->d_name) )
         {
             continue;
         }

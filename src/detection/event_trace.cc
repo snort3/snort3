@@ -113,7 +113,11 @@ void EventTrace_Init()
     {
         time_t now = time(nullptr);
         char time_buf[26];
+        #ifdef _WIN32
+        ctime_s(time_buf, sizeof(time_buf), &now);
+        #else
         ctime_r(&now, time_buf);
+        #endif
 
         tlog = TextLog_Init ("event_trace.txt", 4*1024, 8*1024*1024);
         TextLog_Print(tlog, "\nTrace started at %s", time_buf);
@@ -127,7 +131,11 @@ void EventTrace_Term()
     {
         time_t now = time(nullptr);
         char time_buf[26];
+        #ifdef _WIN32
+        ctime_s(time_buf, sizeof(time_buf), &now);
+        #else
         ctime_r(&now, time_buf);
+        #endif
 
         TextLog_Print(tlog, "\nTraced %u events\n", nEvents);
         TextLog_Print(tlog, "Trace stopped at %s", time_buf);

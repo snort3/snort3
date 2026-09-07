@@ -22,16 +22,30 @@
 
 #include "process.h"
 
+// #include <fcntl.h>
+// #include <grp.h>
+// #include <luajit.h>
+// #include <openssl/crypto.h>
+// #include <pcap.h>
+// #include <pwd.h>
+// #include <sys/file.h>
+// #include <sys/resource.h>
+// #include <sys/stat.h>
+// #include <zlib.h>
+
 #include <fcntl.h>
-#include <grp.h>
 #include <luajit.h>
 #include <openssl/crypto.h>
 #include <pcap.h>
+#include <sys/stat.h>
+#include <zlib.h>
+
+#ifndef _WIN32
+#include <grp.h>
 #include <pwd.h>
 #include <sys/file.h>
 #include <sys/resource.h>
-#include <sys/stat.h>
-#include <zlib.h>
+#endif
 
 #ifdef HAVE_HYPERSCAN
 #include <hs_compile.h>
@@ -82,6 +96,33 @@ extern "C" {
 #include "oops_handler.h"
 #include "snort_config.h"
 
+#ifdef _WIN32
+#ifndef SIGBUS
+#define SIGBUS 0x1001
+#endif
+#ifndef SIGQUIT
+#define SIGQUIT 0x1002
+#endif
+#ifndef SIGPIPE
+#define SIGPIPE 0x1003
+#endif
+#ifndef SIGUSR1
+#define SIGUSR1 0x1004
+#endif
+#ifndef SIGUSR2
+#define SIGUSR2 0x1005
+#endif
+#ifndef SIGHUP
+#define SIGHUP 0x1006
+#endif
+#ifndef SIGURG
+#define SIGURG 0x1007
+#endif
+#ifndef SIGCHLD
+#define SIGCHLD 0x1008
+#endif
+#endif
+
 using namespace snort;
 
 #ifndef SIGNAL_SNORT_RELOAD
@@ -101,6 +142,12 @@ using namespace snort;
 
 #ifndef SIGNAL_SNORT_READ_ATTR_TBL
 #define SIGNAL_SNORT_READ_ATTR_TBL SIGURG
+#endif
+
+#ifdef _WIN32
+using snort_signal_handler_t = void (*)(int);
+#else
+using snort_signal_handler_t = sig_t;
 #endif
 
 static const char* const pig_sig_names[PIG_SIG_MAX] =
@@ -135,7 +182,7 @@ original_sigactions[] =
 static struct
 {
     int signal;
-    sig_t original_sighandler;
+    snort_signal_handler_t original_sighandler;
 }
 original_sighandlers[] =
 {
@@ -148,7 +195,10 @@ original_sighandlers[] =
 };
 #endif
 
-static bool add_signal(int sig, sig_t);
+// static bool add_signal(int sig, sig_t);
+// static bool restore_signal(int sig, bool silent = false);
+
+static bool add_signal(int sig, snort_signal_handler_t);
 static bool restore_signal(int sig, bool silent = false);
 
 static bool exit_pronto = true;
@@ -381,7 +431,8 @@ const char* get_signal_name(PigSignal s)
 // signal management
 //-------------------------------------------------------------------------
 
-static bool add_signal(int sig, sig_t signal_handler)
+// static bool add_signal(int sig, sig_t signal_handler)
+static bool add_signal(int sig, snort_signal_handler_t signal_handler)
 {
 #ifdef HAVE_SIGACTION
     struct sigaction action;
@@ -407,7 +458,7 @@ static bool add_signal(int sig, sig_t signal_handler)
         return false;
     }
 #else
-    sig_t original_handler = signal(sig, signal_handler);
+    snort_signal_handler_t original_handler = signal(sig, signal_handler);
     if (original_handler == SIG_ERR)
     {
         ErrorMessage("Could not add handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
@@ -457,7 +508,8 @@ static bool restore_signal(int sig, bool silent)
         return false;
     }
 #else
-    sig_t signal_handler = SIG_DFL;
+    // sig_t signal_handler = SIG_DFL;
+    snort_signal_handler_t signal_handler = SIG_DFL;
 
     for (unsigned i = 0; original_sighandlers[i].signal; i++)
     {
@@ -479,17 +531,71 @@ static bool restore_signal(int sig, bool silent)
     return true;
 }
 
+// void install_oops_handler()
+// {
+//     add_signal(SIGILL, oops_handler);
+//     add_signal(SIGABRT, oops_handler);
+//     add_signal(SIGBUS, oops_handler);
+//     add_signal(SIGFPE, oops_handler);
+//     add_signal(SIGSEGV, oops_handler);
+// }
+
 void install_oops_handler()
 {
+#ifdef _WIN32
+    add_signal(SIGILL, oops_handler);
+    add_signal(SIGABRT, oops_handler);
+    add_signal(SIGFPE, oops_handler);
+    add_signal(SIGSEGV, oops_handler);
+#else
     add_signal(SIGILL, oops_handler);
     add_signal(SIGABRT, oops_handler);
     add_signal(SIGBUS, oops_handler);
     add_signal(SIGFPE, oops_handler);
     add_signal(SIGSEGV, oops_handler);
+#endif
 }
+
+// void init_signals()
+// {
+//     sigset_t set;
+
+//     sigemptyset(&set);
+//     // FIXIT-L this is undefined for multithreaded apps
+//     sigprocmask(SIG_SETMASK, &set, nullptr);
+
+//     // First things first, install the crash handler
+//     install_oops_handler();
+
+//     // Ignore SIGPIPE for now (it's not particularly actionable in a multithreaded program)
+//     add_signal(SIGPIPE, SIG_IGN);
+
+//     // Set up a clean exit when expected shutdown signals come along
+//     add_signal(SIGTERM, exit_handler);
+//     add_signal(SIGINT, exit_handler);
+//     add_signal(SIGQUIT, dirty_handler);
+
+//     // Finally, set up signal handlers for custom Snort actions
+//     add_signal(SIGNAL_SNORT_DUMP_STATS, dump_stats_handler);
+//     add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler);
+//     add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler);
+//     add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler);
+
+//     // Errno will have potentially been left set from a failed handler installation
+//     errno = 0;
+// }
 
 void init_signals()
 {
+#ifdef _WIN32
+    // Windows does not provide POSIX signal masks or the
+    // Unix-specific signals used by Snort for runtime control.
+
+    install_oops_handler();
+
+    add_signal(SIGTERM, exit_handler);
+    add_signal(SIGINT, exit_handler);
+#else
     sigset_t set;
 
     sigemptyset(&set);
@@ -512,22 +618,55 @@ void init_signals()
     add_signal(SIGNAL_SNORT_ROTATE_STATS, rotate_stats_handler);
     add_signal(SIGNAL_SNORT_RELOAD, reload_config_handler);
     add_signal(SIGNAL_SNORT_READ_ATTR_TBL, reload_attrib_handler);
+#endif
 
-    // Errno will have potentially been left set from a failed handler installation
     errno = 0;
 }
+
+// void remove_oops_handler()
+// {
+//     restore_signal(SIGILL);
+//     restore_signal(SIGABRT);
+//     restore_signal(SIGBUS);
+//     restore_signal(SIGFPE);
+//     restore_signal(SIGSEGV);
+// }
 
 void remove_oops_handler()
 {
     restore_signal(SIGILL);
     restore_signal(SIGABRT);
-    restore_signal(SIGBUS);
     restore_signal(SIGFPE);
     restore_signal(SIGSEGV);
+
+#ifndef _WIN32
+    restore_signal(SIGBUS);
+#endif
 }
+
+// void term_signals()
+// {
+//     restore_signal(SIGNAL_SNORT_DUMP_STATS);
+//     restore_signal(SIGNAL_SNORT_ROTATE_STATS);
+//     restore_signal(SIGNAL_SNORT_RELOAD);
+//     restore_signal(SIGNAL_SNORT_READ_ATTR_TBL);
+
+//     restore_signal(SIGTERM);
+//     restore_signal(SIGINT);
+//     restore_signal(SIGQUIT);
+
+//     restore_signal(SIGPIPE);
+
+//     remove_oops_handler();
+// }
 
 void term_signals()
 {
+#ifdef _WIN32
+    restore_signal(SIGTERM);
+    restore_signal(SIGINT);
+    remove_oops_handler();
+#else
     restore_signal(SIGNAL_SNORT_DUMP_STATS);
     restore_signal(SIGNAL_SNORT_ROTATE_STATS);
     restore_signal(SIGNAL_SNORT_RELOAD);
@@ -540,6 +679,7 @@ void term_signals()
     restore_signal(SIGPIPE);
 
     remove_oops_handler();
+#endif
 }
 
 static void help_signal(unsigned n, const char* name, const char* h)
@@ -593,8 +733,64 @@ static void snuff_stdio()
 // to that.  We can also consider updating to have the child execve().
 // Note that there are system tools for daemonization these days.  See
 // daemon(3) and search deprecated daemonomicon for more.
+// void daemonize()
+// {
+//     // don't daemonize more than once
+//     if ( getppid() == 1 )
+//         return;
+
+//     LogMessage("initializing daemon mode\n");
+
+//     // register signal handler so that parent can trap signal
+//     add_signal(SIGNAL_SNORT_CHILD_READY, child_ready_handler);
+
+//     pid_t cpid = fork();
+
+//     if ( cpid < 0 )
+//         FatalError("fork failed - %s", get_error(errno));
+
+//     if ( cpid > 0 )
+//     {
+//         // parent
+//         int i = 0;
+
+//         while ( !child_ready_signal and i++ < 10 )
+//             sleep(1);
+
+//         if ( !child_ready_signal )
+//             FatalError("daemonization failed");
+//         else
+//             LogMessage("child process is %d\n", cpid);
+
+//         exit(0);
+//     }
+
+//     // child
+//     errno = 0;  // disregard any inherited issues
+
+//     setsid();
+
+//     if ( errno )
+//         FatalError("failed to setsid - %s", get_error(errno));
+
+//     if ( SnortConfig::log_quiet() or SnortConfig::log_syslog() )
+//         snuff_stdio();
+
+//     pid_t ppid = getppid();
+
+//     if ( kill(ppid, SIGNAL_SNORT_CHILD_READY) )
+//         LogMessage("daemonization incomplete, failed to signal parent "
+//             "%d: %s\n", ppid, get_error(errno));
+// }
+
 void daemonize()
 {
+#ifdef _WIN32
+    // Windows does not support the POSIX fork/setsid daemon model.
+    // Snort continues in the foreground.
+    LogMessage("daemon mode is not supported on Windows; running in foreground mode\n");
+    return;
+#else
     // don't daemonize more than once
     if ( getppid() == 1 )
         return;
@@ -611,7 +807,6 @@ void daemonize()
 
     if ( cpid > 0 )
     {
-        // parent
         int i = 0;
 
         while ( !child_ready_signal and i++ < 10 )
@@ -625,8 +820,7 @@ void daemonize()
         exit(0);
     }
 
-    // child
-    errno = 0;  // disregard any inherited issues
+    errno = 0;
 
     setsid();
 
@@ -641,6 +835,7 @@ void daemonize()
     if ( kill(ppid, SIGNAL_SNORT_CHILD_READY) )
         LogMessage("daemonization incomplete, failed to signal parent "
             "%d: %s\n", ppid, get_error(errno));
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -730,18 +925,54 @@ int DisplayBanner()
 }
 
 // get offset seconds from GMT
+// int gmt2local(time_t t)
+// {
+//     if (t == 0)
+//         t = time(nullptr);
+
+//     struct tm gmt;
+//     struct tm* lt = gmtime_r(&t, &gmt);
+//     if (lt == nullptr)
+//         return 0;
+
+//     struct tm loc;
+//     localtime_r(&t, &loc);
+
+//     int dt = (loc.tm_hour - gmt.tm_hour) * 60 * 60 +
+//         (loc.tm_min - gmt.tm_min) * 60;
+
+//     int dir = loc.tm_year - gmt.tm_year;
+
+//     if (dir == 0)
+//         dir = loc.tm_yday - gmt.tm_yday;
+
+//     dt += dir * 24 * 60 * 60;
+
+//     return(dt);
+// }
+
 int gmt2local(time_t t)
 {
     if (t == 0)
         t = time(nullptr);
 
     struct tm gmt;
+#ifdef _WIN32
+    if (gmtime_s(&gmt, &t) != 0)
+        return 0;
+#else
     struct tm* lt = gmtime_r(&t, &gmt);
     if (lt == nullptr)
         return 0;
+#endif
 
     struct tm loc;
+#ifdef _WIN32
+    if (localtime_s(&loc, &t) != 0)
+        return 0;
+#else
     localtime_r(&t, &loc);
+#endif
 
     int dt = (loc.tm_hour - gmt.tm_hour) * 60 * 60 +
         (loc.tm_min - gmt.tm_min) * 60;
@@ -753,17 +984,102 @@ int gmt2local(time_t t)
 
     dt += dir * 24 * 60 * 60;
 
-    return(dt);
+    return dt;
 }
 
 static FILE* pid_lockfile = nullptr;
 static FILE* pid_file = nullptr;
+
+// void CreatePidFile(pid_t pid)
+// {
+//     SnortConfig* sc = SnortConfig::get_main_conf();
+
+//     sc->pid_filename = sc->log_dir + '/' + sc->pid_filename;
+
+//     std::string pid_lockfilename;
+
+//     if ( !sc->no_lock_pid_file() )
+//     {
+//         pid_lockfilename = sc->pid_filename;
+//         pid_lockfilename += ".lck";
+
+//         /* First, lock the PID file */
+//         pid_lockfile = fopen(pid_lockfilename.c_str(), "w");
+
+//         if ( pid_lockfile )
+//         {
+//             struct flock lock;
+//             int lock_fd = fileno(pid_lockfile);
+
+//             lock.l_type = F_WRLCK;
+//             lock.l_whence = SEEK_SET;
+//             lock.l_start = 0;
+//             lock.l_len = 0;
+
+//             if (fcntl(lock_fd, F_SETLK, &lock) == -1)
+//             {
+//                 ClosePidFile();
+//                 ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"",
+//                     sc->pid_filename.c_str(), (int)pid);
+//                 return;
+//             }
+//         }
+//     }
+
+//     /* Okay, were able to lock PID file, now open and write PID */
+//     pid_file = fopen(sc->pid_filename.c_str(), "w");
+//     if (pid_file)
+//     {
+//         LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
+//             sc->pid_filename.c_str());
+//         fprintf(pid_file, "%d\n", (int)pid);
+//         fflush(pid_file);
+//     }
+//     else
+//     {
+//         if (pid_lockfile)
+//         {
+//             fclose(pid_lockfile);
+//             pid_lockfile = nullptr;
+//         }
+//         const char* error = get_error(errno);
+//         ErrorMessage("Failed to create pid file %s, Error: %s\n",
+//             sc->pid_filename.c_str(), error);
+//         sc->pid_filename.clear();
+//     }
+//     if ( !pid_lockfilename.empty() )
+//         unlink(pid_lockfilename.c_str());
+// }
 
 void CreatePidFile(pid_t pid)
 {
     SnortConfig* sc = SnortConfig::get_main_conf();
 
     sc->pid_filename = sc->log_dir + '/' + sc->pid_filename;
+
+#ifdef _WIN32
+
+    pid_file = fopen(sc->pid_filename.c_str(), "w");
+
+    if (pid_file)
+    {
+        LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
+            sc->pid_filename.c_str());
+
+        fprintf(pid_file, "%d\n", (int)pid);
+        fflush(pid_file);
+    }
+    else
+    {
+        const char* error = get_error(errno);
+
+        ErrorMessage("Failed to create pid file %s, Error: %s\n",
+            sc->pid_filename.c_str(), error);
+
+        sc->pid_filename.clear();
+    }
+
+#else
 
     std::string pid_lockfilename;
 
@@ -772,7 +1088,6 @@ void CreatePidFile(pid_t pid)
         pid_lockfilename = sc->pid_filename;
         pid_lockfilename += ".lck";
 
-        /* First, lock the PID file */
         pid_lockfile = fopen(pid_lockfilename.c_str(), "w");
 
         if ( pid_lockfile )
@@ -788,19 +1103,22 @@ void CreatePidFile(pid_t pid)
             if (fcntl(lock_fd, F_SETLK, &lock) == -1)
             {
                 ClosePidFile();
+
                 ParseError("Failed to Lock PID File \"%s\" for PID \"%d\"",
                     sc->pid_filename.c_str(), (int)pid);
+
                 return;
             }
         }
     }
 
-    /* Okay, were able to lock PID file, now open and write PID */
     pid_file = fopen(sc->pid_filename.c_str(), "w");
+
     if (pid_file)
     {
         LogMessage("Writing PID \"%d\" to file \"%s\"\n", (int)pid,
             sc->pid_filename.c_str());
+
         fprintf(pid_file, "%d\n", (int)pid);
         fflush(pid_file);
     }
@@ -811,13 +1129,19 @@ void CreatePidFile(pid_t pid)
             fclose(pid_lockfile);
             pid_lockfile = nullptr;
         }
+
         const char* error = get_error(errno);
+
         ErrorMessage("Failed to create pid file %s, Error: %s\n",
             sc->pid_filename.c_str(), error);
+
         sc->pid_filename.clear();
     }
+
     if ( !pid_lockfilename.empty() )
         unlink(pid_lockfilename.c_str());
+
+#endif
 }
 
 void ClosePidFile()
@@ -835,8 +1159,46 @@ void ClosePidFile()
 }
 
 // set safe UserID and GroupID, if needed
+// bool SetUidGid(int user_id, int group_id)
+// {
+//     // Were any changes requested?
+//     if (group_id == -1 && user_id == -1)
+//         return true;
+
+//     if (group_id != -1)
+//     {
+//         if (setgid(group_id) < 0)
+//         {
+//             ParseError("Cannot set GID: %d", group_id);
+//             return false;
+//         }
+//         LogMessage("Set GID to %d\n", group_id);
+//     }
+
+//     if (user_id != -1)
+//     {
+//         if (setuid(user_id) < 0)
+//         {
+//             ParseError("Cannot set UID: %d", user_id);
+//             return false;
+//         }
+//         LogMessage("Set UID to %d\n", user_id);
+//     }
+
+//     return true;
+// }
+
 bool SetUidGid(int user_id, int group_id)
 {
+#ifdef _WIN32
+    if (user_id != -1 || group_id != -1)
+    {
+        ParseError("UID/GID privilege dropping is not supported on Windows");
+        return false;
+    }
+
+    return true;
+#else
     // Were any changes requested?
     if (group_id == -1 && user_id == -1)
         return true;
@@ -848,6 +1210,7 @@ bool SetUidGid(int user_id, int group_id)
             ParseError("Cannot set GID: %d", group_id);
             return false;
         }
+
         LogMessage("Set GID to %d\n", group_id);
     }
 
@@ -858,22 +1221,51 @@ bool SetUidGid(int user_id, int group_id)
             ParseError("Cannot set UID: %d", user_id);
             return false;
         }
+
         LogMessage("Set UID to %d\n", user_id);
     }
 
     return true;
+#endif
 }
 
 // set the groups of the process based on the UserID with the GroupID added
+// void InitGroups(int user_id, int group_id)
+// {
+//     if ((user_id != -1) && (getuid() == 0))
+//     {
+//         struct passwd* pw = getpwuid(user_id);  // main thread only
+
+//         if (pw != nullptr)
+//         {
+//             /* getpwuid and initgroups may use the same static buffers */
+//             char* username = snort_strdup(pw->pw_name);
+
+//             if (initgroups(username, group_id) < 0)
+//                 ParseError("Can not initgroups(%s,%d)", username, group_id);
+
+//             snort_free(username);
+//         }
+
+//         /** Just to be on the safe side... **/
+//         endgrent();
+//         endpwent();
+//     }
+// }
+
 void InitGroups(int user_id, int group_id)
 {
+#ifdef _WIN32
+    (void)user_id;
+    (void)group_id;
+    return;
+#else
     if ((user_id != -1) && (getuid() == 0))
     {
-        struct passwd* pw = getpwuid(user_id);  // main thread only
+        struct passwd* pw = getpwuid(user_id);
 
         if (pw != nullptr)
         {
-            /* getpwuid and initgroups may use the same static buffers */
             char* username = snort_strdup(pw->pw_name);
 
             if (initgroups(username, group_id) < 0)
@@ -882,10 +1274,10 @@ void InitGroups(int user_id, int group_id)
             snort_free(username);
         }
 
-        /** Just to be on the safe side... **/
         endgrent();
         endpwent();
     }
+#endif
 }
 
 //-------------------------------------------------------------------------
@@ -949,49 +1341,146 @@ static const char* CurrentWorkingDir(PathBuf& buf)
     return buf;
 }
 
+// static char* GetAbsolutePath(const char* dir, PathBuf& buf)
+// {
+//     assert(dir);
+//     errno = 0;
+
+//     if ( !realpath(dir, buf) )
+//     {
+//         LogMessage("Couldn't determine absolute path for '%s': %s\n", dir, get_error(errno));
+//         return nullptr;
+//     }
+
+//     return buf;
+// }
+
 static char* GetAbsolutePath(const char* dir, PathBuf& buf)
 {
+#ifdef _WIN32
+    (void)dir;
+    (void)buf;
+    return nullptr;
+#else
     assert(dir);
     errno = 0;
 
     if ( !realpath(dir, buf) )
     {
-        LogMessage("Couldn't determine absolute path for '%s': %s\n", dir, get_error(errno));
+        LogMessage("Couldn't determine absolute path for '%s': %s\n",
+            dir, get_error(errno));
         return nullptr;
     }
 
     return buf;
+#endif
 }
 
 // Chroot and adjust the log_dir reference
+// bool EnterChroot(std::string& root_dir, std::string& log_dir)
+// {
+//     if (log_dir.empty())
+//     {
+//         ParseError("Log directory not specified");
+//         return false;
+//     }
+//     PathBuf pwd;
+//     PathBuf abs_log_dir;
+
+//     if ( !GetAbsolutePath(log_dir.c_str(), abs_log_dir) )
+//         return false;
+
+//     /* change to the desired root directory */
+//     if (chdir(root_dir.c_str()) != 0)
+//     {
+//         ParseError("EnterChroot: Can not chdir to \"%s\": %s", root_dir.c_str(),
+//             get_error(errno));
+//         return false;
+//     }
+
+//     /* always returns an absolute pathname */
+//     const char* abs_root_dir = CurrentWorkingDir(pwd);
+//     if (!abs_root_dir)
+//     {
+//         ParseError("Couldn't retrieve current working directory");
+//         return false;
+//     }
+//     size_t abs_root_dir_len = strlen(abs_root_dir);
+
+//     if (strncmp(abs_root_dir, abs_log_dir, abs_root_dir_len))
+//     {
+//         ParseError("Specified log directory is not contained with the chroot jail");
+//         return false;
+//     }
+
+//     if (chroot(abs_root_dir) < 0)
+//     {
+//         ParseError("Can not chroot to \"%s\": absolute: %s: %s",
+//             root_dir.c_str(), abs_root_dir, get_error(errno));
+//         return false;
+//     }
+
+
+//     /* Immediately change to the root directory of the jail. */
+//     if (chdir("/") < 0)
+//     {
+//         ParseError("Can not chdir to \"/\" after chroot: %s",
+//             get_error(errno));
+//         return false;
+//     }
+
+
+//     if (abs_root_dir_len >= strlen(abs_log_dir))
+//         log_dir = "/";
+//     else
+//         log_dir = abs_log_dir + abs_root_dir_len;
+
+
+//     LogMessage("Chroot directory = %s\n", root_dir.c_str());
+
+//     return true;
+// }
+
 bool EnterChroot(std::string& root_dir, std::string& log_dir)
 {
+#ifdef _WIN32
+    if (!root_dir.empty())
+    {
+        ParseError("chroot is not supported on Windows");
+        return false;
+    }
+
+    (void)log_dir;
+    return true;
+#else
+
     if (log_dir.empty())
     {
         ParseError("Log directory not specified");
         return false;
     }
+
     PathBuf pwd;
     PathBuf abs_log_dir;
 
     if ( !GetAbsolutePath(log_dir.c_str(), abs_log_dir) )
         return false;
 
-    /* change to the desired root directory */
     if (chdir(root_dir.c_str()) != 0)
     {
-        ParseError("EnterChroot: Can not chdir to \"%s\": %s", root_dir.c_str(),
-            get_error(errno));
+        ParseError("EnterChroot: Can not chdir to \"%s\": %s",
+            root_dir.c_str(), get_error(errno));
         return false;
     }
 
-    /* always returns an absolute pathname */
     const char* abs_root_dir = CurrentWorkingDir(pwd);
+
     if (!abs_root_dir)
     {
         ParseError("Couldn't retrieve current working directory");
         return false;
     }
+
     size_t abs_root_dir_len = strlen(abs_root_dir);
 
     if (strncmp(abs_root_dir, abs_log_dir, abs_root_dir_len))
@@ -1007,8 +1496,6 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
 
-
-    /* Immediately change to the root directory of the jail. */
     if (chdir("/") < 0)
     {
         ParseError("Can not chdir to \"/\" after chroot: %s",
@@ -1016,16 +1503,15 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir)
         return false;
     }
 
-
     if (abs_root_dir_len >= strlen(abs_log_dir))
         log_dir = "/";
     else
         log_dir = abs_log_dir + abs_root_dir_len;
 
-
     LogMessage("Chroot directory = %s\n", root_dir.c_str());
 
     return true;
+#endif
 }
 
 #if defined(NOCOREFILE)

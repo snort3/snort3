@@ -13,3 +13,7 @@ install (TARGETS u2spewfoo
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+
+if (WIN32)
+    target_link_libraries(u2spewfoo ws2_32)
+endif ()

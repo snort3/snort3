@@ -14,6 +14,9 @@ include_directories ( AFTER ${EXTERNAL_INCLUDES} )
 
 add_daq_module ( daq_file daq_file.c )
 add_daq_module ( daq_hext daq_hext.c )
+if (WIN32)
+    target_link_libraries(daq_hext ws2_32)
+endif ()
 
 install (FILES ${DAQS_HEADERS}
     DESTINATION "${INCLUDE_INSTALL_PATH}/daq"

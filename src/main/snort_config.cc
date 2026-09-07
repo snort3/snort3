@@ -23,10 +23,15 @@
 
 #include "snort_config.h"
 
-#include <atomic>
+#ifndef _WIN32
 #include <grp.h>
-#include <mutex>
 #include <pwd.h>
+#endif
+
+#include <atomic>
+// #include <grp.h>
+#include <mutex>
+// #include <pwd.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
@@ -707,8 +712,43 @@ void SnortConfig::set_obfuscation_mask(const char* mask)
     static_cast<void>(obfuscation_net.set(mask));
 }
 
+// void SnortConfig::set_gid(const char* args)
+// {
+//     struct group* gr;
+//     long target_gid;
+//     char* endptr;
+
+//     if (!args)
+//         return;
+
+//     target_gid = SnortStrtol(args, &endptr, 10);
+//     if (*endptr != '\0')
+//         gr = getgrnam(args); // main thread only
+//     else if (errno == ERANGE || target_gid < 0)
+//     {
+//         ParseError("group id '%s' out of range.", args);
+//         return;
+//     }
+//     else
+//         gr = getgrgid((gid_t)target_gid);  // main thread only
+
+//     if (!gr)
+//     {
+//         ParseError("group '%s' unknown.", args);
+//         return;
+//     }
+
+//     /* If we're already running as the desired group ID, don't bother to try changing it later. */
+//     if (gr->gr_gid != getgid())
+//         group_id = (int)gr->gr_gid;
+// }
+
 void SnortConfig::set_gid(const char* args)
 {
+#ifdef _WIN32
+    (void)args;
+    return;
+#else
     struct group* gr;
     long target_gid;
     char* endptr;
@@ -717,15 +757,16 @@ void SnortConfig::set_gid(const char* args)
         return;
 
     target_gid = SnortStrtol(args, &endptr, 10);
+
     if (*endptr != '\0')
-        gr = getgrnam(args); // main thread only
+        gr = getgrnam(args);
     else if (errno == ERANGE || target_gid < 0)
     {
         ParseError("group id '%s' out of range.", args);
         return;
     }
     else
-        gr = getgrgid((gid_t)target_gid);  // main thread only
+        gr = getgrgid((gid_t)target_gid);
 
     if (!gr)
     {
@@ -733,13 +774,54 @@ void SnortConfig::set_gid(const char* args)
         return;
     }
 
-    /* If we're already running as the desired group ID, don't bother to try changing it later. */
     if (gr->gr_gid != getgid())
         group_id = (int)gr->gr_gid;
+#endif
 }
+
+// void SnortConfig::set_uid(const char* args)
+// {
+//     struct passwd* pw;
+//     long target_uid;
+//     char* endptr;
+
+//     if (!args)
+//         return;
+
+//     target_uid = SnortStrtol(args, &endptr, 10);
+//     if (*endptr != '\0')
+//         pw = getpwnam(args); // main thread only
+//     else if (errno == ERANGE || target_uid < 0)
+//     {
+//         ParseError("user id '%s' out of range.", args);
+//         return;
+//     }
+//     else
+//         pw = getpwuid((uid_t)target_uid);  // main thread only
+
+//     if (!pw)
+//     {
+//         ParseError("user '%s' unknown.", args);
+//         return;
+//     }
+
+//     /* Set group ID to user's default group if not already set.
+//        If we're already running as the desired user and/or group ID,
+//        don't bother to try changing it later. */
+//     if (pw->pw_uid != getuid())
+//         user_id = (int)pw->pw_uid;
+
+//     if (group_id == -1 && pw->pw_gid != getgid())
+//         group_id = (int)pw->pw_gid;
+// }
+
 
 void SnortConfig::set_uid(const char* args)
 {
+#ifdef _WIN32
+    (void)args;
+    return;
+#else
     struct passwd* pw;
     long target_uid;
     char* endptr;
@@ -748,15 +830,16 @@ void SnortConfig::set_uid(const char* args)
         return;
 
     target_uid = SnortStrtol(args, &endptr, 10);
+
     if (*endptr != '\0')
-        pw = getpwnam(args); // main thread only
+        pw = getpwnam(args);
     else if (errno == ERANGE || target_uid < 0)
     {
         ParseError("user id '%s' out of range.", args);
         return;
     }
     else
-        pw = getpwuid((uid_t)target_uid);  // main thread only
+        pw = getpwuid((uid_t)target_uid);
 
     if (!pw)
     {
@@ -764,14 +847,12 @@ void SnortConfig::set_uid(const char* args)
         return;
     }
 
-    /* Set group ID to user's default group if not already set.
-       If we're already running as the desired user and/or group ID,
-       don't bother to try changing it later. */
     if (pw->pw_uid != getuid())
         user_id = (int)pw->pw_uid;
 
     if (group_id == -1 && pw->pw_gid != getgid())
         group_id = (int)pw->pw_gid;
+#endif
 }
 
 void SnortConfig::set_show_year(bool enabled)

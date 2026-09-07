@@ -28,9 +28,13 @@
 
 using namespace snort;
 
+#ifndef _WIN32
 extern const BaseApi* mp_unix_transport[];
+#endif
 
 void load_mp_transports()
 {
+#ifndef _WIN32
     PluginManager::load_plugins(mp_unix_transport);
+#endif
 }

@@ -109,7 +109,9 @@ bool HeldPacketQueue::adjust_expiration(uint32_t new_timeout, const timeval& now
     else
         return false;
 
-    timeval delta = { static_cast<time_t>(ms) / 1000, static_cast<suseconds_t>((ms % 1000) * 1000) };
+    timeval delta;
+    delta.tv_sec = static_cast<decltype(delta.tv_sec)>(ms / 1000);
+    delta.tv_usec = static_cast<decltype(delta.tv_usec)>((ms % 1000) * 1000);
 
     for ( auto& hp : q )
         hp.adjust_expiration(delta, up);

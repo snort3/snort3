@@ -64,6 +64,7 @@ extern const BaseApi* cd_pgm[];
 extern const BaseApi* cd_pppencap[];
 extern const BaseApi* cd_pppoepkt[];
 extern const BaseApi* cd_raw[];
+extern const BaseApi* cd_null[];
 extern const BaseApi* cd_routing[];
 extern const BaseApi* cd_teredo[];
 extern const BaseApi* cd_transbridge[];
@@ -80,6 +81,9 @@ void load_codecs()
     PluginManager::load_plugins(cd_ipv6);
     PluginManager::load_plugins(cd_tcp);
     PluginManager::load_plugins(cd_hopopts);
+    PluginManager::load_plugins(cd_raw);
+    PluginManager::load_plugins(cd_null);
+    PluginManager::load_plugins(cd_routing);
 
 #ifdef STATIC_CODECS
     PluginManager::load_plugins(cd_ah);

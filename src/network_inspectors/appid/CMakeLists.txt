@@ -82,7 +82,6 @@ set ( SP_APPID_SOURCES
     service_plugins/service_rfb.h
     service_plugins/service_rlogin.cc
     service_plugins/service_rlogin.h
-    service_plugins/service_rpc.cc
     service_plugins/service_rpc.h
     service_plugins/service_rshell.cc
     service_plugins/service_rshell.h

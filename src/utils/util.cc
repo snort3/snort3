@@ -97,11 +97,26 @@ bool is_directory_path(const std::string& path)
     return ISDIR(sb.st_mode);
 }
 
+// const char* get_error(int errnum)
+// {
+//     static THREAD_LOCAL char buf[128];
+
+// #if defined(HAVE_GNU_STRERROR_R)
+//     return strerror_r(errnum, buf, sizeof(buf));
+// #else
+//     (void)strerror_r(errnum, buf, sizeof(buf));
+//     return buf;
+// #endif
+// }
+
 const char* get_error(int errnum)
 {
     static THREAD_LOCAL char buf[128];
 
-#if defined(HAVE_GNU_STRERROR_R)
+#ifdef _WIN32
+    strerror_s(buf, sizeof(buf), errnum);
+    return buf;
+#elif defined(HAVE_GNU_STRERROR_R)
     return strerror_r(errnum, buf, sizeof(buf));
 #else
     (void)strerror_r(errnum, buf, sizeof(buf));
@@ -161,7 +176,13 @@ void ts_print(const struct timeval* tvp, char* timebuf, bool yyyymmdd)
     time_t Time = (tvp->tv_sec + localzone) - s;
 
     struct tm ttm;
-    struct tm* lt = gmtime_r(&Time, &ttm);
+    struct tm* lt;
+
+    #ifdef _WIN32
+        lt = (gmtime_s(&ttm, &Time) == 0) ? &ttm : nullptr;
+    #else
+        lt = gmtime_r(&Time, &ttm);
+    #endif
 
     if ( !lt )
     {

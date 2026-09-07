@@ -377,7 +377,7 @@ static void AlertExtraData(
     if ((config == nullptr) || !xtradata_mask || !alert_info.event_second)
         return;
 
-    xid = ffs(xtradata_mask);
+    xid = __builtin_ffs(xtradata_mask);
 
     const IpsContext* c = DetectionEngine::get_context();
     Obfuscator* obf = (c and c->packet) ? c->packet->obfuscator : nullptr;
@@ -403,7 +403,7 @@ static void AlertExtraData(
             _WriteExtraData(config, obf, alert_info.event_id, tenant_id, alert_info.event_second, write_buffer, len, type);
         }
         xtradata_mask ^= BIT(xid);
-        xid = ffs(xtradata_mask);
+        xid = __builtin_ffs(xtradata_mask);
     }
 }
 

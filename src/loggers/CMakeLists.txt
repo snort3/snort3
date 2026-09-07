@@ -13,11 +13,14 @@ set (PLUGIN_LIST
     alert_json.cc
     alert_syslog.cc
     alert_talos.cc
-    alert_unixsock.cc
     log_hext.cc
     log_pcap.cc
     unified2.cc
 )
+
+if (NOT WIN32)
+    list (APPEND PLUGIN_LIST alert_unixsock.cc)
+endif ()
 
 if (STATIC_LOGGERS)
     add_library ( loggers OBJECT
@@ -38,7 +41,9 @@ else (STATIC_LOGGERS)
     add_dynamic_module(alert_json loggers alert_json.cc)
     add_dynamic_module(alert_syslog loggers alert_syslog.cc)
     add_dynamic_module(alert_talos loggers alert_talos.cc)
+    if (NOT WIN32)
     add_dynamic_module(alert_unixsock loggers alert_unixsock.cc)
+    endif ()
     add_dynamic_module(log_hext loggers log_hext.cc)
     add_dynamic_module(log_pcap loggers log_pcap.cc)
     add_dynamic_module(unified2 loggers unified2.cc)

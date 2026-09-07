@@ -26,6 +26,12 @@
 // -- inspection - for flow handling
 // -- ips - for rule handling
 
+#ifdef _WIN32
+#ifdef uuid_t
+#undef uuid_t
+#endif
+#endif
+
 #ifdef HAVE_UUID
 #include <uuid.h>
 #else
