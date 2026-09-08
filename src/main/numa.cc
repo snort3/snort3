@@ -17,7 +17,7 @@
 //--------------------------------------------------------------------------
 // numa.cc author Denys Zikratyi <dzikraty@cisco.com>
 
-#include "numa.h"
+#include "numa_snort.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
