@@ -119,6 +119,19 @@ unsigned FlowControl::get_flows_allocated() const
 Flow* FlowControl::find_flow(const FlowKey* key)
 { return cache->find(key); }
 
+Flow* FlowControl::find_flow_either_tunnel_state(const FlowKey& key)
+{
+    assert(!key.flags.tunnel_encapsulated);
+    if ( Flow* flow = cache->find(&key) )
+        return flow;
+
+    // Tuple-only metadata cannot disambiguate when both variants exist.  Keep
+    // the historical bare-flow preference and use the tunneled key on a miss.
+    FlowKey tunneled_key = key;
+    tunneled_key.flags.tunnel_encapsulated = true;
+    return cache->find(&tunneled_key);
+}
+
 Flow* FlowControl::new_flow(const FlowKey* key)
 { return cache->allocate(key); }
 
@@ -165,9 +178,7 @@ void FlowControl::timeout_flows(unsigned max, time_t cur_time)
 
 Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
 {
-    // treat a tunnel traffic / bare packet mismatch as stale
-    if ( (p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW)
-         or (flow->flags.udp_tunneled != p->is_udp_tunneled()) )
+    if ( p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW )
     {
         flow_log("Session: deleting snort session, reason: stale and not cleaned \n");
 
@@ -225,6 +236,10 @@ bool FlowControl::set_key(FlowKey* key, Packet* p)
         reversed = key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.sp,
             ip_api.get_dst(), p->ptrs.dp, vlanId, mplsId, *p->pkth);
     }
+
+    // keep inner tuples decapsulated from a UDP tunnel in a key space of their own
+    key->flags.tunnel_encapsulated = p->is_tunnel_encapsulated();
+
     return reversed;
 }
 
@@ -528,7 +543,6 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
             }
 
             flow->flow_id = p->pkth->flow_id;
-            flow->flags.udp_tunneled = p->is_udp_tunneled();
             if ( p->is_tcp() and p->ptrs.tcph->is_syn_ack() )
                 flow->flags.key_is_reversed = !reversed;
             else

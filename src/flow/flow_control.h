@@ -62,6 +62,7 @@ public:
 
     bool process(PktType, snort::Packet*, bool* new_flow = nullptr);
     snort::Flow* find_flow(const snort::FlowKey*);
+    snort::Flow* find_flow_either_tunnel_state(const snort::FlowKey&);
     snort::Flow* new_flow(const snort::FlowKey*);
     void release_flow(const snort::FlowKey*);
     void release_flow(snort::Flow*, PruneReason);

@@ -229,6 +229,7 @@ void PacketManager::decode(
 
     ProtocolIndex mapped_prot = cm->grinder;
     ProtocolId prev_prot_id = cm->grinder_id;
+    bool was_non_ip_tunnel = false;
 
     RawData raw(p->daq_msg, pkt, pktlen);
     CodecData codec_data(p->context->conf, ProtocolId::FINISHED_DECODE);
@@ -383,6 +384,15 @@ void PacketManager::decode(
         raw.data += curr_lyr_len;
 
         p->proto_bits |= codec_data.proto_bits;
+
+        // A UDP tunnel codec sets CODEC_NON_IP_TUNNEL and the IP codec that
+        // successfully decodes its payload clears it.  Latch that falling edge
+        // before a later nested tunnel can re-arm the marker.
+        const bool non_ip_tunnel = (codec_data.codec_flags & CODEC_NON_IP_TUNNEL) != 0;
+        if ( was_non_ip_tunnel and !non_ip_tunnel and
+            (p->proto_bits & PROTO_BIT__ANY_UDP_TUNNEL) )
+            p->proto_bits |= PROTO_BIT__TUNNEL_DECAP;
+        was_non_ip_tunnel = non_ip_tunnel;
 
         // Reset the volatile part of the codec data for the next codec to decode into
         codec_data.next_prot_id = ProtocolId::FINISHED_DECODE;

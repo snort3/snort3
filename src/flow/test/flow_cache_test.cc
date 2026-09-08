@@ -281,6 +281,112 @@ bool DumpFlowsSummaryTest::execute(FlowCache* cache)
     return true;
 }
 
+TEST_GROUP(tunnel_key) { };
+
+// An inner 5-tuple decapsulated from a UDP tunnel is named by the packet
+// payload rather than by the connection the DAQ keyed on
+TEST(tunnel_key, tunneled_inner_tuple_does_not_match_bare_flow)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 2;
+    FlowCache* cache = new FlowCache(fcg);
+
+    FlowKey bare_key;
+    memset(&bare_key, 0, sizeof(FlowKey));
+    bare_key.pkt_type = PktType::TCP;
+    bare_key.port_l = 18080;
+    bare_key.port_h = 52669;
+
+    // the same 5-tuple, but reached by decapsulating a UDP tunnel
+    FlowKey tunneled_key = bare_key;
+    tunneled_key.flags.tunnel_encapsulated = true;
+
+    CHECK(!FlowKey::is_equal(&bare_key, &tunneled_key));
+
+    const Flow* bare_flow = cache->allocate(&bare_key);
+    CHECK(bare_flow != nullptr);
+    CHECK(cache->get_count() == 1);
+
+    // the tunneled key must not find the bare Flow
+    CHECK(cache->find(&tunneled_key) == nullptr);
+
+    // and gets a Flow of its own, leaving the bare Flow intact
+    const Flow* tunneled_flow = cache->allocate(&tunneled_key);
+    CHECK(tunneled_flow != nullptr);
+    CHECK(tunneled_flow != bare_flow);
+    CHECK(cache->get_count() == 2);
+    CHECK(cache->find(&bare_key) == bare_flow);
+
+    cache->purge();
+    delete cache;
+}
+
+// Ensure that the tunnel_encapsulated bit has an effect in the hash calculation
+TEST(tunnel_key, tunnel_bit_participates_in_hash)
+{
+    FlowKey bare_key;
+    memset(&bare_key, 0, sizeof(FlowKey));
+    bare_key.pkt_type = PktType::TCP;
+    bare_key.port_l = 18080;
+    bare_key.port_h = 52669;
+
+    FlowKey tunneled_key = bare_key;
+    tunneled_key.flags.tunnel_encapsulated = true;
+
+    FlowHashKeyOps hash_ops(1024);
+    const unsigned bare_hash =
+        hash_ops.do_hash(reinterpret_cast<const unsigned char*>(&bare_key), sizeof(FlowKey));
+    const unsigned tunneled_hash =
+        hash_ops.do_hash(reinterpret_cast<const unsigned char*>(&tunneled_key), sizeof(FlowKey));
+
+    CHECK(bare_hash != tunneled_hash);
+}
+
+TEST(tunnel_key, tuple_lookup_retries_tunneled_key)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 1;
+    FlowControl flow_control(fcg);
+
+    FlowKey bare_key = {};
+    bare_key.pkt_type = PktType::TCP;
+    bare_key.port_l = 18080;
+    bare_key.port_h = 52669;
+
+    FlowKey tunneled_key = bare_key;
+    tunneled_key.flags.tunnel_encapsulated = true;
+    const Flow* tunneled_flow = flow_control.new_flow(&tunneled_key);
+
+    CHECK(tunneled_flow != nullptr);
+    CHECK(flow_control.find_flow_either_tunnel_state(bare_key) == tunneled_flow);
+    CHECK_FALSE(bare_key.flags.tunnel_encapsulated);
+
+    flow_control.purge_flows();
+}
+
+TEST(tunnel_key, tuple_lookup_prefers_bare_key)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 2;
+    FlowControl flow_control(fcg);
+
+    FlowKey bare_key = {};
+    bare_key.pkt_type = PktType::TCP;
+    bare_key.port_l = 18080;
+    bare_key.port_h = 52669;
+
+    FlowKey tunneled_key = bare_key;
+    tunneled_key.flags.tunnel_encapsulated = true;
+    const Flow* bare_flow = flow_control.new_flow(&bare_key);
+    const Flow* tunneled_flow = flow_control.new_flow(&tunneled_key);
+
+    CHECK(bare_flow != nullptr);
+    CHECK(tunneled_flow != nullptr);
+    CHECK(flow_control.find_flow_either_tunnel_state(bare_key) == bare_flow);
+
+    flow_control.purge_flows();
+}
+
 TEST_GROUP(flow_prune) { };
 
 // No flows in the flow cache, pruning should not happen

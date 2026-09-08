@@ -26,6 +26,7 @@
 #include "sip_dialog.h"
 
 #include "detection/detection_engine.h"
+#include "flow/flow_key.h"
 #include "framework/data_bus.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
@@ -401,12 +402,20 @@ static int SIP_ignoreChannels(const SIP_DialogData& dialog, Packet* p, const SIP
     {
         //void *ssn;
         /* Call into Streams to mark data channel as something to ignore. */
-        Flow* ssn = Stream::get_flow(
-            PktType::UDP, IpProtocol::UDP, &mdataA->maddress,
-            mdataA->mport, &mdataB->maddress, mdataB->mport,
+        FlowKey key;
+        key.init(p->context->conf, PktType::UDP, IpProtocol::UDP,
+            &mdataA->maddress, mdataA->mport, &mdataB->maddress, mdataB->mport,
             (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
             (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
             *p->pkth);
+
+        // the media channel inherits the signaling flow's tunnel context; init()
+        // clears the bit, so it must be set after
+        key.flags.tunnel_encapsulated = p->flow->key
+            ? p->flow->key->flags.tunnel_encapsulated
+            : p->is_tunnel_encapsulated();
+
+        Flow* ssn = Stream::get_flow(&key);
         if (ssn)
         {
             ssn->set_ignore_direction(SSN_DIR_BOTH);

@@ -170,6 +170,7 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
 
     bool reversed_key = key.init(p->context->conf, type, ip_proto, srcIP, p->ptrs.sp, dstIP, p->ptrs.dp,
         vlanId, mplsId, *p->pkth);
+    key.flags.tunnel_encapsulated = p->is_tunnel_encapsulated();
 
     /*
         Lookup order:
@@ -353,6 +354,14 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
 #endif
         0 != (ctrlPkt->pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS),
         expected_ingress_group, expected_egress_group);
+
+    // An expected channel inherits the tunnel context of its control channel.
+    // Prefer the control Flow's key: a rebuilt PDU has lost the tunnel
+    // proto_bits that is_tunnel_encapsulated() reads.
+    key.flags.tunnel_encapsulated = ( ctrlPkt->flow and ctrlPkt->flow->key )
+        ? ctrlPkt->flow->key->flags.tunnel_encapsulated
+        : ctrlPkt->is_tunnel_encapsulated();
+
     bool new_node = false;
     ExpectNode* node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );
     if ( !node )

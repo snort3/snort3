@@ -95,9 +95,9 @@ private:
 
 // Ensure to increment both versions simultaneously to maintain consistency
 #ifndef DISABLE_TENANT_ID
-static constexpr uint8_t HA_MESSAGE_VERSION = 5;
-#else
 static constexpr uint8_t HA_MESSAGE_VERSION = 6;
+#else
+static constexpr uint8_t HA_MESSAGE_VERSION = 7;
 #endif
 
 // define message size and content constants.

@@ -57,6 +57,7 @@ static const FlowKey s_test_key =
     /* .pkt_type = */ PktType::TCP,
     /* .version = */ 14,
     /* .flags.group_used = */ 0,
+    /* .flags.tunnel_encapsulated = */ 0,
     /* .flags.padding_bits = */ 0,
 };
 
@@ -511,6 +512,52 @@ TEST(high_availability_test, receive_update_stream_only)
     mock().checkExpectations();
     CHECK(mock().getData("stream_consume_size").getIntValue() == 10);
     MEMCMP_EQUAL_TEXT(&s_test_key, &s_flow_key, sizeof(s_test_key), "flow key should be s_test_key");
+}
+
+// A tunnel-encapsulated key must survive a full HA produce -> consume round
+// trip and reach Stream::delete_flow() with tunnel_encapsulated still set.  If
+// serialization dropped the bit (endian/layout/padding), the standby would
+// reconstruct a bare key and delete/merge the wrong flow after failover.
+TEST(high_availability_test, receive_deletion_tunnel_key_round_trip)
+{
+    flow_key = s_test_key;
+    flow_key.flags.tunnel_encapsulated = true;
+
+    // process_deletion() skips NEW/DELETED/STANDBY flows; clear NEW so this
+    // stands in for a flow already synced to the peer and a deletion is sent.
+    s_flow.ha_state->clear(FlowHAState::NEW);
+
+    mock().expectNCalls(1, "transmit_message");
+    HighAvailabilityManager::process_deletion(s_flow);   // produce into s_sc_message
+
+    mock().expectNCalls(1, "delete_flow");
+    HighAvailabilityManager::process_receive();           // consume the produced bytes
+    mock().checkExpectations();
+
+    CHECK(s_flow_key.flags.tunnel_encapsulated == true);
+    MEMCMP_EQUAL_TEXT(&flow_key, &s_flow_key, sizeof(flow_key),
+        "delete_flow key must round-trip with tunnel_encapsulated set");
+}
+
+// Same round trip on the standby lookup path: the key handed to
+// Stream::get_flow() must retain tunnel_encapsulated after produce -> consume.
+TEST(high_availability_test, receive_update_tunnel_key_round_trip)
+{
+    flow_key = s_test_key;
+    flow_key.flags.tunnel_encapsulated = true;
+
+    mock().setData("stream_update_required", (int)true);
+    mock().expectNCalls(1, "transmit_message");
+    HighAvailabilityManager::process_update(&s_flow, &s_pkt);   // produce into s_sc_message
+
+    mock().expectNCalls(1, "get_flow");
+    mock().expectNCalls(1, "consume");
+    HighAvailabilityManager::process_receive();                 // consume the produced bytes
+    mock().checkExpectations();
+
+    CHECK(s_flow_key.flags.tunnel_encapsulated == true);
+    MEMCMP_EQUAL_TEXT(&flow_key, &s_flow_key, sizeof(flow_key),
+        "get_flow key must round-trip with tunnel_encapsulated set");
 }
 
 TEST(high_availability_test, transmit_deletion)

@@ -104,6 +104,8 @@ void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
 DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;
+IpsContext::IpsContext(unsigned) { }
+IpsContext::~IpsContext() = default;
 unsigned FlowCache::purge() { return 1; }
 unsigned FlowCache::get_flows_allocated() const { return 0; }
 Flow* FlowCache::find(const FlowKey*) { return nullptr; }
@@ -477,11 +479,8 @@ TEST(stale_flow, stale_flow)
     delete cache;
 }
 
-// A UDP tunnel packet must not attach to a Flow
-// created by bare traffic on the same inner tuple, and vice versa
-//
-// The mismatch causes it to be treated as stale and the flow is released.
-TEST(stale_flow, tunnel_bare_mismatch)
+// tunnel traffic is not stale on that basis alone
+TEST(stale_flow, tunnel_traffic_is_not_stale)
 {
     Packet* p = new Packet(false);
     Flow* flow = new Flow;
@@ -493,25 +492,19 @@ TEST(stale_flow, tunnel_bare_mismatch)
     dh.flags = 0;
     p->pkth = &dh;
 
-    // Bare flow, tunneled packet -> stale
+    // a tunnel-dispatched packet on an established Flow -> not stale
     snort::udp::UDPHdr udph = { };
     p->ptrs.udph = &udph;
     p->proto_bits = PROTO_BIT__UDP_TUNNELED;
-    flow->flags.udp_tunneled = false;
-    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == nullptr);
-
-    // Tunneled flow, bare packet -> stale
-    p->flow = nullptr;
-    p->proto_bits = 0;
-    p->ptrs.udph = nullptr;
-    flow->flags.udp_tunneled = true;
-    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == nullptr);
-
-    // Tunneled flow, tunneled packet -> attach
-    p->proto_bits = PROTO_BIT__UDP_TUNNELED;
-    p->ptrs.udph = &udph;
-    flow->flags.udp_tunneled = true;
     CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == flow);
+
+    // a fully decapsulated packet -> also not stale
+    p->proto_bits = PROTO_BIT__UDP_TUNNELED | PROTO_BIT__GTP | PROTO_BIT__TUNNEL_DECAP;
+    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == flow);
+
+    // ...but a new flow on the same tuple is still stale
+    dh.flags = DAQ_PKT_FLAG_NEW_FLOW;
+    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == nullptr);
 
     p->pkth = nullptr;
     p->ptrs.udph = nullptr;
@@ -519,6 +512,68 @@ TEST(stale_flow, tunnel_bare_mismatch)
     delete p;
     delete flow_control;
     delete cache;
+}
+
+TEST_GROUP(tunnel_attach) { };
+
+// a decapsulated inner tuple keys apart from the same tuple seen bare
+TEST(tunnel_attach, decapsulated_packet_keys_apart_from_bare)
+{
+    Packet packet(false);
+    Packet* p = &packet;
+    FlowCacheConfig fcg;
+    FlowControl flow_control_instance(fcg);
+    FlowControl* flow_control = &flow_control_instance;
+    DAQ_PktHdr_t dh = { };
+    IpsContext ctx(1);
+    FlowKey key;
+
+    // the FlowKey::init() stubs above ignore the config, so a null one is fine
+    ctx.conf = nullptr;
+    p->context = &ctx;
+    p->pkth = &dh;
+
+    // a bare packet, and one whose inner tuple came out of a tunnel codec,
+    // must not agree on the discriminator for an otherwise identical tuple
+    p->proto_bits = 0;
+    key.flags.tunnel_encapsulated = true;    // must be overwritten
+    flow_control->set_key(&key, p);
+    CHECK(key.flags.tunnel_encapsulated == false);
+
+    // PROTO_BIT__UDP_TUNNELED alone is only a dispatch marker, not a
+    // completed decapsulation, so it must not move the key
+    snort::udp::UDPHdr udph = { };
+    p->ptrs.udph = &udph;
+    p->proto_bits = PROTO_BIT__UDP_TUNNELED;
+    key.flags.tunnel_encapsulated = true;
+    flow_control->set_key(&key, p);
+    CHECK(key.flags.tunnel_encapsulated == false);
+    p->ptrs.udph = nullptr;
+
+    // A validated tunnel header alone is not enough: the key moves only after
+    // an inner IP codec has successfully completed decapsulation.
+    const uint32_t tunnels[] =
+        { PROTO_BIT__GTP, PROTO_BIT__TEREDO, PROTO_BIT__VXLAN, PROTO_BIT__GENEVE };
+    uint32_t all_tunnels = 0;
+
+    for ( uint32_t bit : tunnels )
+    {
+        all_tunnels |= bit;
+        p->proto_bits = PROTO_BIT__UDP_TUNNELED | bit;
+        key.flags.tunnel_encapsulated = true;    // must be overwritten
+        flow_control->set_key(&key, p);
+        CHECK(key.flags.tunnel_encapsulated == false);
+
+        p->proto_bits |= PROTO_BIT__TUNNEL_DECAP;
+        flow_control->set_key(&key, p);
+        CHECK(key.flags.tunnel_encapsulated == true);
+    }
+
+    CHECK(all_tunnels == PROTO_BIT__ANY_UDP_TUNNEL);
+    CHECK((PROTO_BIT__ANY_UDP_TUNNEL & PROTO_BIT__UDP_TUNNELED) == 0);
+
+    p->pkth = nullptr;
+    p->context = nullptr;
 }
 
 int main(int argc, char** argv)

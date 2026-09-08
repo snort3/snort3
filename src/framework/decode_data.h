@@ -89,9 +89,17 @@ enum class LRUType : std::uint8_t
 #define PROTO_BIT__ARP              0x400000
 #define PROTO_BIT__ALL              0x7FFFFF
 
+// Derived state, deliberately outside PROTO_BIT__ALL: an inner IP tuple was
+// successfully decoded from a UDP tunnel.
+#define PROTO_BIT__TUNNEL_DECAP     0x800000
+
 #define PROTO_BIT__ICMP_EMBED \
     (PROTO_BIT__TCP_EMBED_ICMP | PROTO_BIT__UDP_EMBED_ICMP | \
     PROTO_BIT__ICMP_EMBED_ICMP | PROTO_BIT__ICMP_EMBED_OTHER)
+
+// Every UDP tunnel codec that validates its own header; add new ones here.
+#define PROTO_BIT__ANY_UDP_TUNNEL \
+    (PROTO_BIT__GTP | PROTO_BIT__TEREDO | PROTO_BIT__VXLAN | PROTO_BIT__GENEVE)
 
 #define PROTO_BIT__ANY_IP   (PROTO_BIT__IP | PROTO_BIT__TCP | PROTO_BIT__UDP | PROTO_BIT__ICMP)
 #define PROTO_BIT__ANY_PDU  (PROTO_BIT__TCP | PROTO_BIT__UDP | PROTO_BIT__PDU)

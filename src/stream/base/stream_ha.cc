@@ -138,7 +138,6 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
     flow->ssn_state = hac.ssn_state;
     flow->ssn_state.session_flags &= ~SSNFLAG_ESTABLISHED;  // clear flag for tcp established event to be generated
     flow->flow_state = hac.flow_state;
-    flow->flags.udp_tunneled = hac.flags & SessionHAContent::FLAG_UDP_TUNNELED;
 
     // Flows created before HA became active have a null ha_state (see
     // Flow::init).  Allocate on demand so the standby bookkeeping below
@@ -173,9 +172,6 @@ bool StreamHAClient::produce(Flow& flow, HAMessage& msg)
 
     if (flow.client_ip.get_family() == AF_INET6)
         hac.flags |= SessionHAContent::FLAG_IP6;
-
-    if (flow.flags.udp_tunneled)
-        hac.flags |= SessionHAContent::FLAG_UDP_TUNNELED;
 
     std::memcpy(msg.cursor, &hac, sizeof(hac));
 

@@ -122,7 +122,9 @@ Flow* Stream::get_flow(
         tenant_id, 
 #endif
         significant_groups, ingress_group, egress_group);
-    return get_flow(&key);
+    // Tuple-only metadata has no tunnel discriminator.  Preserve the
+    // historical bare-flow preference, then try the tunneled key space.
+    return flow_con->find_flow_either_tunnel_state(key);
 }
 
 Flow* Stream::get_flow(
@@ -137,7 +139,7 @@ Flow* Stream::get_flow(
 
     key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId,
         pkth);
-    return get_flow(&key);
+    return flow_con->find_flow_either_tunnel_state(key);
 }
 
 void Stream::populate_flow_key(const Packet* p, FlowKey* key)
@@ -154,6 +156,11 @@ void Stream::populate_flow_key(const Packet* p, FlowKey* key)
         (p->proto_bits & PROTO_BIT__VLAN) ? layer::get_vlan_layer(p)->vid() : 0,
         (p->proto_bits & PROTO_BIT__MPLS) ? p->ptrs.mplsHdr.label : 0,
         *p->pkth);
+
+    // prefer the flow's key; a rebuilt PDU has lost the tunnel proto_bits
+    key->flags.tunnel_encapsulated = ( p->flow and p->flow->key )
+        ? p->flow->key->flags.tunnel_encapsulated
+        : p->is_tunnel_encapsulated();
 }
 
 //-------------------------------------------------------------------------

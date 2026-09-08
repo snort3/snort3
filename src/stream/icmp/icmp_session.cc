@@ -149,6 +149,7 @@ static int ProcessIcmpUnreach(Packet* p)
     skey.init_address_space(sc, 0);
     skey.init_mpls(sc, 0);
     skey.padding = skey.flags.padding_bits = 0;
+    skey.flags.tunnel_encapsulated = p->is_tunnel_encapsulated();
     skey.flags.group_used = p->is_inter_group_flow();
     skey.init_groups(p->pkth->ingress_group, p->pkth->egress_group, reversed);
 #ifndef DISABLE_TENANT_ID

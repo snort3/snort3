@@ -273,6 +273,7 @@ bool FlowKey::init(
     init_mpls(sc, mplsId);
 
     padding = flags.padding_bits = 0;
+    flags.tunnel_encapsulated = false;
 
     flags.group_used = significant_groups;
     init_groups(ingress_group, egress_group, reversed);
@@ -318,6 +319,7 @@ bool FlowKey::init(
     init_mpls(sc, mplsId);
 
     padding = flags.padding_bits = 0;
+    flags.tunnel_encapsulated = false;
     flags.group_used = 0 != (pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
 
@@ -361,6 +363,7 @@ bool FlowKey::init(
     init_mpls(sc, mplsId);
 
     padding = flags.padding_bits = 0;
+    flags.tunnel_encapsulated = false;
 
     flags.group_used = 0 != (pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);

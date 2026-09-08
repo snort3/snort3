@@ -97,6 +97,7 @@ constexpr uint16_t CODEC_IPOPT_LEN_THREE = 0x0040;
 constexpr uint16_t CODEC_TEREDO_SEEN = 0x0080;
 
 constexpr uint16_t CODEC_STREAM_REBUILT = 0x0100;
+// Non-IP tunnel codecs set this marker; a successfully decoded inner IP clears it.
 constexpr uint16_t CODEC_NON_IP_TUNNEL = 0x0200;
 
 constexpr uint16_t CODEC_IP6_EXT_OOO = 0x0400;
