@@ -55,6 +55,10 @@ ControlConn* ControlConn::query_from_lua(const lua_State* L)
 ControlConn::ControlConn(int fd, bool local) : fd(fd), local(local)
 {
     shell = new Shell;
+
+    if (!Shell::get_lua_sandbox().empty())
+        shell->load_lua_sandbox();
+
     configure();
     if (show_prompt())
         touch();
@@ -77,9 +81,6 @@ void ControlConn::shutdown()
 
 void ControlConn::configure() const
 {
-    if (!Shell::get_lua_sandbox().empty())
-        shell->load_lua_sandbox();
-
     ModuleManager::load_commands(shell);
 }
 
