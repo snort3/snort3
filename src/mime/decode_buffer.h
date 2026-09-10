@@ -22,39 +22,49 @@
 
 // Manage decode/encode buffers
 
+#include <vector>
+
 #include "main/snort_types.h"
 
 class DecodeBuffer
 {
 public:
+    enum class RestoreResult
+    {
+        READY,
+        NO_INPUT,
+        EXCEEDED
+    };
+
     DecodeBuffer(int max_depth);
-    ~DecodeBuffer();
 
     // Make sure buffer is available and restore the buffer saved
-    bool check_restore_buffer();
+    RestoreResult check_restore_buffer(uint32_t in_bytes);
 
     // Save buffer for future use (restore)
-    void save_buffer(uint8_t* buff, uint32_t buff_size);
+    void save_buffer(uint32_t offset, uint32_t buff_size);
 
     // Move forward buffer pointer
     void update_buffer(uint32_t act_encode_size, uint32_t act_decode_size);
 
     void reset_saved();
-    uint8_t* get_encode_buff() { return encodeBuf; }
+    uint8_t* get_encode_buff() { return encodeBuf.data(); }
     uint32_t get_decode_bytes_read() { return decode_bytes_read; }
     uint32_t get_decode_avail();
     uint32_t get_encode_avail();
     uint32_t get_prev_encoded_bytes() { return prev_encoded_bytes; }
 
 private:
+    uint32_t raw_encode_avail();
+
+    std::vector<uint8_t> encodeBuf;
+
     uint32_t buf_size;
-    uint32_t prev_encoded_bytes;
-    uint8_t* prev_encoded_buf;
-    uint8_t* encodeBuf = nullptr;
-    uint32_t encode_bytes_read;
-    uint32_t decode_bytes_read;
+    uint32_t prev_encoded_bytes = 0;
+    uint32_t prev_encoded_offset = 0;
+    uint32_t encode_bytes_read = 0;
+    uint32_t decode_bytes_read = 0;
     int code_depth;
 };
 
 #endif
-

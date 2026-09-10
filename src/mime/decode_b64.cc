@@ -41,7 +41,14 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end, ui
     uint32_t act_encode_size = 0, act_decode_size = 0;
     uint32_t i = 0;
 
-    if (!buffer->check_restore_buffer() || !decode_buf)
+    const DecodeBuffer::RestoreResult restore_result = buffer->check_restore_buffer(end - start);
+    if (restore_result == DecodeBuffer::RestoreResult::NO_INPUT)
+    {
+        reset_decode_state();
+        return DECODE_FAIL;
+    }
+
+    if (restore_result == DecodeBuffer::RestoreResult::EXCEEDED || !decode_buf)
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
@@ -65,7 +72,7 @@ DecodeResult B64Decode::decode_data(const uint8_t* start, const uint8_t* end, ui
     if (i)
     {
         act_encode_size = act_encode_size - i;
-        buffer->save_buffer(buffer->get_encode_buff() + act_encode_size, i);
+        buffer->save_buffer(act_encode_size, i);
     }
     else
         buffer->reset_saved();

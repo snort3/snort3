@@ -43,7 +43,14 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end, uin
 {
     uint32_t act_encode_size = 0, act_decode_size = 0, bytes_read = 0;
 
-    if (!buffer->check_restore_buffer() || !decode_buf)
+    const DecodeBuffer::RestoreResult restore_result = buffer->check_restore_buffer(end - start);
+    if (restore_result == DecodeBuffer::RestoreResult::NO_INPUT)
+    {
+        reset_decode_state();
+        return DECODE_FAIL;
+    }
+
+    if (restore_result == DecodeBuffer::RestoreResult::EXCEEDED || !decode_buf)
     {
         reset_decode_state();
         return DECODE_EXCEEDED;
@@ -75,7 +82,7 @@ DecodeResult QPDecode::decode_data(const uint8_t* start, const uint8_t* end, uin
 
     if (bytes_read < act_encode_size)
     {
-        buffer->save_buffer(buffer->get_encode_buff() + bytes_read, (act_encode_size - bytes_read));
+        buffer->save_buffer(bytes_read, (act_encode_size - bytes_read));
         act_encode_size = bytes_read;
     }
     else
@@ -172,4 +179,3 @@ int sf_qpdecode(const char* src, uint32_t slen, char* dst, uint32_t dlen, uint32
 
     return 0;
 }
-

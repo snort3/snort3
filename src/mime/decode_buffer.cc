@@ -24,50 +24,66 @@
 
 #include "decode_buffer.h"
 
+#include <algorithm>
+#include <cstring>
+#include <new>
+
 #include "file_mime_config.h"
-#include "utils/util.h"
 
 void DecodeBuffer::reset_saved()
 {
     prev_encoded_bytes = 0;
-    prev_encoded_buf = nullptr;
+    prev_encoded_offset = 0;
 }
 
-bool DecodeBuffer::check_restore_buffer()
+DecodeBuffer::RestoreResult DecodeBuffer::check_restore_buffer(uint32_t in_bytes)
 {
     // 1. Stop decoding when we have reached either the decode depth or encode depth.
     // 2. Stop decoding when we are out of memory
 
+    if (!in_bytes)
+        return RestoreResult::NO_INPUT;
+
+    if (code_depth < 0)
+        return RestoreResult::EXCEEDED;
+
     uint32_t decode_avail = get_decode_avail();
 
-    uint32_t encode_avail =  get_encode_avail();
+    uint32_t encode_avail = raw_encode_avail();
 
-    if (encode_avail ==0 || decode_avail ==0 ||
-        (!encodeBuf))
+    if (encode_avail ==0 || decode_avail ==0)
+        return RestoreResult::EXCEEDED;
+
+    const uint32_t max_stage = std::min(encode_avail, buf_size);
+    const uint64_t needed = static_cast<uint64_t>(prev_encoded_bytes) + in_bytes;
+    const uint32_t want = static_cast<uint32_t>(std::min<uint64_t>(needed, max_stage));
+
+    if (want > encodeBuf.size())
     {
-        return false;
+        try
+        {
+            encodeBuf.reserve(want);
+            encodeBuf.resize(want);
+        }
+        catch (const std::bad_alloc&)
+        {
+            return RestoreResult::EXCEEDED;
+        }
     }
 
     /*The non decoded encoded data in the previous packet is required for successful decoding
      * in case of data spanned across packets*/
 
     if ( !prev_encoded_bytes )
-        return true;
+        return RestoreResult::READY;
 
     if (prev_encoded_bytes > encode_avail)
         prev_encoded_bytes = encode_avail;
 
-    uint32_t prev_bytes = prev_encoded_bytes;
+    memmove(encodeBuf.data(), encodeBuf.data() + prev_encoded_offset, prev_encoded_bytes);
+    prev_encoded_offset = 0;
 
-    uint32_t i = 0;
-    while (prev_bytes)
-    {
-        encodeBuf[i] = prev_encoded_buf[i];
-        i++;
-        prev_bytes--;
-    }
-
-    return true;
+    return RestoreResult::READY;
 }
 
 uint32_t DecodeBuffer::get_decode_avail()
@@ -85,7 +101,7 @@ uint32_t DecodeBuffer::get_decode_avail()
     return avail;
 }
 
-uint32_t DecodeBuffer::get_encode_avail()
+uint32_t DecodeBuffer::raw_encode_avail()
 {
     if (!(code_depth))
     {
@@ -97,6 +113,11 @@ uint32_t DecodeBuffer::get_encode_avail()
     }
 }
 
+uint32_t DecodeBuffer::get_encode_avail()
+{
+    return std::min(raw_encode_avail(), static_cast<uint32_t>(encodeBuf.size()));
+}
+
 DecodeBuffer::DecodeBuffer(int max_depth)
 {
     if (!max_depth)
@@ -105,20 +126,6 @@ DecodeBuffer::DecodeBuffer(int max_depth)
         buf_size = max_depth;
 
     code_depth = max_depth;
-    encode_bytes_read = decode_bytes_read = 0;
-    prev_encoded_bytes = 0;
-    prev_encoded_buf = nullptr;
-
-    if (max_depth < 0)
-        return;
-
-    encodeBuf = (uint8_t*)snort_alloc(buf_size);
-}
-
-DecodeBuffer::~DecodeBuffer()
-{
-    if (encodeBuf)
-        snort_free(encodeBuf);
 }
 
 void DecodeBuffer::update_buffer(uint32_t act_encode_size, uint32_t act_decode_size)
@@ -127,9 +134,8 @@ void DecodeBuffer::update_buffer(uint32_t act_encode_size, uint32_t act_decode_s
     decode_bytes_read += act_decode_size;
 }
 
-void DecodeBuffer::save_buffer(uint8_t* buff, uint32_t buff_size)
+void DecodeBuffer::save_buffer(uint32_t offset, uint32_t buff_size)
 {
+    prev_encoded_offset = offset;
     prev_encoded_bytes = buff_size;
-    prev_encoded_buf = buff;
 }
-
