@@ -283,7 +283,7 @@ bool DumpFlowsSummaryTest::execute(FlowCache* cache)
 
 TEST_GROUP(tunnel_key) { };
 
-// An inner 5-tuple decapsulated from a UDP tunnel is named by the packet
+// An inner 5-tuple decapsulated from a tunnel is named by the packet
 // payload rather than by the connection the DAQ keyed on
 TEST(tunnel_key, tunneled_inner_tuple_does_not_match_bare_flow)
 {
@@ -297,7 +297,7 @@ TEST(tunnel_key, tunneled_inner_tuple_does_not_match_bare_flow)
     bare_key.port_l = 18080;
     bare_key.port_h = 52669;
 
-    // the same 5-tuple, but reached by decapsulating a UDP tunnel
+    // the same 5-tuple, but reached by decapsulating a tunnel
     FlowKey tunneled_key = bare_key;
     tunneled_key.flags.tunnel_encapsulated = true;
 

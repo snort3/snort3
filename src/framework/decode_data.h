@@ -90,7 +90,7 @@ enum class LRUType : std::uint8_t
 #define PROTO_BIT__ALL              0x7FFFFF
 
 // Derived state, deliberately outside PROTO_BIT__ALL: an inner IP tuple was
-// successfully decoded from a UDP tunnel.
+// successfully decoded after a UDP-tunnel or TEB dispatch.
 #define PROTO_BIT__TUNNEL_DECAP     0x800000
 
 #define PROTO_BIT__ICMP_EMBED \
@@ -177,4 +177,3 @@ struct DecodeData
 };
 
 #endif
-

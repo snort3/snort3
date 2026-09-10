@@ -237,7 +237,8 @@ bool FlowControl::set_key(FlowKey* key, Packet* p)
             ip_api.get_dst(), p->ptrs.dp, vlanId, mplsId, *p->pkth);
     }
 
-    // keep inner tuples decapsulated from a UDP tunnel in a key space of their own
+    // Keep inner tuples decoded after a UDP-tunnel or TEB dispatch in a key
+    // space of their own.
     key->flags.tunnel_encapsulated = p->is_tunnel_encapsulated();
 
     return reversed;

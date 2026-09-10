@@ -540,6 +540,13 @@ TEST(tunnel_attach, decapsulated_packet_keys_apart_from_bare)
     flow_control->set_key(&key, p);
     CHECK(key.flags.tunnel_encapsulated == false);
 
+    // The committed discriminator is carrier-neutral.  GRE-TEB and MPLS-TEB
+    // have no UDP dispatch bit once their inner IP tuple has been decoded.
+    p->proto_bits = PROTO_BIT__IP | PROTO_BIT__TUNNEL_DECAP;
+    key.flags.tunnel_encapsulated = false;
+    flow_control->set_key(&key, p);
+    CHECK(key.flags.tunnel_encapsulated == true);
+
     // PROTO_BIT__UDP_TUNNELED alone is only a dispatch marker, not a
     // completed decapsulation, so it must not move the key
     snort::udp::UDPHdr udph = { };

@@ -232,9 +232,10 @@ struct SO_PUBLIC Packet
         return false;
     }
 
-    // True once an inner IP tuple has been successfully decoded from a UDP
-    // tunnel.  Reassembled PDUs lose this state to reset(), so callers that can
-    // receive one must inherit the discriminator from the Flow's key.
+    // True once an inner IP tuple has been successfully decoded after a
+    // UDP-tunnel or TEB dispatch.  Reassembled PDUs lose this state to reset(),
+    // so callers that can receive one must inherit the discriminator from the
+    // Flow's key.
     bool is_tunnel_encapsulated() const
     { return (proto_bits & PROTO_BIT__TUNNEL_DECAP) != 0; }
 

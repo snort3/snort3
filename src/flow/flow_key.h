@@ -69,7 +69,8 @@ struct SO_PUBLIC FlowKey
     struct
     {
         bool group_used : 1;
-        // set when the codec chain successfully decoded an inner IP tuple from a UDP tunnel
+        // set when the codec chain successfully decoded an inner IP tuple after
+        // a UDP-tunnel or TEB dispatch
         bool tunnel_encapsulated : 1;
         uint8_t padding_bits : 6;
     } flags;
@@ -124,4 +125,3 @@ PADDING_GUARD_END
 }
 
 #endif
-

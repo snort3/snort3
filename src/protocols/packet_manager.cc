@@ -229,7 +229,7 @@ void PacketManager::decode(
 
     ProtocolIndex mapped_prot = cm->grinder;
     ProtocolId prev_prot_id = cm->grinder_id;
-    bool was_non_ip_tunnel = false;
+    bool tunnel_decap_pending = false;
 
     RawData raw(p->daq_msg, pkt, pktlen);
     CodecData codec_data(p->context->conf, ProtocolId::FINISHED_DECODE);
@@ -385,14 +385,20 @@ void PacketManager::decode(
 
         p->proto_bits |= codec_data.proto_bits;
 
-        // A UDP tunnel codec sets CODEC_NON_IP_TUNNEL and the IP codec that
-        // successfully decodes its payload clears it.  Latch that falling edge
-        // before a later nested tunnel can re-arm the marker.
-        const bool non_ip_tunnel = (codec_data.codec_flags & CODEC_NON_IP_TUNNEL) != 0;
-        if ( was_non_ip_tunnel and !non_ip_tunnel and
-            (p->proto_bits & PROTO_BIT__ANY_UDP_TUNNEL) )
-            p->proto_bits |= PROTO_BIT__TUNNEL_DECAP;
-        was_non_ip_tunnel = non_ip_tunnel;
+        // A validated UDP-tunnel codec or a codec that dispatches into a TEB
+        // payload establishes a pending decapsulation boundary.
+        // Wait for an IP codec to succeed so malformed or header-only tunnels
+        // remain keyed on their outer tuple.  Plain IP-in-GRE never dispatches
+        // through TEB and therefore keeps its existing flow-key behavior.
+        if ( codec_data.proto_bits & PROTO_BIT__IP )
+        {
+            if ( tunnel_decap_pending )
+                p->proto_bits |= PROTO_BIT__TUNNEL_DECAP;
+            tunnel_decap_pending = false;
+        }
+        else if ( (codec_data.proto_bits & PROTO_BIT__ANY_UDP_TUNNEL) or
+            codec_data.next_prot_id == ProtocolId::ETHERTYPE_TRANS_ETHER_BRIDGING )
+            tunnel_decap_pending = true;
 
         // Reset the volatile part of the codec data for the next codec to decode into
         codec_data.next_prot_id = ProtocolId::FINISHED_DECODE;
