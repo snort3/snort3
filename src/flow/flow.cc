@@ -187,8 +187,12 @@ void Flow::restart(bool dump_flow_data)
 
     flags.svc_event_generated = false;
 
+    const uint32_t prev_session_flags = ssn_state.session_flags;
+
     ssn_state.ignore_direction = 0;
     ssn_state.session_flags = SSNFLAG_NONE;
+
+    update_uni_candidacy(prev_session_flags);
 
     session_state = STREAM_STATE_NONE;
     expire_time = 0;
@@ -478,6 +482,28 @@ void Flow::swap_roles()
     std::swap(inner_client_ttl, inner_server_ttl);
     std::swap(outer_client_ttl, outer_server_ttl);
     flags.client_initiated = !flags.client_initiated;
+}
+
+void Flow::set_block_flags(uint32_t drop_flags)
+{
+    const uint32_t prev_session_flags = ssn_state.session_flags;
+    ssn_state.session_flags |= drop_flags;
+
+    update_uni_candidacy(prev_session_flags);
+}
+
+void Flow::update_uni_candidacy(uint32_t prev_session_flags)
+{
+    if ( !key or !flow_con )
+        return;
+
+    if ( was_blocked() )
+        flow_con->unlink_uni(this);
+
+    else if ( (prev_session_flags & SSNFLAG_BLOCK)
+        and (prev_session_flags & SSNFLAG_SEEN_BOTH) != SSNFLAG_SEEN_BOTH
+        and !two_way_traffic() )
+        flow_con->relink_uni(this);
 }
 
 bool Flow::handle_allowlist()

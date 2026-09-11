@@ -120,7 +120,10 @@ size_t FlowCache::uni_ip_flows_size() const { return 0; }
 size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
 unsigned SnortConfig::get_reload_id() { return 0; }
-void FlowCache::unlink_uni(Flow*) { }
+static Flow* test_unlink_uni_flow = nullptr;
+static Flow* test_relink_uni_flow = nullptr;
+void FlowCache::unlink_uni(Flow* flow) { test_unlink_uni_flow = flow; }
+void FlowCache::relink_uni(Flow* flow) { test_relink_uni_flow = flow; }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(const Packet*) { }
@@ -581,6 +584,35 @@ TEST(tunnel_attach, decapsulated_packet_keys_apart_from_bare)
 
     p->pkth = nullptr;
     p->context = nullptr;
+}
+
+TEST_GROUP(uni_candidacy) { };
+
+// Flow::set_block_flags() and Flow::restart() reach the cache through these
+TEST(uni_candidacy, unlink_uni_forwards_to_the_cache)
+{
+    FlowCacheConfig fcg;
+    FlowControl* flow_control = new FlowControl(fcg);
+    Flow flow;
+
+    test_unlink_uni_flow = nullptr;
+    flow_control->unlink_uni(&flow);
+    POINTERS_EQUAL(&flow, test_unlink_uni_flow);
+
+    delete flow_control;
+}
+
+TEST(uni_candidacy, relink_uni_forwards_to_the_cache)
+{
+    FlowCacheConfig fcg;
+    FlowControl* flow_control = new FlowControl(fcg);
+    Flow flow;
+
+    test_relink_uni_flow = nullptr;
+    flow_control->relink_uni(&flow);
+    POINTERS_EQUAL(&flow, test_relink_uni_flow);
+
+    delete flow_control;
 }
 
 int main(int argc, char** argv)

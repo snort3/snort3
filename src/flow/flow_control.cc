@@ -135,6 +135,12 @@ Flow* FlowControl::find_flow_either_tunnel_state(const FlowKey& key)
 Flow* FlowControl::new_flow(const FlowKey* key)
 { return cache->allocate(key); }
 
+void FlowControl::unlink_uni(Flow* flow)
+{ cache->unlink_uni(flow); }
+
+void FlowControl::relink_uni(Flow* flow)
+{ cache->relink_uni(flow); }
+
 void FlowControl::release_flow(const FlowKey* key)
 {
     if ( auto flow = cache->find(key) )

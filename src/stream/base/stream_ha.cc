@@ -135,6 +135,8 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         }
     }
 
+    const uint32_t prev_session_flags = flow->ssn_state.session_flags;
+
     flow->ssn_state = hac.ssn_state;
     flow->ssn_state.session_flags &= ~SSNFLAG_ESTABLISHED;  // clear flag for tcp established event to be generated
     flow->flow_state = hac.flow_state;
@@ -150,6 +152,8 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         protocol_deactivate_session(flow);
         flow->ha_state->add(FlowHAState::STANDBY);
     }
+
+    flow->update_uni_candidacy(prev_session_flags);
 
     msg.advance_cursor(sizeof(SessionHAContent));
 

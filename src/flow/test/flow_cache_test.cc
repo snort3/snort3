@@ -129,14 +129,36 @@ Flow::Flow() { }
 Flow::~Flow() = default;
 void Flow::init(PktType) { }
 void Flow::flush(bool) { }
-void Flow::reset(bool) { }
+
+// the real reset() reaches Flow::restart() through Session::cleanup(), which
+// makes a still-blocked flow a candidate again; set this to model that
+FlowCache* test_reset_relink_cache = nullptr;
+
+void Flow::reset(bool)
+{
+    if ( test_reset_relink_cache and was_blocked() )
+        test_reset_relink_cache->relink_uni(this);
+}
+
 void Flow::trust() { }
 void Flow::free_flow_data() { }
+void Flow::set_block_flags(uint32_t drop_flags) { ssn_state.session_flags |= drop_flags; }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(const Packet*) { }
 void FlowStash::reset() { }
 FlowDataStore::~FlowDataStore() = default;
+
+IpsContext::IpsContext(unsigned) { }
+IpsContext::~IpsContext() = default;
+
+void IpsContextChain::push_back(IpsContext* c)
+{
+    if ( !_front )
+        _front = c;
+    _back = c;
+}
+
 void packet_gettimeofday(struct timeval* ) { }
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool) { }
 
@@ -520,6 +542,687 @@ TEST(flow_prune, prune_all_blocked_flows)
     delete cache;
 }
 
+
+static FlowKey make_key(PktType pkt_type, uint16_t port)
+{
+    FlowKey flow_key;
+    memset(&flow_key, 0, sizeof(FlowKey));
+    flow_key.pkt_type = pkt_type;
+    flow_key.port_l = port;
+    return flow_key;
+}
+
+static FlowKey make_tcp_key(uint16_t port)
+{ return make_key(PktType::TCP, port); }
+
+// prune_unis() drops a candidate blocked without the funnel running, instead of
+// stepping over it on every later allocation
+TEST(flow_prune, uni_prune_unlinks_blocked_candidates)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;
+    FlowCache* cache = new FlowCache(fcg);
+
+    Flow* flows[8];
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        flows[i] = cache->allocate(&flow_key);
+    }
+
+    CHECK_EQUAL(8u, cache->get_count());
+    CHECK_EQUAL(8u, cache->uni_flows_size());
+
+    // allocate() prepends, so flows[0] is oldest; block more than max_uni = 3
+    for ( unsigned i = 0; i < 4; i++ )
+        flows[i]->block();
+
+    FlowKey trigger_key = make_tcp_key(2000);
+    cache->allocate(&trigger_key);
+
+    CHECK_EQUAL(1u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::EXCESS));
+
+    CHECK_EQUAL(4u, cache->uni_flows_size());
+
+    CHECK_EQUAL(8u, cache->get_count());
+    CHECK_EQUAL(8u, cache->count_flows_in_lru(to_utype(PktType::TCP)));
+
+    for ( unsigned i = 0; i < 4; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        CHECK(cache->find(&flow_key) != nullptr);
+    }
+
+    FlowKey pruned_key = make_tcp_key(1004);
+    CHECK(cache->find(&pruned_key) == nullptr);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// a flow that stops being blocked is a candidate again, and relinking is idempotent
+TEST(flow_prune, relink_uni_restores_candidacy_once)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;
+    FlowCache* cache = new FlowCache(fcg);
+
+    FlowKey flow_key = make_tcp_key(1000);
+    Flow* flow = cache->allocate(&flow_key);
+
+    CHECK_EQUAL(1u, cache->uni_flows_size());
+
+    cache->unlink_uni(flow);
+    CHECK_EQUAL(0u, cache->uni_flows_size());
+
+    cache->relink_uni(flow);
+    CHECK_EQUAL(1u, cache->uni_flows_size());
+
+    cache->relink_uni(flow);
+    CHECK_EQUAL(1u, cache->uni_flows_size());
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// delete_active_flows() frees the flow itself, so the reset() that relinks it
+// must happen before the final unlink, not after
+TEST(flow_prune, delete_flows_unlinks_a_candidate_restored_by_reset)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 2;
+    FlowCache* cache = new FlowCache(fcg);
+
+    FlowKey flow_key = make_tcp_key(1000);
+    Flow* flow = cache->allocate(&flow_key);
+
+    flow->block();
+    // the stubbed set_block_flags() above only sets the flags
+    cache->unlink_uni(flow);
+    CHECK_EQUAL(0u, cache->uni_flows_size());
+
+    test_reset_relink_cache = cache;
+    CHECK_EQUAL(1u, cache->delete_flows(1));
+    test_reset_relink_cache = nullptr;
+
+    CHECK_EQUAL(0u, cache->uni_flows_size());
+    CHECK_EQUAL(0u, cache->get_count());
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// with every candidate blocked, prune_unis() prunes nothing and prune_excess()
+// must still terminate and hand the excess to prune_multiple()
+TEST(flow_prune, uni_prune_all_blocked_falls_through_to_excess)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;
+    fcg.prune_flows = 2;
+    FlowCache* cache = new FlowCache(fcg);
+
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        cache->allocate(&flow_key)->block();
+    }
+
+    FlowKey trigger_key = make_tcp_key(2000);
+    cache->allocate(&trigger_key);
+
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(2u, cache->get_prunes(PruneReason::EXCESS));
+
+    // max_uni = 3 candidates left, the two excess prunes come from the old end of
+    // the LRU, which prune_unis() already unlinked, then the new flow is linked
+    CHECK_EQUAL(4u, cache->uni_flows_size());
+    CHECK_EQUAL(7u, cache->get_count());
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// a blocked run of any length is rotated past, so prune_excess() prunes the
+// eligible flow behind it rather than handing the blocked heads to prune_multiple()
+TEST(flow_prune, excess_prune_rotates_past_blocked_run)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;
+    fcg.prune_flows = 2;
+    FlowCache* cache = new FlowCache(fcg);
+
+    Flow* flows[8];
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        flows[i] = cache->allocate(&flow_key);
+        // keep prune_unis() out of it; this is about the protocol LRU
+        cache->unlink_uni(flows[i]);
+    }
+
+    for ( unsigned i = 0; i < 5; i++ )
+        flows[i]->block();
+
+    FlowKey trigger_key = make_tcp_key(2000);
+    cache->allocate(&trigger_key);
+
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(1u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(8u, cache->get_count());
+
+    for ( unsigned i = 0; i < 5; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        CHECK(cache->find(&flow_key) != nullptr);
+    }
+
+    FlowKey pruned_key = make_tcp_key(1005);
+    CHECK(cache->find(&pruned_key) == nullptr);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// an offloaded head is rotated past like a blocked one, so detection in flight is
+// not discarded while a prunable flow is still available behind it
+TEST(flow_prune, excess_prune_rotates_past_suspended_run)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;
+    fcg.prune_flows = 2;
+    FlowCache* cache = new FlowCache(fcg);
+
+    Flow* flows[8];
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        flows[i] = cache->allocate(&flow_key);
+        // keep prune_unis() out of it; this is about the protocol LRU
+        cache->unlink_uni(flows[i]);
+    }
+
+    // the pointer just has to be non-null for is_suspended()
+    IpsContext suspending_context(1);
+    for ( unsigned i = 0; i < 5; i++ )
+        flows[i]->context_chain.push_back(&suspending_context);
+
+    FlowKey trigger_key = make_tcp_key(2000);
+    cache->allocate(&trigger_key);
+
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(1u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(8u, cache->get_count());
+
+    for ( unsigned i = 0; i < 5; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        CHECK(cache->find(&flow_key) != nullptr);
+    }
+
+    FlowKey pruned_key = make_tcp_key(1005);
+    CHECK(cache->find(&pruned_key) == nullptr);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// max_blocked_unlink_per_prune caps what one call drains, not the drain itself:
+// each unlink is permanent, so a backlog larger than the cap converges over
+// successive allocations instead of being stepped over again on each one
+TEST(flow_prune, uni_prune_drains_large_blocked_backlog_across_allocations)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 1024;
+    FlowCache* cache = new FlowCache(fcg);
+
+    // more than max_blocked_unlink_per_prune, and max_uni = 257 stays below the
+    // candidate count throughout, so the drain is what ends each walk
+    const unsigned blocked_count = 300;
+
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        Flow* flow = cache->allocate(&flow_key);
+        if ( i < blocked_count )
+            flow->block();
+    }
+
+    CHECK_EQUAL(1024u, cache->uni_flows_size());
+    CHECK_EQUAL(1024u, cache->get_count());
+
+    FlowKey first_key = make_tcp_key(3000);
+    cache->allocate(&first_key);
+
+    // the drain cap ends the walk before any candidate is reached, and the excess walk
+    // finds only blocked heads.  prune_flows is left unset to isolate the drain: with a
+    // configured value prune_multiple() would make the room and reclaim, which
+    // excess_fallback_blocked_cost_is_bounded_per_episode covers.  Unset, the cache goes
+    // one over max_flows, which keeps every later allocation pruning and so lets the
+    // drain converge.
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(769u, cache->uni_flows_size());
+    CHECK_EQUAL(1025u, cache->get_count());
+
+    FlowKey second_key = make_tcp_key(3001);
+    cache->allocate(&second_key);
+
+    // the remaining 44 unlink, then the first candidate behind them is pruned
+    CHECK_EQUAL(1u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(725u, cache->uni_flows_size());
+    CHECK_EQUAL(1025u, cache->get_count());
+
+    FlowKey third_key = make_tcp_key(3002);
+    cache->allocate(&third_key);
+
+    // converged: nothing left to step over, one candidate pruned per allocation
+    CHECK_EQUAL(2u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(725u, cache->uni_flows_size());
+    CHECK_EQUAL(1025u, cache->get_count());
+
+    // with the fallback out of reach the drain only unlinks and the walk only steps
+    // over, so nothing blocked is released here
+    unsigned blocked_found = 0;
+    for ( unsigned i = 0; i < blocked_count; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        if ( cache->find(&flow_key) )
+            blocked_found++;
+    }
+    CHECK_EQUAL(blocked_count, blocked_found);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// the round robin visits every LRU, so an LRU with nothing prunable cannot starve
+// the others: the eligible flow deeper in a larger LRU is still reached and preferred
+// over a blocked head that the fallbacks would have taken
+TEST(flow_prune, excess_prune_leaves_exhausted_lru_to_reach_eligible_flow)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;
+    fcg.prune_flows = 2;
+    FlowCache* cache = new FlowCache(fcg);
+
+    Flow* tcp_flows[2];
+    for ( unsigned i = 0; i < 2; i++ )
+    {
+        FlowKey flow_key = make_key(PktType::TCP, 1000 + i);
+        tcp_flows[i] = cache->allocate(&flow_key);
+        cache->unlink_uni(tcp_flows[i]);
+        tcp_flows[i]->block();
+    }
+
+    Flow* udp_flows[6];
+    for ( unsigned i = 0; i < 6; i++ )
+    {
+        FlowKey flow_key = make_key(PktType::UDP, 2000 + i);
+        udp_flows[i] = cache->allocate(&flow_key);
+        cache->unlink_uni(udp_flows[i]);
+    }
+
+    // the whole TCP LRU is unprunable; the one eligible flow is the newest UDP one
+    for ( unsigned i = 0; i < 5; i++ )
+        udp_flows[i]->block();
+
+    FlowKey trigger_key = make_key(PktType::TCP, 3000);
+    cache->allocate(&trigger_key);
+
+    // one prune, and it is the eligible flow rather than a blocked LRU head taken
+    // by the prune_multiple() fallback
+    CHECK_EQUAL(0u, cache->get_prunes(PruneReason::UNI));
+    CHECK_EQUAL(1u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(8u, cache->get_count());
+
+    for ( unsigned i = 0; i < 2; i++ )
+    {
+        FlowKey flow_key = make_key(PktType::TCP, 1000 + i);
+        CHECK(cache->find(&flow_key) != nullptr);
+    }
+
+    for ( unsigned i = 0; i < 5; i++ )
+    {
+        FlowKey flow_key = make_key(PktType::UDP, 2000 + i);
+        CHECK(cache->find(&flow_key) != nullptr);
+    }
+
+    FlowKey pruned_key = make_key(PktType::UDP, 2005);
+    CHECK(cache->find(&pruned_key) == nullptr);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+// an all-blocked cache of the given size, forcing prune_excess() to walk without
+// finding anything it can freely take; returns what that one allocation examined
+static unsigned all_blocked_excess_examined(unsigned size)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = size;
+    fcg.prune_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    for ( unsigned i = 0; i < size; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+        flow->block();
+    }
+
+    FlowKey trigger_key = make_tcp_key(60000);
+    cache->allocate(&trigger_key);
+
+    // the walk found nothing free to take, so prune_multiple() made the room and it
+    // takes blocked heads, up to prune_flows of them
+    CHECK_EQUAL(fcg.prune_flows, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(size - fcg.prune_flows + 1, cache->get_count());
+
+    const unsigned examined = cache->get_last_excess_examined();
+
+    cache->purge();
+    delete cache;
+
+    return examined;
+}
+
+// max_excess_examined_per_prune bounds what one allocation pays to walk past heads it
+// cannot take, so that cost does not scale with the cache: doubling the size examines
+// no more before prune_multiple() makes the room
+TEST(flow_prune, excess_prune_work_does_not_scale_with_cache_size)
+{
+    const unsigned small = all_blocked_excess_examined(300);
+    const unsigned large = all_blocked_excess_examined(600);
+
+    CHECK(small > 0);
+    CHECK(small < 300);
+    CHECK_EQUAL(small, large);
+}
+
+// only a head the walk actually reads spends budget. with one protocol in the cache
+// every other LRU it rotates through is empty, and if those cost budget the walk gives
+// up long before reaching a flow it could have taken.
+TEST(flow_prune, excess_prune_budget_not_diluted_by_empty_lrus)
+{
+    const unsigned blocked_count = 100;
+
+    FlowCacheConfig fcg;
+    fcg.max_flows = blocked_count + 1;
+    fcg.prune_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    // oldest, so the walk meets all of them before anything else
+    for ( unsigned i = 0; i < blocked_count; i++ )
+    {
+        FlowKey blocked_key = make_tcp_key(1000 + i);
+        Flow* blocked = cache->allocate(&blocked_key);
+        cache->unlink_uni(blocked);
+        blocked->block();
+    }
+
+    FlowKey free_key = make_tcp_key(2000);
+    cache->unlink_uni(cache->allocate(&free_key));
+
+    FlowKey trigger_key = make_tcp_key(60000);
+    cache->allocate(&trigger_key);
+
+    // each blocked head is rotated to MRU, so the free flow reaches the tail and is
+    // taken on the next read -- in preference to any blocked flow
+    CHECK_EQUAL(1u, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(blocked_count + 1, cache->get_last_excess_examined());
+    CHECK(nullptr == cache->find(&free_key));
+
+    FlowKey survivor_key = make_tcp_key(1000);
+    CHECK(nullptr != cache->find(&survivor_key));
+
+    cache->purge();
+    delete cache;
+}
+
+static FlowCache* make_blocked_backlog_cache(FlowCacheConfig& fcg, unsigned blocked_count,
+    const FlowKey& free_key)
+{
+    fcg.max_flows = blocked_count + 1;
+    FlowCache* cache = new FlowCache(fcg);
+
+    for ( unsigned i = 0; i < blocked_count; i++ )
+    {
+        FlowKey blocked_key = make_tcp_key(1000 + i);
+        Flow* blocked = cache->allocate(&blocked_key);
+        cache->unlink_uni(blocked);
+        blocked->block();
+    }
+
+    cache->unlink_uni(cache->allocate(&free_key));
+    return cache;
+}
+
+TEST(flow_prune, excess_fallback_takes_blocked_above_budget)
+{
+    const unsigned blocked_count = 300;
+
+    FlowCacheConfig fcg;
+    fcg.prune_flows = 10;
+    FlowKey free_key = make_tcp_key(2000);
+    FlowCache* cache = make_blocked_backlog_cache(fcg, blocked_count, free_key);
+
+    FlowKey trigger_key = make_tcp_key(60000);
+    cache->allocate(&trigger_key);
+
+    // the budget stops the walk short of the eligible flow, so nothing the walk
+    // examined was reclaimable and every reclaim came from the fallback
+    CHECK_EQUAL(1u, cache->get_excess_walk_calls());
+    CHECK(cache->get_last_excess_examined() < blocked_count);
+    CHECK_EQUAL(fcg.prune_flows, cache->get_prunes(PruneReason::EXCESS));
+
+    // the fallback checks neither block state nor depth, so it takes blocked flows
+    // and leaves the eligible one -- the reverse of what happens under the budget
+    CHECK(nullptr != cache->find(&free_key));
+
+    unsigned blocked_alive = 0;
+    for ( unsigned i = 0; i < blocked_count; i++ )
+    {
+        FlowKey blocked_key = make_tcp_key(1000 + i);
+        if ( cache->find(&blocked_key) )
+            blocked_alive++;
+    }
+    CHECK_EQUAL(blocked_count - fcg.prune_flows, blocked_alive);
+
+    cache->purge();
+    delete cache;
+}
+
+// with every flow blocked the walk can reclaim nothing at all, so the fallback is the
+// only path to the cap; prune_one() takes blocked flows, so max_flows still holds
+TEST(flow_prune, excess_holds_cap_when_every_flow_is_blocked)
+{
+    const unsigned over_cap = 50;
+
+    FlowCacheConfig fcg;
+    fcg.max_flows = 100;
+    fcg.prune_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    for ( unsigned i = 0; i < fcg.max_flows + over_cap; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+        flow->block();
+    }
+
+    // one reclaim for every allocation that found the cache at the cap
+    CHECK_EQUAL(over_cap, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(fcg.max_flows, cache->get_count());
+
+    cache->purge();
+    delete cache;
+}
+
+// at the configured default the fallback is reachable, so the blocked run is paid for
+// once per over-cap episode and the walk then converges onto eligible flows
+TEST(flow_prune, excess_fallback_blocked_cost_is_bounded_per_episode)
+{
+    const unsigned blocked_count = 300;
+    const unsigned allocations = 40;
+
+    FlowCacheConfig fcg;
+    fcg.max_flows = 1024;
+    fcg.prune_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    // the oldest flows are the blocked run; unlinking every flow leaves prune_unis()
+    // with nothing to reclaim, so each allocation over the cap reaches prune_excess()
+    for ( unsigned i = 0; i < fcg.max_flows; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+        if ( i < blocked_count )
+            flow->block();
+    }
+
+    for ( unsigned i = 0; i < allocations; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(60000 + i);
+        cache->allocate(&flow_key);
+    }
+
+    unsigned blocked_alive = 0;
+    for ( unsigned i = 0; i < blocked_count; i++ )
+    {
+        FlowKey flow_key = make_tcp_key(1000 + i);
+        if ( cache->find(&flow_key) )
+            blocked_alive++;
+    }
+
+    // the fallback ran once and took prune_flows blocked flows; the rest of the run
+    // was walked past rather than reclaimed, so the cost does not scale with the
+    // allocations that follow
+    CHECK_EQUAL(fcg.prune_flows, blocked_count - blocked_alive);
+
+    // every allocation over the cap made room, so the cap holds
+    CHECK_EQUAL(allocations, cache->get_prunes(PruneReason::EXCESS));
+    CHECK_EQUAL(fcg.max_flows, cache->get_count());
+
+    // reclaiming prune_flows at once leaves cleanup_flows short of the cap, so the
+    // allocations that fill the gap back in do not walk at all
+    CHECK(cache->get_excess_walk_calls() < allocations);
+
+    cache->purge();
+    delete cache;
+}
+
+TEST(flow_prune, excess_walk_advances_across_allocations)
+{
+    const unsigned blocked_count = 300;
+
+    FlowCacheConfig fcg;
+    // prune_flows = 1 leaves no headroom, so the next allocation reaches prune_excess()
+    // again; a larger value would skip it and leave last_excess_examined stale
+    fcg.prune_flows = 1;
+    FlowKey free_key = make_tcp_key(2000);
+    FlowCache* cache = make_blocked_backlog_cache(fcg, blocked_count, free_key);
+
+    // no find() between the two passes: find() touches the flow it returns to MRU
+    // and would reorder the very LRU under test
+    FlowKey first_key = make_tcp_key(60000);
+    cache->allocate(&first_key);
+    const unsigned first_examined = cache->get_last_excess_examined();
+
+    FlowKey second_key = make_tcp_key(60001);
+    cache->allocate(&second_key);
+    const unsigned second_examined = cache->get_last_excess_examined();
+
+    // both allocations walked, so the two counts are from different calls
+    CHECK_EQUAL(2u, cache->get_excess_walk_calls());
+
+    // a head the walk declines is rotated to MRU, so the next call resumes past it
+    // rather than re-reading the same run
+    CHECK(second_examined < first_examined);
+
+    // and having advanced, the walk reaches the eligible flow and prefers it
+    CHECK(nullptr == cache->find(&free_key));
+
+    cache->purge();
+    delete cache;
+}
+
+TEST_GROUP(flow_timeout)
+{
+    void setup() override    { ha_standby_flows.clear(); }
+    void teardown() override { ha_standby_flows.clear(); }
+};
+
+TEST(flow_timeout, expired_head_is_retired)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    FlowKey flow_key = make_tcp_key(1000);
+    cache->allocate(&flow_key)->last_data_seen = 1;
+
+    CHECK_EQUAL(1u, cache->timeout(5, 1000000));
+
+    cache->purge();
+    delete cache;
+}
+
+// a head timeout() cannot release must leave the walk able to finish. before, the
+// standby check neither advanced the cursor nor retired the LRU, so the call could
+// not reach its exit condition and never returned.
+TEST(flow_timeout, standby_head_does_not_stall_the_walk)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    FlowKey flow_key = make_tcp_key(1000);
+    Flow* standby = cache->allocate(&flow_key);
+    standby->last_data_seen = 1;
+    set_standby(standby, true);
+
+    CHECK_EQUAL(0u, cache->timeout(5, 1000000));
+
+    cache->purge();
+    delete cache;
+}
+
+// and it must not cost another protocol its timeout
+TEST(flow_timeout, standby_head_does_not_hide_another_proto)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    FlowCache* cache = new FlowCache(fcg);
+
+    FlowKey tcp_key = make_tcp_key(1000);
+    Flow* standby = cache->allocate(&tcp_key);
+    standby->last_data_seen = 1;
+    set_standby(standby, true);
+
+    FlowKey udp_key = make_key(PktType::UDP, 2000);
+    cache->allocate(&udp_key)->last_data_seen = 1;
+
+    CHECK_EQUAL(1u, cache->timeout(5, 1000000));
+    CHECK(nullptr == cache->find(&udp_key));
+    CHECK(nullptr != cache->find(&tcp_key));
+
+    cache->purge();
+    delete cache;
+}
 
 // prune base on the proto type of the flow
 TEST(flow_prune, prune_proto)

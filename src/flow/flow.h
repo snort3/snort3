@@ -266,6 +266,8 @@ public:
     uint32_t clear_session_flags(uint32_t ssn_flags)
     { return ssn_state.session_flags &= ~ssn_flags; }
 
+    void update_uni_candidacy(uint32_t prev_session_flags);
+
     uint32_t clear_session_state(uint32_t state_mask)
     { return session_state &= ~state_mask; }
 
@@ -299,7 +301,9 @@ public:
     { return pkt_type == PktType::TCP or pkt_type == PktType::USER; }
 
     void block()
-    { ssn_state.session_flags |= SSNFLAG_BLOCK; }
+    { set_block_flags(SSNFLAG_BLOCK); }
+
+    void set_block_flags(uint32_t drop_flags);
 
     bool was_blocked() const
     { return (ssn_state.session_flags & SSNFLAG_BLOCK) != 0; }

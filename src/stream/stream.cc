@@ -319,11 +319,15 @@ void Stream::drop_traffic(const Packet* p, char dir)
     if ( !flow )
         return;
 
-    if ((dir & SSN_DIR_FROM_CLIENT) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_CLIENT))
-        flow->ssn_state.session_flags |= SSNFLAG_DROP_CLIENT;
+    uint32_t drop_flags = 0;
 
-    if ((dir & SSN_DIR_FROM_SERVER) && !(flow->ssn_state.session_flags & SSNFLAG_DROP_SERVER))
-        flow->ssn_state.session_flags |= SSNFLAG_DROP_SERVER;
+    if ( dir & SSN_DIR_FROM_CLIENT )
+        drop_flags |= SSNFLAG_DROP_CLIENT;
+
+    if ( dir & SSN_DIR_FROM_SERVER )
+        drop_flags |= SSNFLAG_DROP_SERVER;
+
+    flow->set_block_flags(drop_flags);
 }
 
 void Stream::block_flow(const Packet* p)

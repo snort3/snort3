@@ -118,6 +118,12 @@ const FlowCacheConfig& FlowControl::get_flow_cache_config() const
 // cppcheck-suppress functionStatic ; stub matches non-static declaration in flow_control.cc
 bool FlowControl::move_to_allowlist(snort::Flow*) { return true; }
 
+// cppcheck-suppress functionStatic ; stub matches non-static declaration in flow_control.cc
+void FlowControl::unlink_uni(snort::Flow*) { }
+
+// cppcheck-suppress functionStatic ; stub matches non-static declaration in flow_control.cc
+void FlowControl::relink_uni(snort::Flow*) { }
+
 bool HighAvailabilityManager::active() { return false; }
 FlowHAState::FlowHAState() = default;
 // cppcheck-suppress functionStatic ; stub matches non-static declaration in ha.cc

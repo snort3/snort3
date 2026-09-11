@@ -64,6 +64,8 @@ public:
     snort::Flow* find_flow(const snort::FlowKey*);
     snort::Flow* find_flow_either_tunnel_state(const snort::FlowKey&);
     snort::Flow* new_flow(const snort::FlowKey*);
+    void unlink_uni(snort::Flow*);
+    void relink_uni(snort::Flow*);
     void release_flow(const snort::FlowKey*);
     void release_flow(snort::Flow*, PruneReason);
     void purge_flows();

@@ -129,8 +129,8 @@ const PegInfo base_pegs[] =
     // Keep the NOW stats at the bottom as it requires special sum_stats logic
     { CountType::NOW, "allowlist_flows", "number of flows moved to the allowlist" },
     { CountType::NOW, "current_flows", "current number of flows in cache" },
-    { CountType::NOW, "uni_flows", "number of uni flows in cache" },
-    { CountType::NOW, "uni_ip_flows", "number of uni ip flows in cache" },
+    { CountType::NOW, "uni_flows", "number of uni flows in the uni prune candidate list" },
+    { CountType::NOW, "uni_ip_flows", "number of uni ip flows in the uni prune candidate list" },
     { CountType::END, nullptr, nullptr }
 };
 

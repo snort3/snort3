@@ -43,6 +43,8 @@ constexpr uint8_t allowlist_lru_index = max_protocols;
 constexpr uint8_t total_lru_count = max_protocols + 1;
 constexpr uint64_t all_lru_mask = (1ULL << max_protocols) - 1;
 constexpr uint8_t first_proto = to_utype(PktType::NONE) + 1;
+constexpr uint64_t proto_lru_mask = all_lru_mask & ~((1ULL << first_proto) - 1);
+constexpr uint8_t rotated_lru_count = total_lru_count - first_proto;
 
 #ifdef ALLOWLIST_MOVE_ON_EXCESS
 constexpr unsigned allowlist_admission_scan_cap = 8;
@@ -115,6 +117,7 @@ public:
     }
 
     void unlink_uni(snort::Flow*);
+    void relink_uni(snort::Flow*);
 
     void set_flow_cache_config(const FlowCacheConfig& cfg)
     { config = cfg; }
@@ -144,6 +147,14 @@ public:
     { return released_total_flow_mem; }
 #ifdef UNIT_TEST
     size_t count_flows_in_lru(uint8_t lru_index) const;
+
+    // cppcheck-suppress unusedFunction
+    unsigned get_last_excess_examined() const
+    { return last_excess_examined; }
+
+    // cppcheck-suppress unusedFunction
+    unsigned get_excess_walk_calls() const
+    { return excess_walk_calls; }
 #endif
 
 private:
@@ -175,6 +186,9 @@ private:
     static inline bool all_lrus_checked(uint64_t checked_lrus_mask)
     { return checked_lrus_mask == all_lru_mask; }
 
+    static inline bool all_proto_lrus_checked(uint64_t checked_lrus_mask)
+    { return (checked_lrus_mask & proto_lru_mask) == proto_lru_mask; }
+
     static inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t lru_mask)
     { checked_lrus_mask |= lru_mask; }
 
@@ -190,9 +204,16 @@ private:
 
     inline void log_flow_release(const snort::Flow* flow, PruneReason reason) const;
 
+#ifdef REG_TEST
+    void log_allowlist_timeouts(time_t) const;
+#endif
+
 private:
-    uint8_t timeout_idx = 0;
     static const unsigned cleanup_flows = 1;
+    // bound the per-call cost of walking past flows that cannot be taken; see dev_notes.txt
+    static const unsigned max_blocked_unlink_per_prune = 256;
+    static const unsigned max_excess_examined_per_prune = 256;
+
     FlowCacheConfig config;
     uint32_t flags = 0;
 
@@ -204,6 +225,10 @@ private:
     FlowDeleteStats delete_stats;
     uint64_t empty_lru_mask = 0;
     PegCount excess_to_allowlist_count = 0;
+#ifdef UNIT_TEST
+    unsigned last_excess_examined = 0;
+    unsigned excess_walk_calls = 0;
+#endif
 
     // flow-memory accounting, sampled at release/retire.
     // read Flow::get_mem_usage() directly rather than these pegs for specific flow memory

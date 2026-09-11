@@ -241,3 +241,97 @@ the above section.
     - released_total_flow_mem (SUM): cumulative get_mem_usage() released
       across all flows.
 
+08/28/2026
+Blocked flows and prune candidacy
+The uni list holds uni-prune candidates, not every unidirectional flow.
+prune_unis() cannot reclaim a blocked flow, so a flow leaves the list when it
+blocks; Flow::set_block_flags() is the single idempotent funnel that sets the
+SSNFLAG_DROP_* bits and drops candidacy.  Only uni pruning reads the list, so the
+flow stays in the hash table and its protocol LRU, found by find() and counted by
+current_flows.  uni_flows and uni_ip_flows count candidates.
+
+prune_unis() unlinks any blocked flow it meets, since HA import ordering or a direct
+session_flags write can block one without the funnel; when that unlink alone
+satisfies the exit condition the reclaim is recorded EXCESS, not UNI.
+max_blocked_unlink_per_prune caps the unlinking, and cleanup_flows is 1, so a call
+may unlink up to the cap while reclaiming one flow; a deeper backlog drains over
+several allocations through prune_excess() until the list falls to max_uni.
+
+prune_excess() is bounded by max_excess_examined_per_prune, which fixes what one
+allocation pays to walk past flows it cannot take.  It round robins the allowlist and
+per-protocol LRUs, releasing an oldest flow free to take and rotating past one that
+is not, so a run of blocked or offloaded heads costs a walk rather than a reclaim.
+Only a head actually read spends budget, so empty LRUs cost a pointer read and a
+single-protocol deployment keeps its budget.  A lap finding every reachable LRU empty
+ends the walk, which is what terminates it when the rest sit in an LRU the rotation
+never visits.
+
+Reclaiming nothing falls back to prune_multiple(), bounded by config.prune_flows.
+prune_one() checks neither block state nor save_me, making the fallback both where
+excess pruning can take a blocked flow and what holds the cache at max_flows.
+prune_flows is "1:max32" default 10, so it is zero only when the stream module never
+configures -- a unit test, or no -c -- and only then can excess pruning return zero
+while over max_flows.  Zero disables every prune_multiple() caller, not just this one:
+the flow memcap prunes through the same function, Stream::prune_flows() registered as
+the MemoryCap prune handler, so a blocked flow is never exempt from memory reclaim and
+block state cannot pin the cache above the cap.
+
+Reclaiming nothing includes exhausting the budget with reclaimable flows deeper than
+the bound, so above the bound the preference inverts: a blocked run longer than the
+bound ahead of an eligible flow costs prune_flows blocked flows and spares the
+eligible one.  That is the price of a fixed per-allocation cost, paid to hold
+max_flows.  The inversion is transient, because a declined head is rotated to MRU and
+the next call resumes past it, so the walk re-reads nothing and crosses a run of N
+blocked flows in N reads: with 300 blocked ahead of one eligible and prune_flows 1,
+the calls read 256 then 44 and the second takes the eligible flow.  The cost is per
+over-cap episode and bounded by the backlog, not by the packet rate, and an episode
+ends as soon as the walk reaches an eligible flow.
+
+A reclaim of prune_flows leaves the cache prune_flows below max_flows, and allocate()
+prunes only at max_flows, so the allocations that fill that gap back in never reach
+prune_excess() at all.  Anything sampling the walk has to allow for that gap; the
+larger prune_flows is, the more allocations pass between walks.
+
+Leaving the list is not permanent.  Flow::update_uni_candidacy() compares the
+session_flags from before a write and moves the flow off or back on if the write
+changed its block state; set_block_flags() and restart() go through it, and
+relink_uni() is a no-op for a listed flow.  Relinking undoes only what the block
+took, so the flow must have been a candidate apart from the block -- not
+bidirectional before the write -- and still be one after; without the first,
+restart() would relink a flow unlinked for two way traffic, and without the second an
+HA import turning a blocked unidirectional flow bidirectional would relink it.  A
+write bypassing both reconciles itself, since StreamHAClient::consume() assigns
+ssn_state wholesale and the drop bits are HA critical, so a standby learns both block
+and unblock.
+
+restart() is also reached from Flow::reset() during teardown, so the flow must leave
+the list after its reset, not before, or the list keeps a node about to be freed;
+release() and retire() get that from remove(), and the reload delete path unlinks
+explicitly.
+
+LRU round robin bookkeeping
+The loops walking every per-protocol LRU carry a bitmask of the LRUs they are done
+with and stop when all are set.  Two rules keep them terminating.
+
+* A branch declining to reclaim the head must retire that LRU or advance its cursor;
+  doing neither faces the same head with the same mask forever.  timeout() advances
+  with lru_next(), retires the LRU when that runs out, and tracks the protocols in
+  play as a mask rather than an index, so nothing depends on where the previous pass
+  stopped.
+
+* The exit test must cover exactly the LRUs the loop visits, so there are two.
+  prune_idle() and delete_active_flows() walk first_proto through max_protocols and
+  never touch PktType::NONE, so they use all_proto_lrus_checked() against
+  proto_lru_mask.  prune_multiple() starts at zero and wraps through it, so it uses
+  all_lrus_checked() and the full mask; the protocol-only test would let it stop
+  before draining PktType::NONE.
+
+LRU zero is nearly a one way door, which is why the excess walk carries an empty lap
+terminator no real run needs.  allocate() indexes by the key's pkt_type and will put
+a flow there, but purge(), prune_idle(), timeout() and delete_active_flows() start at
+first_proto, and prune_multiple() reaches zero only through prune_one(), which
+refuses the table's last node -- so such a flow prunes down to one and no further.
+Production never gets there, since a key's pkt_type comes from a decoded packet; that
+also makes the terminator untestable, as draining the LRU to prove the walk exits
+leaves a flow the cache cannot free.  It stays so termination does not rest on LRU
+zero being empty.

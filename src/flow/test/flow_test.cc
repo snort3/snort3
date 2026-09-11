@@ -30,6 +30,7 @@
 #include "flow/flow.h"
 #include "flow/flow_config.h"
 #include "flow/flow_control.h"
+#include "flow/flow_key.h"
 #include "flow/flow_stash.h"
 #include "flow/ha.h"
 #include "flow/session.h"
@@ -82,6 +83,14 @@ const FlowCacheConfig& FlowControl::get_flow_cache_config() const
 }
 
 bool FlowControl:: move_to_allowlist(snort::Flow*) { return true; }
+
+static Flow* test_unlink_uni_flow = nullptr;
+static Flow* test_relink_uni_flow = nullptr;
+
+FlowControl::FlowControl(const FlowCacheConfig&) { }
+FlowControl::~FlowControl() = default;
+void FlowControl::unlink_uni(snort::Flow* flow) { test_unlink_uni_flow = flow; }
+void FlowControl::relink_uni(snort::Flow* flow) { test_relink_uni_flow = flow; }
 
 Inspector::Inspector() : ref_count(nullptr) { }
 Inspector::~Inspector() = default;
@@ -162,6 +171,151 @@ TEST(flow_restart, resets_service_event_generated)
     flow.restart(false);
 
     CHECK_FALSE(flow.flags.svc_event_generated);
+}
+
+TEST(flow_restart, blocked_flow_regains_uni_candidacy)
+{
+    FlowCacheConfig fcc;
+    FlowControl flow_control(fcc);
+    FlowKey flow_key = {};
+    Flow flow;
+
+    flow.key = &flow_key;
+    flow_con = &flow_control;
+    test_unlink_uni_flow = nullptr;
+    test_relink_uni_flow = nullptr;
+
+    flow.block();
+    CHECK(flow.was_blocked());
+    POINTERS_EQUAL(&flow, test_unlink_uni_flow);
+
+    flow.restart(false);
+    CHECK_FALSE(flow.was_blocked());
+    POINTERS_EQUAL(&flow, test_relink_uni_flow);
+
+    flow.key = nullptr;
+    flow_con = nullptr;
+}
+
+TEST(flow_restart, bidirectional_blocked_flow_is_not_relinked)
+{
+    FlowCacheConfig fcc;
+    FlowControl flow_control(fcc);
+    FlowKey flow_key = {};
+    Flow flow;
+
+    flow.key = &flow_key;
+    flow_con = &flow_control;
+    test_unlink_uni_flow = nullptr;
+    test_relink_uni_flow = nullptr;
+
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_BOTH;
+    flow.block();
+    POINTERS_EQUAL(&flow, test_unlink_uni_flow);
+
+    flow.restart(false);
+    CHECK_FALSE(flow.was_blocked());
+    CHECK_FALSE(flow.two_way_traffic());
+    POINTERS_EQUAL(nullptr, test_relink_uni_flow);
+
+    flow.key = nullptr;
+    flow_con = nullptr;
+}
+
+TEST(flow_restart, unblocked_flow_keeps_its_candidacy)
+{
+    FlowCacheConfig fcc;
+    FlowControl flow_control(fcc);
+    FlowKey flow_key = {};
+    Flow flow;
+
+    flow.key = &flow_key;
+    flow_con = &flow_control;
+    test_relink_uni_flow = nullptr;
+
+    flow.restart(false);
+    POINTERS_EQUAL(nullptr, test_relink_uni_flow);
+
+    flow.key = nullptr;
+    flow_con = nullptr;
+}
+
+TEST_GROUP(uni_candidacy)
+{
+    FlowCacheConfig fcc;
+    FlowControl* flow_control = nullptr;
+    FlowKey flow_key = {};
+
+    void setup() override
+    {
+        flow_control = new FlowControl(fcc);
+        flow_con = flow_control;
+        test_unlink_uni_flow = nullptr;
+        test_relink_uni_flow = nullptr;
+    }
+
+    void teardown() override
+    {
+        flow_con = nullptr;
+        delete flow_control;
+    }
+};
+
+// a standby flow gets its block state from an HA import that assigns ssn_state
+// wholesale, bypassing set_block_flags(); both directions have to be reconciled
+TEST(uni_candidacy, imported_block_state_is_reconciled_both_ways)
+{
+    Flow flow;
+    flow.key = &flow_key;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_CLIENT;
+
+    uint32_t prev_session_flags = flow.ssn_state.session_flags;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_CLIENT | SSNFLAG_BLOCK;
+    flow.update_uni_candidacy(prev_session_flags);
+    POINTERS_EQUAL(&flow, test_unlink_uni_flow);
+    POINTERS_EQUAL(nullptr, test_relink_uni_flow);
+
+    prev_session_flags = flow.ssn_state.session_flags;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_CLIENT;
+    flow.update_uni_candidacy(prev_session_flags);
+    POINTERS_EQUAL(&flow, test_relink_uni_flow);
+
+    flow.key = nullptr;
+}
+
+// unlike restart(), an import can clear the drop bits while SSNFLAG_SEEN_* stay
+// set, and a flow with two way traffic is not a uni prune candidate
+TEST(uni_candidacy, bidirectional_flow_is_not_relinked)
+{
+    Flow flow;
+    flow.key = &flow_key;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_BOTH | SSNFLAG_BLOCK;
+
+    const uint32_t prev_session_flags = flow.ssn_state.session_flags;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_BOTH;
+    flow.update_uni_candidacy(prev_session_flags);
+
+    CHECK_FALSE(flow.was_blocked());
+    POINTERS_EQUAL(nullptr, test_relink_uni_flow);
+
+    flow.key = nullptr;
+}
+
+// an import that leaves the block state alone has nothing to undo
+TEST(uni_candidacy, unchanged_block_state_is_inert)
+{
+    Flow flow;
+    flow.key = &flow_key;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_CLIENT;
+
+    const uint32_t prev_session_flags = flow.ssn_state.session_flags;
+    flow.ssn_state.session_flags = SSNFLAG_SEEN_CLIENT | SSNFLAG_ESTABLISHED;
+    flow.update_uni_candidacy(prev_session_flags);
+
+    POINTERS_EQUAL(nullptr, test_unlink_uni_flow);
+    POINTERS_EQUAL(nullptr, test_relink_uni_flow);
+
+    flow.key = nullptr;
 }
 
 TEST_GROUP(inspection_time_presence)
