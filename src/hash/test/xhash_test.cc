@@ -25,6 +25,8 @@
 
 #include "hash/xhash.h"
 
+#include <set>
+
 #include "hash/hash_defs.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
@@ -130,6 +132,117 @@ TEST(xhash, free_anr_lru_delete_tail_node_test)
 
     const HashNode* xhnode = test_table->find_node(&xtk);
     CHECK(xhnode == nullptr);
+
+    delete test_table;
+}
+
+// every node pinned: release_lru_node must evict nothing and leave the LRU
+// intact, so an insert at capacity fails rather than dropping a pinned node
+class all_pinned_xhash : public XHash
+{
+public:
+    all_pinned_xhash(int rows, int keysize, int datasize, unsigned long memcap)
+        : XHash(rows, keysize, datasize, memcap) { }
+
+protected:
+    bool is_node_recovery_ok(HashNode*) override
+    { return false; }
+};
+
+TEST(xhash, release_lru_node_never_evicts_pinned)
+{
+    all_pinned_xhash* test_table = new all_pinned_xhash(4, sizeof(struct xhash_test_key), 0, 0);
+    CHECK(test_table);
+    test_table->set_max_nodes(4);
+
+    for (int i = 1; i <= 4; i++)
+    {
+        xhash_test_key xtk { i };
+        CHECK(test_table->insert(&xtk, nullptr) == HASH_OK);
+    }
+    CHECK(test_table->get_num_nodes() == 4);
+
+    xhash_test_key ins { 99 };
+    CHECK(test_table->insert(&ins, nullptr) == HASH_NOMEM);
+    CHECK(test_table->get_num_nodes() == 4);
+
+    xhash_test_key first { 1 };
+    CHECK(test_table->find_node(&first) != nullptr);
+
+    delete test_table;
+}
+
+class selective_pinned_xhash : public XHash
+{
+public:
+    selective_pinned_xhash(int rows, int keysize, int datasize, unsigned long memcap)
+        : XHash(rows, keysize, datasize, memcap) { }
+
+    std::set<int> pinned;
+
+protected:
+    bool is_node_recovery_ok(HashNode* hnode) override
+    { return pinned.find(((xhash_test_key*)hnode->key)->key) == pinned.end(); }
+};
+
+// a recoverable node sitting behind pinned nodes at the tail is reclaimed
+TEST(xhash, release_lru_node_reclaims_recoverable_behind_pinned)
+{
+    selective_pinned_xhash* test_table =
+        new selective_pinned_xhash(8, sizeof(struct xhash_test_key), 0, 0);
+    CHECK(test_table);
+    test_table->set_max_nodes(4);
+
+    // insertion order 1..4: node 1 is the LRU tail; pin the two oldest
+    test_table->pinned = { 1, 2 };
+    for (int i = 1; i <= 4; i++)
+    {
+        xhash_test_key xtk { i };
+        CHECK(test_table->insert(&xtk, nullptr) == HASH_OK);
+    }
+    CHECK(test_table->get_num_nodes() == 4);
+
+    xhash_test_key ins { 5 };
+    CHECK(test_table->insert(&ins, nullptr) == HASH_OK);
+    CHECK(test_table->get_num_nodes() == 4);
+
+    xhash_test_key n1 { 1 };
+    xhash_test_key n2 { 2 };
+    xhash_test_key n3 { 3 };
+    xhash_test_key n5 { 5 };
+    CHECK(test_table->find_node(&n1) != nullptr);
+    CHECK(test_table->find_node(&n2) != nullptr);
+    CHECK(test_table->find_node(&n3) == nullptr);
+    CHECK(test_table->find_node(&n5) != nullptr);
+
+    delete test_table;
+}
+
+// a recoverable node past the bounded window is not reached: the walk stops
+// and the insert fails rather than scanning the whole list
+TEST(xhash, release_lru_node_walk_is_bounded)
+{
+    const int cap = 80;
+    selective_pinned_xhash* test_table =
+        new selective_pinned_xhash(128, sizeof(struct xhash_test_key), 0, 0);
+    CHECK(test_table);
+    test_table->set_max_nodes(cap);
+
+    // pin every node except the head (key cap), which is the furthest from the
+    // tail; recovering it would require walking all cap nodes
+    for (int i = 1; i < cap; i++)
+        test_table->pinned.insert(i);
+
+    for (int i = 1; i <= cap; i++)
+    {
+        xhash_test_key xtk { i };
+        CHECK(test_table->insert(&xtk, nullptr) == HASH_OK);
+    }
+    CHECK(test_table->get_num_nodes() == cap);
+
+    xhash_test_key ins { 999 };
+    CHECK(test_table->insert(&ins, nullptr) == HASH_NOMEM);
+    CHECK(test_table->get_num_nodes() == cap);
 
     delete test_table;
 }

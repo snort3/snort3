@@ -309,7 +309,13 @@ static PS_TRACKER* ps_tracker_get(PS_HASH_KEY* key)
         return ht;
 
     auto prev_count = portscan_hash->get_num_nodes();
-    if ( portscan_hash->insert((void*)key, nullptr) != HASH_OK )
+    int status = portscan_hash->insert((void*)key, nullptr);
+
+    // Pin is a keep-preference, not a lifetime guard: force one LRU eviction and retry.
+    if ( status == HASH_NOMEM and portscan_hash->delete_lru_node() )
+        status = portscan_hash->insert((void*)key, nullptr);
+
+    if ( status != HASH_OK )
         return nullptr;
 
     ++spstats.trackers;

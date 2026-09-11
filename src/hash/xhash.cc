@@ -532,25 +532,30 @@ void* XHash::get_next_walk_user_data(uint8_t type)
     return walk_node ? walk_node->data : nullptr;
 }
 
+// Bound the walk so a fully-pinned cache is not re-scanned end-to-end each insert.
+#define XHASH_MAX_RECOVERY_WALK 64
+
 HashNode* XHash::release_lru_node(uint8_t type)
 {
     assert(type < num_lru_caches);
-    HashNode* hnode = lru_caches[type]->get_lru_node();
-    while ( hnode )
+    HashLruCache* cache = lru_caches[type];
+
+    unsigned candidates = 0;
+    for ( HashNode* hnode = cache->get_lru_node();
+        hnode and candidates < XHASH_MAX_RECOVERY_WALK;
+        hnode = cache->get_next_lru_node(), ++candidates )
     {
         if ( is_node_recovery_ok(hnode) )
         {
-            lru_caches[type]->remove_node(hnode);
+            cache->remove_node(hnode);
             free_user_data(hnode);
             unlink_node(hnode);
             --num_nodes;
             ++stats.memcap_prunes;
-            break;
+            return hnode;
         }
-        else
-            hnode = lru_caches[type]->get_next_lru_node ();
     }
-    return hnode;
+    return nullptr;
 }
 
 void XHash::switch_node_lru_cache(HashNode* hnode, uint8_t old_type, uint8_t new_type)
