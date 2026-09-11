@@ -25,10 +25,12 @@
 #include <atomic>
 #include <ctime>
 #include <mutex>
+#include <vector>
 
 #include "framework/counts.h"
 #include "framework/ips_action.h"
 #include "main/policy.h"
+#include "main/snort_types.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
 
@@ -56,7 +58,6 @@ typedef enum
     SFRF_COUNT_NOP,
     SFRF_COUNT_RESET,
     SFRF_COUNT_INCREMENT,
-    SFRF_COUNT_DECREMENT,
     SFRF_COUNT_MAX
 } SFRF_COUNT_OPERATION;
 
@@ -175,10 +176,23 @@ struct RateFilterConfig
     int internal_event_mask;
 };
 
+struct SFRFGaugeKey
+{
+    PolicyId policyId = 0;
+    int tid = 0;
+    uint64_t generation = 0;
+    snort::SfIp ip;
+};
+
+typedef std::vector<SFRFGaugeKey> SFRFGaugeKeys;
+
 struct RateFilterStats
 {
     PegCount xhash_nomem_peg = 0;
+    PegCount recoveries = 0;
 };
+
+extern THREAD_LOCAL RateFilterStats rate_filter_stats;
 
 void SFRF_Delete();
 void SFRF_Flush();
@@ -186,11 +200,13 @@ int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
 int SFRF_TestThreshold(RateFilterConfig *config, unsigned gid, unsigned sid,
     PolicyId policyid, const snort::SfIp *sip, const snort::SfIp *dip,
-    time_t curTime, SFRF_COUNT_OPERATION);
+    time_t curTime, SFRF_COUNT_OPERATION, SFRFGaugeKeys* = nullptr);
+
+void SFRF_ReleaseGauges(const SFRFGaugeKeys&);
 
 void SFRF_ShowObjects(RateFilterConfig*);
 
-int SFRF_Alloc(unsigned int memcap);
+void SFRF_Alloc(unsigned nbytes);
 
 inline void enable_internal_event(RateFilterConfig* config, uint32_t sid)
 {

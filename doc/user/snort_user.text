@@ -2919,7 +2919,7 @@ Example: snort -c snort.lua --dump-config-text
 
 consolidated config for snort.lua
 alerts.order="pass reset block drop alert log"
-alerts.rate_filter_memcap=1048576
+alerts.rate_filter_memcap=16777216
 binder[0].when.ips_policy_id=0
 binder[0].when.role="any"
 binder[0].when.nets="10.1.2.0/24"
@@ -2973,7 +2973,7 @@ Example: snort -c snort.lua --dump-config=all | jq .
         "config": {
         "alerts": {
             "order": "pass reset block drop alert log",
-            "rate_filter_memcap": 1048576
+            "rate_filter_memcap": 16777216
         },
         "binder": [
             {
@@ -3086,7 +3086,7 @@ Example: snort -c snort.lua --dump-config=top | jq .
 {
     "alerts": {
         "order": "pass reset block drop alert log",
-        "rate_filter_memcap": 1048576,
+        "rate_filter_memcap": 16777216,
     },
     "binder": [
         {

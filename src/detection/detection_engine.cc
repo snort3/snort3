@@ -737,6 +737,35 @@ int DetectionEngine::queue_event(unsigned gid, unsigned sid)
     return 0;
 }
 
+int DetectionEngine::log_builtin_event(unsigned gid, unsigned sid, int rate_action)
+{
+    const IpsContext* c = get_context();
+
+    if ( !c or !c->conf or !c->packet )
+        return 0;
+
+    const OptTreeNode* otn = OtnLookup(c->conf->otn_map, gid, sid);
+
+    if ( !otn )
+        return 0;
+
+    Packet* p = c->packet;
+
+    IpsQueuingEvent data_event(otn->sigInfo);
+    DataBus::publish(get_pub_id(), DetectionEventIds::BUILTIN, data_event, p->flow);
+
+    const uint32_t packet_flags = p->packet_flags & (PKT_PASS_RULE | PKT_STATELESS);
+
+    fpLogEvent(otn, p, rate_action);
+
+    p->packet_flags &= ~(PKT_PASS_RULE | PKT_STATELESS);
+    p->packet_flags |= packet_flags;
+
+    sfthreshold_reset();
+
+    return 0;
+}
+
 static int log_events(void* event, void* user)
 {
     if ( !event || !user )

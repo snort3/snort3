@@ -94,6 +94,8 @@ public:
     static int queue_event(const OptTreeNode*);
     static int queue_event(unsigned gid, unsigned sid);
 
+    static int log_builtin_event(unsigned gid, unsigned sid, int rate_action);
+
     static void disable_all(Packet*);
     static bool all_disabled(Packet*);
 

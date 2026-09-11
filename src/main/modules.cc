@@ -716,8 +716,8 @@ static const Parameter alerts_params[] =
     { "order", Parameter::PT_STRING, nullptr, nullptr,
       "change the order of rule action application" },
 
-    { "rate_filter_memcap", Parameter::PT_INT, "0:max32", "1048576",
-      "set available MB of memory for rate_filters" },
+    { "rate_filter_memcap", Parameter::PT_INT, "0:max32", "16777216",
+      "set available bytes of memory for rate_filters" },
 
     { "reference_net", Parameter::PT_STRING, nullptr, nullptr,
       "set the CIDR for homenet "
@@ -1969,7 +1969,7 @@ static const Parameter rate_filter_params[] =
       "take this action on future hits until timeout" },
 
     { "timeout", Parameter::PT_INT, "0:max32", "1",
-      "count interval" },
+      "seconds the new action applies before reverting (0 = never revert)" },
 
     { "apply_to", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "restrict filter to these addresses according to track" },
@@ -1980,10 +1980,10 @@ static const Parameter rate_filter_params[] =
 #define rate_filter_help \
     "configure rate filters (which change rule actions)"
 
-extern THREAD_LOCAL RateFilterStats rate_filter_stats;
 const PegInfo rate_filter_peg_names[] =
 {
     { CountType::SUM, "no_memory", "number of times rate filter ran out of memory" },
+    { CountType::SUM, "recoveries", "number of tracked addresses dropped to make room for another" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -2058,9 +2058,8 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool RateFilterModule::begin(const char*, int, SnortConfig* sc)
+bool RateFilterModule::begin(const char*, int, SnortConfig*)
 {
-    SFRF_Alloc(sc->rate_filter_config->memcap);
     thdx.init();
     return true;
 }

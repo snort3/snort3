@@ -49,7 +49,7 @@ extern THREAD_LOCAL snort::ProfileStats mpsePerfStats;
 extern THREAD_LOCAL snort::ProfileStats rulePerfStats;
 
 struct RuleTreeNode;
-int fpLogEvent(const OptTreeNode*, snort::Packet*);
+int fpLogEvent(const OptTreeNode*, snort::Packet*, int rate_action = -1);
 bool fp_eval_rtn(RuleTreeNode*, snort::Packet*, int check_ports);
 int fp_eval_option(void*, Cursor&, snort::Packet*);
 void populate_trace_data();

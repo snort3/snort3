@@ -23,6 +23,7 @@
 #endif
 
 #include "catch/snort_catch.h"
+#include "detection/rules.h"
 #include "main/snort_config.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
@@ -52,7 +53,7 @@ using namespace snort;
 #define RULE_ORIG  (-1)          // original action applies
 #define RULE_NEW    0          // new_action when not orig
 
-#define MEM_DEFAULT (1024*1024)  // default if not re"config"ed
+#define MEM_DEFAULT (16*1024*1024)  // default if not re"config"ed
 #define MEM_MINIMUM 0          // forces use of minimum
 
 typedef struct
@@ -667,4 +668,534 @@ TEST_CASE("sfrf minimum memcap", "[sfrf]")
             CHECK(CapCheck(i) == 1);
     }
     Term();
+}
+
+//---------------------------------------------------------------
+// a rate_filter with seconds = 0 on session setup is not a rate but a gauge: it counts the
+// connections that are currently up.  that only stays bounded because the flow that took a
+// count gives it back when it goes away, so the pairing is the property worth testing.
+
+#define GAUGE_COUNT   2
+#define GAUGE_TIMEOUT 5
+
+static int GaugeUp(RateFilterConfig* cf, time_t now, SFRFGaugeKeys& gauges)
+{
+    SfIp sip, dip;
+    sip.set(IP4_SRC);
+    dip.set(IP4_DST);
+
+    int status = SFRF_TestThreshold(cf, GID_SESSION, SESSION_EVENT_SETUP,
+        get_network_policy()->policy_id, &sip, &dip, now, SFRF_COUNT_INCREMENT, &gauges);
+
+    // the first trip is returned offset, to say "log this one too"
+    if ( status >= IpsAction::get_max_types() )
+        status -= IpsAction::get_max_types();
+
+    return status;
+}
+
+TEST_CASE("sfrf connect gauge pairs", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    rfc = RateFilter_ConfigNew();
+    rfc->memcap = MEM_DEFAULT;
+    SFRF_Alloc(rfc->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = GAUGE_COUNT;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+
+    // a zero timeout never rereads the count once the filter is on, which would hide
+    // whether the decrements landed at all
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, rfc, &cfg) == 0);
+
+    SFRFGaugeKeys held[GAUGE_COUNT + 1];
+
+    // connections up to the limit are at it, not over it
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        CHECK(GaugeUp(rfc, 0, held[i]) == RULE_ORIG);
+
+    // one more is over it
+    CHECK(GaugeUp(rfc, 0, held[GAUGE_COUNT]) == RULE_NEW);
+
+    // now every one of those connections ends, each giving back what it took
+    for ( int i = 0; i <= GAUGE_COUNT; ++i )
+        SFRF_ReleaseGauges(held[i]);
+
+    // past the revert timeout the gauge is read again, so this is the whole point: with the
+    // counts given back this connection is the first one and passes.  had they not been,
+    // the gauge would still read three and every later connection would be filtered forever
+    SFRFGaugeKeys next;
+    CHECK(GaugeUp(rfc, GAUGE_TIMEOUT * 2, next) == RULE_ORIG);
+
+    Term();
+}
+
+TEST_CASE("sfrf setup rate is not a connect gauge", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    rfc = RateFilter_ConfigNew();
+    rfc->memcap = MEM_DEFAULT;
+    SFRF_Alloc(rfc->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = 1;
+    cfg.seconds = 60;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, rfc, &cfg) == 0);
+
+    SfIp sip, dip;
+    sip.set(IP4_SRC);
+    dip.set(IP4_DST);
+
+    SFRFGaugeKeys gauges;
+    int status = SFRF_TestThreshold(rfc, GID_SESSION, SESSION_EVENT_SETUP,
+        get_network_policy()->policy_id, &sip, &dip, 0, SFRF_COUNT_INCREMENT, &gauges);
+
+    CHECK(gauges.empty());
+    CHECK(status == RULE_ORIG);
+
+    status = SFRF_TestThreshold(rfc, GID_SESSION, SESSION_EVENT_SETUP,
+        get_network_policy()->policy_id, &sip, &dip, 0, SFRF_COUNT_INCREMENT, &gauges);
+    CHECK(gauges.empty());
+    CHECK(status >= 0);
+
+    // a session that took nothing gives nothing back, so a rate cannot be un-tripped by
+    // the sessions that raised it ending
+    SFRF_ReleaseGauges(gauges);
+
+    status = SFRF_TestThreshold(rfc, GID_SESSION, SESSION_EVENT_SETUP,
+        get_network_policy()->policy_id, &sip, &dip, 1, SFRF_COUNT_INCREMENT, &gauges);
+    CHECK(status >= 0);
+
+    Term();
+}
+
+TEST_CASE("sfrf reports connect gauge ownership", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    rfc = RateFilter_ConfigNew();
+    rfc->memcap = MEM_DEFAULT;
+    SFRF_Alloc(rfc->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = GAUGE_COUNT;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, rfc, &cfg) == 0);
+
+    SfIp sip, dip;
+    sip.set(IP4_SRC);
+    dip.set(IP4_DST);
+
+    SFRFGaugeKeys gauges;
+    SFRF_TestThreshold(rfc, GID_SESSION, SESSION_EVENT_SETUP,
+        get_network_policy()->policy_id, &sip, &dip, 0, SFRF_COUNT_INCREMENT, &gauges);
+    CHECK(gauges.size() == 1);
+    CHECK(gauges[0].policyId == get_network_policy()->policy_id);
+
+    Term();
+}
+
+TEST_CASE("sfrf connect gauge counts outlive the config that took them", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    RateFilterConfig* first = RateFilter_ConfigNew();
+    first->memcap = MEM_DEFAULT;
+    SFRF_Alloc(first->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = GAUGE_COUNT;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, first, &cfg) == 0);
+
+    SFRFGaugeKeys held[GAUGE_COUNT];
+
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        CHECK(GaugeUp(first, 0, held[i]) == RULE_ORIG);
+
+    RateFilterConfig* second = RateFilter_ConfigNew();
+    second->memcap = MEM_DEFAULT;
+    CHECK(SFRF_ConfigAdd(nullptr, second, &cfg) == 0);
+
+    SFRFGaugeKeys next;
+    CHECK(GaugeUp(second, 0, next) == RULE_NEW);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(first);
+    RateFilter_ConfigFree(second);
+}
+
+TEST_CASE("sfrf connect gauge counts are stranded when a reload reorders the filters",
+    "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = GAUGE_COUNT;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    tSFRFConfigNode other = cfg;
+    other.sid = SESSION_EVENT_CLEAR;
+
+    RateFilterConfig* first = RateFilter_ConfigNew();
+    first->memcap = MEM_DEFAULT;
+    SFRF_Alloc(first->memcap);
+
+    CHECK(SFRF_ConfigAdd(nullptr, first, &other) == 0);
+    CHECK(SFRF_ConfigAdd(nullptr, first, &cfg) == 0);
+
+    SFRFGaugeKeys held[GAUGE_COUNT];
+
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        CHECK(GaugeUp(first, 0, held[i]) == RULE_ORIG);
+
+    RateFilterConfig* second = RateFilter_ConfigNew();
+    second->memcap = MEM_DEFAULT;
+
+    CHECK(SFRF_ConfigAdd(nullptr, second, &cfg) == 0);
+    CHECK(SFRF_ConfigAdd(nullptr, second, &other) == 0);
+
+    SFRFGaugeKeys taken[GAUGE_COUNT];
+
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        CHECK(GaugeUp(second, 0, taken[i]) == RULE_ORIG);
+
+    // the connections counted under the old order end.  each gives its count back to the
+    // node that took it, so the gauge the new order is using is left where it was; taking
+    // the keys from the current configuration instead would credit it with counts it never
+    // gave out and let it over shoot the limit
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        SFRF_ReleaseGauges(held[i]);
+
+    SFRFGaugeKeys next;
+    CHECK(GaugeUp(second, 0, next) == RULE_NEW);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(first);
+    RateFilter_ConfigFree(second);
+}
+
+TEST_CASE("sfrf connect gauge counts are given back after the gauge is removed", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = GAUGE_COUNT;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    tSFRFConfigNode other = cfg;
+    other.sid = SESSION_EVENT_CLEAR;
+
+    RateFilterConfig* first = RateFilter_ConfigNew();
+    first->memcap = MEM_DEFAULT;
+    SFRF_Alloc(first->memcap);
+
+    CHECK(SFRF_ConfigAdd(nullptr, first, &other) == 0);
+    CHECK(SFRF_ConfigAdd(nullptr, first, &cfg) == 0);
+
+    SFRFGaugeKeys held[GAUGE_COUNT];
+
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        CHECK(GaugeUp(first, 0, held[i]) == RULE_ORIG);
+
+    // a reload drops the gauge, and the connections that took counts under it end with no
+    // gauge configured at all.  the counts still go back, so a later configuration that is
+    // given the same identity starts from zero rather than inheriting them
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        SFRF_ReleaseGauges(held[i]);
+
+    RateFilterConfig* third = RateFilter_ConfigNew();
+    third->memcap = MEM_DEFAULT;
+
+    CHECK(SFRF_ConfigAdd(nullptr, third, &other) == 0);
+    CHECK(SFRF_ConfigAdd(nullptr, third, &cfg) == 0);
+
+    SFRFGaugeKeys taken[GAUGE_COUNT];
+
+    for ( int i = 0; i < GAUGE_COUNT; ++i )
+        CHECK(GaugeUp(third, 0, taken[i]) == RULE_ORIG);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(first);
+    RateFilter_ConfigFree(third);
+}
+
+#define MANY_GAUGES 5
+
+TEST_CASE("sfrf every overlapping connect gauge is enforced", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    RateFilterConfig* cf = RateFilter_ConfigNew();
+    cf->memcap = MEM_DEFAULT;
+    SFRF_Alloc(cf->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    // the last one configured is the one with something to say, so it is only heard if every
+    // gauge the session matches is counted, however many of them there are
+    for ( int i = 0; i < MANY_GAUGES; ++i )
+    {
+        cfg.count = ( i == MANY_GAUGES - 1 ) ? 1 : MANY_GAUGES * 2;
+        CHECK(SFRF_ConfigAdd(nullptr, cf, &cfg) == 0);
+    }
+
+    SFRFGaugeKeys first, second;
+
+    CHECK(GaugeUp(cf, 0, first) == RULE_ORIG);
+    CHECK(first.size() == MANY_GAUGES);
+
+    CHECK(GaugeUp(cf, 0, second) == RULE_NEW);
+    CHECK(second.size() == MANY_GAUGES);
+
+    SFRF_ReleaseGauges(first);
+    SFRF_ReleaseGauges(second);
+
+    SFRFGaugeKeys next;
+    CHECK(GaugeUp(cf, GAUGE_TIMEOUT * 2, next) == RULE_ORIG);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(cf);
+}
+
+static int GaugeUpAt(RateFilterConfig* cf, time_t now, SFRFGaugeKeys& gauges,
+    const char* src, const char* dst)
+{
+    SfIp sip, dip;
+    sip.set(src);
+    dip.set(dst);
+
+    int status = SFRF_TestThreshold(cf, GID_SESSION, SESSION_EVENT_SETUP,
+        get_network_policy()->policy_id, &sip, &dip, now, SFRF_COUNT_INCREMENT, &gauges);
+
+    if ( status >= IpsAction::get_max_types() )
+        status -= IpsAction::get_max_types();
+
+    return status;
+}
+
+// enough addresses to fill a table this small many times over
+#define GAUGE_SPRAY 200
+
+TEST_CASE("sfrf restarts a connect gauge when its node is recovered", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    RateFilterConfig* cf = RateFilter_ConfigNew();
+
+    // room for a handful of nodes, so the spray below has to recover the node holding the
+    // gauge below it
+    cf->memcap = 2048;
+    SFRF_Alloc(cf->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = 1;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, cf, &cfg) == 0);
+
+    SFRFGaugeKeys held;
+    CHECK(GaugeUpAt(cf, 0, held, IP4_SRC, IP4_DST) == RULE_ORIG);
+    CHECK(held.size() == 1);
+
+    const PegCount nomem = rate_filter_stats.xhash_nomem_peg;
+    const PegCount recoveries = rate_filter_stats.recoveries;
+
+    // one node per address, none of them given back, oldest first
+    for ( unsigned i = 0; i < GAUGE_SPRAY; ++i )
+    {
+        char dst[24];
+        snprintf(dst, sizeof(dst), "10.0.%u.%u", i / 256, i % 256);
+
+        SFRFGaugeKeys spray;
+        GaugeUpAt(cf, 0, spray, IP4_SRC, dst);
+    }
+
+    // every node can be recovered, so the spray never runs the table out
+    CHECK(rate_filter_stats.xhash_nomem_peg == nomem);
+
+    // a table too small for what is being tracked is visible as a peg rather than only as
+    // gauges that read low
+    CHECK(rate_filter_stats.recoveries > recoveries);
+
+    // the held address no longer has a node, so its count starts over and the next
+    // connection reads as the first
+    SFRFGaugeKeys second;
+    CHECK(GaugeUpAt(cf, 0, second, IP4_SRC, IP4_DST) == RULE_ORIG);
+
+    // the count owed on the recovered node went with it, so giving it back must not come off
+    // the node that took its place and must not wrap the count of the session that is up
+    SFRF_ReleaseGauges(held);
+    SFRF_ReleaseGauges(held);
+
+    SFRFGaugeKeys third;
+    CHECK(GaugeUpAt(cf, 0, third, IP4_SRC, IP4_DST) == RULE_NEW);
+
+    // the keys taken against the node that is there now still give their counts back, so the
+    // gauge reverts once the revert timeout is up
+    SFRF_ReleaseGauges(second);
+    SFRF_ReleaseGauges(third);
+
+    SFRFGaugeKeys fourth;
+    CHECK(GaugeUpAt(cf, GAUGE_TIMEOUT + 1, fourth, IP4_SRC, IP4_DST) == RULE_ORIG);
+    SFRF_ReleaseGauges(fourth);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(cf);
+}
+
+TEST_CASE("sfrf does not pass a recycled node's filter state to another address", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    RateFilterConfig* cf = RateFilter_ConfigNew();
+    cf->memcap = 2048;
+    SFRF_Alloc(cf->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_DST;
+    cfg.count = 1;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, cf, &cfg) == 0);
+
+    // every address trips its gauge and then gives the counts back, so the table fills with
+    // nodes that are on but owe nothing, and those are what a later address recycles
+    bool clean = true;
+
+    for ( unsigned i = 0; i < GAUGE_SPRAY; ++i )
+    {
+        char dst[24];
+        snprintf(dst, sizeof(dst), "10.1.%u.%u", i / 256, i % 256);
+
+        SFRFGaugeKeys up, over;
+
+        // the first connection to an address never seen before is under the gauge, whatever
+        // the node it was given was last used for
+        if ( GaugeUpAt(cf, 1, up, IP4_SRC, dst) != RULE_ORIG )
+            clean = false;
+
+        GaugeUpAt(cf, 1, over, IP4_SRC, dst);
+
+        SFRF_ReleaseGauges(up);
+        SFRF_ReleaseGauges(over);
+    }
+
+    CHECK(clean);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(cf);
+}
+
+TEST_CASE("sfrf a by_rule connect gauge is shared and given back", "[sfrf]")
+{
+    SnortConfig sc;
+    set_default_policy(&sc);
+
+    RateFilterConfig* cf = RateFilter_ConfigNew();
+    cf->memcap = MEM_DEFAULT;
+    SFRF_Alloc(cf->memcap);
+
+    tSFRFConfigNode cfg;
+    cfg.gid = GID_SESSION;
+    cfg.sid = SESSION_EVENT_SETUP;
+    cfg.tracking = TRK_RUL;
+    cfg.count = 1;
+    cfg.seconds = 0;
+    cfg.newAction = (IpsAction::Type)RULE_NEW;
+    cfg.timeout = GAUGE_TIMEOUT;
+    cfg.applyTo = nullptr;
+
+    CHECK(SFRF_ConfigAdd(nullptr, cf, &cfg) == 0);
+
+    // by_rule counts against no address at all, so sessions between unrelated hosts share
+    // the one count and the second of them is over the gauge
+    SFRFGaugeKeys first, second;
+
+    CHECK(GaugeUpAt(cf, 0, first, IP4_SRC, IP4_DST) == RULE_ORIG);
+    CHECK(first.size() == 1);
+
+    CHECK(GaugeUpAt(cf, 0, second, IP6_SRC, IP6_DST) == RULE_NEW);
+    CHECK(second.size() == 1);
+
+    // each session kept the cleared key it was counted under rather than its own addresses,
+    // so both releases land on the shared node
+    SFRF_ReleaseGauges(first);
+    SFRF_ReleaseGauges(second);
+
+    SFRFGaugeKeys next;
+    CHECK(GaugeUpAt(cf, GAUGE_TIMEOUT * 2, next, IP6_SRC, IP4_DST) == RULE_ORIG);
+
+    SFRF_Delete();
+    RateFilter_ConfigFree(cf);
 }

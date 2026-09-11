@@ -24,24 +24,50 @@
 #include "config.h"
 #endif
 
+#include <atomic>
+#include <utility>
+
 #include "rate_filter.h"
 
 #include "detection/ips_context.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
+#include "flow/flow.h"
 #include "hash/ghash.h"
+#include "main/policy.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
+#include "time/packet_time.h"
 #include "utils/util.h"
 
 #include "sfrf.h"
 
 using namespace snort;
 
+static std::atomic<unsigned> rf_flow_data_id { 0 };
+
+class RateFilterFlowData : public FlowData
+{
+public:
+    RateFilterFlowData(unsigned id, SFRFGaugeKeys&& g) : FlowData(id), gauges(std::move(g)) { }
+    ~RateFilterFlowData() override;
+
+    FLOW_DATA_SIZE_OF_EXTRA(RateFilterFlowData,
+        gauges.capacity() * sizeof(SFRFGaugeKey))
+
+private:
+    const SFRFGaugeKeys gauges;
+};
+
+RateFilterFlowData::~RateFilterFlowData()
+{
+    SFRF_ReleaseGauges(gauges);
+}
+
 RateFilterConfig* RateFilter_ConfigNew()
 {
     RateFilterConfig* rf_config = (RateFilterConfig*)snort_calloc(sizeof(*rf_config));
-    rf_config->memcap = 1024 * 1024;
+    rf_config->memcap = 16 * 1024 * 1024;
     return rf_config;
 }
 
@@ -92,7 +118,12 @@ int RateFilter_Create(
         enable_internal_event(rf_config, thdx->sid);
 
         if ( thdx->sid == SESSION_EVENT_SETUP )
+        {
             enable_internal_event(rf_config, SESSION_EVENT_CLEAR);
+
+            if ( !thdx->seconds && !rf_flow_data_id.load(std::memory_order_relaxed) )
+                rf_flow_data_id.store(FlowData::create_flow_data_id(), std::memory_order_relaxed);
+        }
     }
     return error;
 }
@@ -127,18 +158,37 @@ int RateFilter_Test(const OptTreeNode* otn, Packet* p)
 
     RateFilterConfig* rfc = p->context->conf->rate_filter_config;
 
-    if ( EventIsInternal(gid) )
-    {
-        // at present stream connection events are the only internal
-        // events and these require: src -> client, dst -> server.
-        if ( p->is_from_server() )
-        {
-            return SFRF_TestThreshold(rfc, gid, sid, get_inspection_policy()->policy_id,
-                dip, sip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
-        }
-    }
-
     return SFRF_TestThreshold(rfc, gid, sid, get_inspection_policy()->policy_id,
         sip, dip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
+}
+
+int RateFilter_SessionEvent(unsigned sid, Flow& flow, const SnortConfig& sc)
+{
+    RateFilterConfig* rfc = sc.rate_filter_config;
+    SFRFGaugeKeys gauges;
+
+    const unsigned fd_id = rf_flow_data_id.load(std::memory_order_relaxed);
+
+    if ( fd_id )
+        gauges.reserve(2);
+
+    const int action = SFRF_TestThreshold(rfc, GID_SESSION, sid,
+        get_inspection_policy()->policy_id, &flow.client_ip, &flow.server_ip,
+        packet_time(), SFRF_COUNT_INCREMENT, &gauges);
+
+    if ( !gauges.empty() && fd_id )
+        flow.set_flow_data(new RateFilterFlowData(fd_id, std::move(gauges)));
+
+    return action;
+}
+
+void RateFilter_SessionRelease(Flow& flow)
+{
+    const unsigned fd_id = rf_flow_data_id.load(std::memory_order_relaxed);
+
+    if ( !fd_id )
+        return;
+
+    flow.free_flow_data(fd_id);
 }
 

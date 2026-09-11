@@ -201,7 +201,7 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
 
     if ( flow->get_session_flags() & SSNFLAG_COUNTED_ESTABLISH )
-        tel.log_internal_event(SESSION_EVENT_CLEAR);
+        tel.log_internal_event(SESSION_EVENT_CLEAR, *flow);
 
     if ( restart_session )
     {
@@ -244,7 +244,7 @@ void TcpSession::update_perf_base_state(char newState)
             session_flags |= SSNFLAG_COUNTED_ESTABLISH;
             fire_event = true;
 
-            tel.log_internal_event(SESSION_EVENT_SETUP);
+            tel.log_internal_event(SESSION_EVENT_SETUP, *flow);
             if ( ( session_flags & SSNFLAG_COUNTED_INITIALIZE )
                 && !( session_flags & SSNFLAG_COUNTED_CLOSING ) )
             {

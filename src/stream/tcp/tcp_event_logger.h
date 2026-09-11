@@ -24,6 +24,11 @@
 
 #include <cstdint>
 
+namespace snort
+{
+class Flow;
+}
+
 /* events */
 #define EVENT_SYN_ON_EST                0x00000001
 #define EVENT_DATA_ON_SYN               0x00000002
@@ -59,7 +64,7 @@ public:
     { tcp_events |= eventcode; }
 
     void log_tcp_events();
-    static void log_internal_event(uint32_t eventSid);
+    static void log_internal_event(uint32_t eventSid, snort::Flow&);
 
 private:
     uint32_t tcp_events = 0;

@@ -1,6 +1,7 @@
 
 if ( ENABLE_UNIT_TESTS )
     set(TEST_FILES
+        rate_filter_test.cc
         sfrf_test.cc
         sfthd_test.cc
     )

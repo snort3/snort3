@@ -25,6 +25,7 @@
 // rate filter interface for Snort
 namespace snort
 {
+class Flow;
 struct Packet;
 struct SnortConfig;
 }
@@ -38,6 +39,9 @@ void RateFilter_Cleanup();
 
 int RateFilter_Create(snort::SnortConfig* sc, RateFilterConfig*, tSFRFConfigNode*);
 int RateFilter_Test(const OptTreeNode*, snort::Packet*);
+
+int RateFilter_SessionEvent(unsigned sid, snort::Flow&, const snort::SnortConfig&);
+void RateFilter_SessionRelease(snort::Flow&);
 
 #endif
 

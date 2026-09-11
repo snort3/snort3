@@ -456,7 +456,7 @@ Configuration:
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
   * string alerts.order: change the order of rule action application
-  * int alerts.rate_filter_memcap = 1048576: set available MB of
+  * int alerts.rate_filter_memcap = 16777216: set available bytes of
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
     with -l or -B, does NOT change $HOME_NET in IDS mode)
@@ -1515,7 +1515,8 @@ Configuration:
   * dynamic rate_filter[].new_action = alert: take this action on
     future hits until timeout { alert | block | drop | file_id | log
     | pass | react | reject | rewrite }
-  * int rate_filter[].timeout = 1: count interval { 0:max32 }
+  * int rate_filter[].timeout = 1: seconds the new action applies
+    before reverting (0 = never revert) { 0:max32 }
   * addr_list rate_filter[].apply_to: restrict filter to these
     addresses according to track
 
@@ -1523,6 +1524,8 @@ Peg counts:
 
   * rate_filter.no_memory: number of times rate filter ran out of
     memory (sum)
+  * rate_filter.recoveries: number of tracked addresses dropped to
+    make room for another (sum)
 
 
 2.30. references
@@ -10422,7 +10425,7 @@ libraries see the Getting Started section of the manual.
   * bool alerts.log_references = false: include rule references in
     alert info (full only)
   * string alerts.order: change the order of rule action application
-  * int alerts.rate_filter_memcap = 1048576: set available MB of
+  * int alerts.rate_filter_memcap = 16777216: set available bytes of
     memory for rate_filters { 0:max32 }
   * string alerts.reference_net: set the CIDR for homenet (for use
     with -l or -B, does NOT change $HOME_NET in IDS mode)
@@ -11787,7 +11790,8 @@ libraries see the Getting Started section of the manual.
     | pass | react | reject | rewrite }
   * int rate_filter[].seconds = 1: count interval { 0:max32 }
   * int rate_filter[].sid = 1: rule signature ID { 0:max32 }
-  * int rate_filter[].timeout = 1: count interval { 0:max32 }
+  * int rate_filter[].timeout = 1: seconds the new action applies
+    before reverting (0 = never revert) { 0:max32 }
   * enum rate_filter[].track = by_src: filter only matching source or
     destination addresses { by_src | by_dst | by_rule }
   * string react.page: file containing HTTP response body
@@ -13837,6 +13841,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * rate_filter.no_memory: number of times rate filter ran out of
     memory (sum)
+  * rate_filter.recoveries: number of tracked addresses dropped to
+    make room for another (sum)
   * reload_survivor.rss_bus_destroyed: on_bus_destroyed() invocations
     across all bus teardowns (sum)
   * reload_survivor.rss_bus_stripped: handler entries stripped in

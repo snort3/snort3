@@ -313,7 +313,10 @@ static DAQ_Verdict distill_verdict(Packet* p)
             daq_stats.internal_whitelist++;
         }
         else if ( p->flow )
+        {
+            RateFilter_SessionRelease(*p->flow);
             p->flow->handle_allowlist();
+        }
     }
 
     if ( p->flow )
@@ -686,6 +689,9 @@ void Analyzer::init_unprivileged()
 
     // init filters hash tables that depend on alerts
     sfthreshold_alloc(sc->threshold_config->memcap, sc->threshold_config->memcap);
+
+    if ( sc->rate_filter_config->count )
+        SFRF_Alloc(sc->rate_filter_config->memcap);
 }
 
 void Analyzer::reinit(const SnortConfig* sc)
@@ -693,6 +699,9 @@ void Analyzer::reinit(const SnortConfig* sc)
     PluginManager::thread_reinit(sc);
     Active::thread_init(sc);
     TraceApi::thread_reinit(sc->trace_config);
+
+    if ( sc->rate_filter_config->count )
+        SFRF_Alloc(sc->rate_filter_config->memcap);
 }
 
 void Analyzer::term()

@@ -97,6 +97,7 @@ void ContextSwitcher::start() { }
 void InitTag() { }
 void CleanupTag() { }
 void RateFilter_Cleanup() { }
+void RateFilter_SessionRelease(snort::Flow&) { }
 int sfthreshold_alloc(unsigned int, unsigned int) { return -1; }
 void sfthreshold_reset() { }
 void sfthreshold_free() { }
@@ -120,7 +121,7 @@ void EventManager::reload_outputs() { }
 void PluginManager::thread_init() { }
 void PluginManager::thread_reinit(const snort::SnortConfig*) { }
 void PluginManager::thread_term(bool) { }
-int SFRF_Alloc(unsigned int) { return -1; }
+void SFRF_Alloc(unsigned int) { }
 void packet_time_update(const struct timeval*) { }
 void main_poke(unsigned) { }
 void set_default_policy(const snort::SnortConfig*) { }

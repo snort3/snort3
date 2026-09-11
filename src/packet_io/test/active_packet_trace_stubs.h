@@ -118,7 +118,7 @@ void CodecManager::thread_term() { }
 void EventManager::open_outputs() { }
 void EventManager::close_outputs() { }
 void EventManager::reload_outputs() { }
-int SFRF_Alloc(unsigned int) { return -1; }
+void SFRF_Alloc(unsigned int) { }
 void packet_time_update(const struct timeval*) { }
 void main_poke(unsigned) { }
 void set_default_policy(const snort::SnortConfig*) { }

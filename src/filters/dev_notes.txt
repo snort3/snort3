@@ -12,10 +12,101 @@ the prior, non-eventing packets.
 Rate Filter - Based on configuration options, generically track multiple
 occurrences of the same event/address tuples.  The configuration can
 specify a limit where-by if the tracked limit is exceeded, the action of
-the event is changed.  For instance, the first N occurrences of Event X in
-time period Y can Alert, but if this rate is exceeded subsequent occurrence
-will Drop.  This function can be used to protect against DOS type of
-attacks.
+the event is changed.  For instance, the first N occurrences of Event X
+in time period Y can Alert, but if this rate is exceeded subsequent
+occurrence will Drop.  This function can be used to protect against DOS
+type of attacks.
+
+A rate filter with seconds = 0 is a gauge rather than a rate: it holds a
+running total that is given back when what was counted goes away, so the
+limit is on how many there are at once.  Only the built-in session
+events (gid 135) are counted this way, a setup taking a count and the
+matching teardown returning it, which makes such a filter a cap on the
+sessions open to the tracked address.  A filter written before this
+counted every session since the process started rather than those still
+open, so a configuration that wanted the cumulative reading has to give
+seconds a value.
+
+The count belongs to the session rather than to the packet that carried
+the event, and is returned however inspection ends -- close, timeout,
+prune, or being trusted, allowlisted or ignored -- because a count never
+returned would filter that address for the life of the process, and a
+session that is no longer inspected has no observable end.  A session
+trusted before it establishes never took one.
+
+Counts live in the process wide tracking hash, keyed by the filter's
+parse order, the tracked address, the policy in effect and the number of
+the node's use.  A reload can replace all of that, so the session keeps
+a key for every gauge it was counted against and gives back exactly
+those; nothing takes a count without keeping a key.  Counts therefore
+outlive any edit to the rate_filter list, and a gauge whose parse order
+changed begins a new count, the old one being given back as the sessions
+holding it end.  Clearing the hash on reload instead would re-arm every
+concurrency cap and reset every sampling period.
+
+The hash recovers its least recently used node when it needs room, and
+counts owed to a node that is gone are dropped, so the table has to be
+sized for the addresses being tracked.  A rate rebuilds its count from
+the events that follow; a gauge counts only what is already up, so a
+reading it lost stays low until the sessions behind it end.  Recoveries
+are counted, so a table that is too small shows as a peg rather than as
+a reading that quietly runs low, and the memcap is the knob for it.
+Refusing to recover a node that is owed counts was tried and is worse:
+the nodes a gauge holds are the ones it will not give up, so a table of
+open sessions stops taking new keys altogether, and the search for a
+node to recover repeats over the whole table on every insert.
+
+Filter, address and policy do not identify a node on their own, which is
+why each use of one is numbered: a key left over from a recovered node
+cannot decrement the node that replaced it.  The number says which node
+was counted, not that the node is still there, so lookup, count and
+read-back all happen under the tracking hash lock, since any insert on
+any thread may recover the node in between.  A recovered node is cleared
+first, so an address never inherits the count or the filter state of the
+one before it.
+
+The table is sized when the packet threads start rather than while the
+configuration is read, because the memcap belongs to the alerts module
+and module read order is not fixed, and again when a reload takes
+effect, because a reload can add the first rate_filter to a
+configuration that had none and sizing an existing table does nothing.
+A reload that edits the memcap is rejected instead.  The filter's own
+config states the default as well as the alerts parameter, because a run
+with no configuration file never reads that module; the two have to
+agree, or reloading any file would read as a change to the memcap and be
+refused.  The hash is process wide and is not charged to any flow, but
+the keys a session holds are reported through its flow data's size_of().
+
+A filter is looked up under the inspection policy of the flow being
+checked and, failing that, under the main policy, so one declared in the
+main policy still applies to a flow bound to a targeted network policy
+that declares none of its own.  The tracking node keeps the flow's own
+policy, so each policy counts separately against the same filter.
+
+Giving a count back only decrements, it does not read the filter again,
+so a gauge that falls under its limit stays on until the next session
+event to that address is checked, and with timeout = 0 it stays on
+either way.
+
+A session event is counted against the configuration its packet was
+pinned to, so a reload cannot enable the event for the check and disable
+it for the count; a teardown of some other flow uses the published
+configuration, because that is what the policy for that flow was
+selected against.  A teardown with no packet of its own, from a prune or
+the session destructor, is counted but cannot be logged, because the
+only packet available belongs to another flow.  The count is right; what
+is missing is the event that would otherwise record the filter tripping
+on it.
+
+Session events are counted and logged where they are raised rather than
+when the packet's events are drained.  A blocking rate action therefore
+stops the remaining service and control inspectors on that packet,
+though detection still runs, which is the point of one on session setup,
+and the event no longer loses the event queue's log budget to the
+packet's rule events, which is what kept these events from being logged
+at all; in exchange they are not bounded by event_queue.log or
+max_queue, not ordered against the packet's other events, and not
+counted in the log limit the queue reports.
 
 Event Filter - After the rules engine generates whatever actions it needs
 to, the Event Filter is then invoked to filter the logging of these events.

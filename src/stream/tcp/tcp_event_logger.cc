@@ -26,7 +26,9 @@
 #include "tcp_event_logger.h"
 
 #include "detection/detection_engine.h"
+#include "detection/ips_context.h"
 #include "detection/rules.h"
+#include "filters/rate_filter.h"
 #include "filters/sfrf.h"
 #include "main/snort_config.h"
 #include "stream/stream_log.h"
@@ -71,13 +73,24 @@ struct tcp_event_sid tcp_event_sids[] =
     { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }
 };
 
-void TcpEventLogger::log_internal_event(uint32_t eventSid)
+void TcpEventLogger::log_internal_event(uint32_t eventSid, Flow& flow)
 {
-    if (is_internal_event_enabled(SnortConfig::get_conf()->rate_filter_config, eventSid))
-    {
-        tcpStats.internalEvents++;
-        DetectionEngine::queue_event(GID_SESSION, eventSid);
-    }
+    const IpsContext* context = DetectionEngine::get_context();
+
+    const bool ours = context and context->packet and context->packet->flow == &flow;
+
+    const SnortConfig* sc = ( ours and context->conf ) ? context->conf : SnortConfig::get_conf();
+
+    if ( !sc or !is_internal_event_enabled(sc->rate_filter_config, eventSid) )
+        return;
+
+    tcpStats.internalEvents++;
+
+    const int action = RateFilter_SessionEvent(eventSid, flow, *sc);
+
+    // a teardown with no packet of its own must not log against another flow's packet
+    if ( action >= 0 and ours )
+        DetectionEngine::log_builtin_event(GID_SESSION, eventSid, action);
 }
 
 void TcpEventLogger::log_tcp_events()

@@ -170,7 +170,7 @@ static inline void fpLogOther(
 **    function was pulled out of fpEvalSomething, so now we can log an
 **    event no matter where we are.
 */
-int fpLogEvent(const OptTreeNode* otn, Packet* p)
+int fpLogEvent(const OptTreeNode* otn, Packet* p, int rate_action)
 {
     // for stream module
     if ( otn->stateless() )
@@ -179,7 +179,7 @@ int fpLogEvent(const OptTreeNode* otn, Packet* p)
         p->packet_flags &= ~PKT_STATELESS;
 
     // rate filtering tests (impacts action)
-    int action_rate = RateFilter_Test(otn, p);
+    int action_rate = ( rate_action >= 0 ) ? rate_action : RateFilter_Test(otn, p);
     bool action_override = action_rate >= IpsAction::get_max_types();
 
     if ( action_override )
