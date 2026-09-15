@@ -572,6 +572,9 @@ void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint1
         p->set_detect_limit(session_data->detect_depth_remaining[source_id]);
     }
 
+    if ( !session_data->is_for_httpx() )
+        HttpContextData::claim_pending_section_buffer(p->context, data);
+
     process(data, dsize, p->flow, source_id, true, p);
 
     // Detection was done in process()

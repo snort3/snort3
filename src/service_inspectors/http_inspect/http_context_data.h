@@ -27,8 +27,7 @@ class HttpMsgSection;
 class HttpContextData : public snort::IpsContextData
 {
 public:
-    void clear() override
-    { current_section = nullptr; }
+    void clear() override;
 
     static void init()
     { ips_id = IpsContextData::get_ips_id(); }
@@ -37,9 +36,13 @@ public:
         snort::IpsContext* context = nullptr);
     static void save_snapshot(HttpMsgSection* section);
     static HttpMsgSection* clear_snapshot(snort::IpsContext* context);
+    static void save_pending_section_buffer(const uint8_t*);
+    static void claim_pending_section_buffer(snort::IpsContext*, const uint8_t*);
     static unsigned ips_id;
 
 private:
+    // Owns direct HTTP/1 data pending transfer to an HttpMsgSection.
+    const uint8_t* pending_section_buffer = nullptr;
     HttpMsgSection* current_section = nullptr;
 };
 

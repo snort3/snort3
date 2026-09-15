@@ -31,6 +31,13 @@ using namespace snort;
 
 unsigned HttpContextData::ips_id = 0;
 
+void HttpContextData::clear()
+{
+    delete[] pending_section_buffer;
+    pending_section_buffer = nullptr;
+    current_section = nullptr;
+}
+
 HttpMsgSection* HttpContextData::get_snapshot(const Packet* p)
 {
     assert(p != nullptr);
@@ -71,8 +78,42 @@ HttpMsgSection* HttpContextData::clear_snapshot(IpsContext* context)
     if ( hcd )
     {
         section = hcd->current_section;
-        hcd->clear();
+        hcd->current_section = nullptr;
     }
 
     return section;
+}
+
+void HttpContextData::save_pending_section_buffer(const uint8_t* buffer)
+{
+    assert(buffer);
+
+    DetectionEngine::wait_for_context();
+    IpsContext* context = DetectionEngine::get_next_context();
+    assert(context);
+
+    auto* hcd = static_cast<HttpContextData*>(DetectionEngine::get_data(ips_id, context));
+    if ( !hcd )
+    {
+        hcd = new HttpContextData;
+        context->set_context_data(ips_id, hcd);
+    }
+
+    assert(!hcd->pending_section_buffer);
+    hcd->pending_section_buffer = buffer;
+}
+
+void HttpContextData::claim_pending_section_buffer(IpsContext* context, const uint8_t* expected)
+{
+    assert(context);
+    assert(expected);
+
+    auto* const hcd = static_cast<HttpContextData*>(DetectionEngine::get_data(ips_id, context));
+    assert(hcd);
+    if ( hcd )
+    {
+        assert(hcd->pending_section_buffer == expected);
+        if ( hcd->pending_section_buffer == expected )
+            hcd->pending_section_buffer = nullptr;
+    }
 }

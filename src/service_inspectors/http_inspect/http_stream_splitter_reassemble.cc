@@ -26,6 +26,7 @@
 #include "protocols/packet.h"
 
 #include "http_compress_stream.h"
+#include "http_context_data.h"
 #include "http_inspect.h"
 #include "http_module.h"
 #include "http_test_input.h"
@@ -359,6 +360,9 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
 
         buffer = nullptr;
         session_data->section_offset[source_id] = 0;
+
+        if (!session_data->is_for_httpx())
+            HttpContextData::save_pending_section_buffer(http_buf.data);
     }
     return http_buf;
 }

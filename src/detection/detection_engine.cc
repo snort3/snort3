@@ -300,6 +300,9 @@ void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
         sw->complete();
 }
 
+IpsContext* DetectionEngine::get_next_context()
+{ return Analyzer::get_switcher()->get_next(); }
+
 uint8_t* DetectionEngine::get_next_buffer(unsigned& max)
 {
     max = IpsContext::buf_size;

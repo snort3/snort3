@@ -27,6 +27,11 @@ add_cpputest( http_cutter_decompression_test
     LIBS ${HTTP_COMPRESSION_LIBS}
 )
 
+add_cpputest( http_context_data_test
+    SOURCES
+        ../http_context_data.cc
+)
+
 add_cpputest( http_module_test
     SOURCES
         ../http_cache_data.cc
