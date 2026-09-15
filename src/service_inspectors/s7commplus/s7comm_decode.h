@@ -54,6 +54,10 @@ class S7commplusFlowData;
 /* Need 8 bytes for MBAP Header + Function Code */
 #define S7COMMPLUS_MIN_LEN 8       // this value needs to be decided
 
+/* TPKT + COTP + S7commplus Header + S7commplus Data Header
+   Total 18 bytes */
+#define S7COMMPLUS_MIN_DATA_FRAME_LEN 18
+
 /* GIDs, SIDs, and Strings */
 #define GENERATOR_SPP_S7COMMPLUS 149   /* matches generators.h */
 

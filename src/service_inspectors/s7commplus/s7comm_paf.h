@@ -68,11 +68,13 @@ public:
     bool is_paf() override { return true; }
 
 private:
-
+    StreamSplitter::Status paf_abort();
+    StreamSplitter::Status flush_frame(const snort::Packet*, uint32_t* fp);
     void reset_state();
 
     s7commplus_paf_state_t state;
     uint16_t tpkt_length;
+    uint16_t consecutive_small_pdus;
 };
 
 #endif

@@ -31,6 +31,13 @@
 
 using namespace snort;
 
+static const Parameter s7commplus_params[] =
+{
+    { "small_pdus_limit", Parameter::PT_INT, "0:65534", "64",
+      "max consecutive zero-payload TPKT PDUs before PAF abort" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 THREAD_LOCAL ProfileStats s7commplus_prof;
 
 //-------------------------------------------------------------------------
@@ -43,6 +50,8 @@ const PegInfo peg_names[] =
     { CountType::SUM, "frames", "total S7commplus messages" },
     { CountType::NOW, "concurrent_sessions", "total concurrent s7commplus sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent s7commplus sessions" },
+    { CountType::SUM, "small_pdu_aborts",
+        "flows aborted after exceeding the small-frame flush budget" },
 
     { CountType::END, nullptr, nullptr }
 };
@@ -80,5 +89,13 @@ const RuleMap* S7commplusModule::get_rules() const
 //-------------------------------------------------------------------------
 
 S7commplusModule::S7commplusModule() :
-    Module(S7COMMPLUS_NAME, S7COMMPLUS_HELP)
+    Module(S7COMMPLUS_NAME, S7COMMPLUS_HELP, s7commplus_params)
 { }
+
+bool S7commplusModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("small_pdus_limit") )
+        small_pdus_limit = v.get_uint16();
+
+    return true;
+}

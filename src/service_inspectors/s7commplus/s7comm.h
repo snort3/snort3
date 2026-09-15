@@ -24,6 +24,8 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
+#include "framework/inspector.h"
+#include "protocols/packet.h"
 
 struct S7commplusStats
 {
@@ -31,6 +33,7 @@ struct S7commplusStats
     PegCount frames;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount small_pdu_aborts;
 };
 
 struct S7commplusSessionData
@@ -68,6 +71,28 @@ public:
 public:
     static unsigned inspector_id;
     S7commplusSessionData ssn_data;
+};
+
+class S7commplus : public snort::Inspector
+{
+public:
+    S7commplus(uint16_t small_pdus_limit);
+
+    void show(const snort::SnortConfig*) const override;
+    void eval(snort::Packet*) override;
+
+    int get_message_type(int version, const char* name);
+    int get_info_type(int version, const char* name);
+
+    snort::StreamSplitter* get_splitter(bool c2s) override;
+
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
+
+    uint16_t get_small_pdus_limit() const
+    { return small_pdus_limit; }
+
+private:
+    uint16_t small_pdus_limit;
 };
 
 int get_message_type(int version, const char* name);

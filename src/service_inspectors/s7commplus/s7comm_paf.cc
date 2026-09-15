@@ -34,13 +34,21 @@
 
 using namespace snort;
 
-
 static std::vector<uint8_t> cotp_invalid_codes { 0x00, 0x03, 0x09, 0x0A };
+
+inline int16_t get_s7commplus_small_pdus_limit(const snort::Packet* p)
+{
+    if ( !p or !p->flow or !p->flow->gadget )
+        return S7COMMPLUS_DEFAULT_SMALL_PDUS_LIMIT;
+
+    return static_cast<const S7commplus*>(p->flow->gadget)->get_small_pdus_limit();
+}
 
 S7commplusSplitter::S7commplusSplitter(bool b) : StreamSplitter(b)
 {
     state = S7COMMPLUS_PAF_STATE__TPKT_VER;
     tpkt_length = 0;
+    consecutive_small_pdus = 0;
 }
 
 // S7comm/TCP PAF:
@@ -49,7 +57,7 @@ S7commplusSplitter::S7commplusSplitter(bool b) : StreamSplitter(b)
 // Sets flush point at successful find of S7COMMPLUS protocol ID inside TPKT and COTP encapsulation.
 
 StreamSplitter::Status S7commplusSplitter::scan(
-    Packet*, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
+    Packet* p, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
     const uint8_t* processed_data = data;
@@ -62,11 +70,8 @@ StreamSplitter::Status S7commplusSplitter::scan(
         case S7COMMPLUS_PAF_STATE__TPKT_VER:
         {
             uint8_t tpkt_version = *processed_data;
-            if ( tpkt_version != TPKT_SUPPORTED_VERSION)
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
+            if (tpkt_version != TPKT_SUPPORTED_VERSION)
+                return paf_abort();
 
             ++state;
             break;
@@ -75,10 +80,7 @@ StreamSplitter::Status S7commplusSplitter::scan(
         {
             uint8_t tpkt_reserved_bytes = *processed_data;
             if (tpkt_reserved_bytes != 0)
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
+                return paf_abort();
 
             ++state;
             break;
@@ -93,10 +95,7 @@ StreamSplitter::Status S7commplusSplitter::scan(
         {
             tpkt_length |= *(processed_data);
             if (tpkt_length < TPKT_MIN_PACKET_LEN)
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
+                return paf_abort();
 
             ++state;
             break;
@@ -105,11 +104,8 @@ StreamSplitter::Status S7commplusSplitter::scan(
         {
             uint8_t cotp_length = *(processed_data);
             if (cotp_length < COTP_MIN_PACKET_LEN)
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
-            
+                return paf_abort();
+
             ++state;
             break;
         }
@@ -121,10 +117,7 @@ StreamSplitter::Status S7commplusSplitter::scan(
 
             if ( (std::any_of(cotp_invalid_codes.begin(), cotp_invalid_codes.end(),
                 [&cotp_tpdu](uint8_t code) { return cotp_tpdu == code; })) or flags)
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
+                return paf_abort();
 
             if (cotp_tpdu == COTP_CONNECTION_REQUEST_TPDU)
             {
@@ -135,11 +128,7 @@ StreamSplitter::Status S7commplusSplitter::scan(
                 state = S7COMMPLUS_PAF_STATE__COTP_DT_TPDU_NUM_EOT;
             }
             else
-            {
-                *fp = tpkt_length;
-                reset_state();
-                return StreamSplitter::FLUSH;
-            }
+                return flush_frame(p, fp);
 
             break;
         }
@@ -149,54 +138,44 @@ StreamSplitter::Status S7commplusSplitter::scan(
         case S7COMMPLUS_PAF_STATE__COTP_CR_SRC_REF_2:
             ++state;
             break;
-        
+
         case S7COMMPLUS_PAF_STATE__COTP_CR_CLASS_OPTIONS:
         {
             uint8_t cotp_cr_class_options = *processed_data;
 
             if (!cotp_cr_class_options or (cotp_cr_class_options == 0x10)) // Class 0 or 1
-            {
-                *fp = tpkt_length;
-                reset_state();
-                return StreamSplitter::FLUSH;
-            }
+                return flush_frame(p, fp);
             else
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
+                return paf_abort();
+
+            break;
         }
         case S7COMMPLUS_PAF_STATE__COTP_DT_TPDU_NUM_EOT:
         {
             auto dst_ref_last_packet = *processed_data;
-            if (dst_ref_last_packet & 0x80) // 1st bit indicates that data is finished
+
+            // 1st bit indicates that data is finished; a TPKT that ends with the COTP
+            // header carries no payload, so there is no protocol id to look at
+            if (dst_ref_last_packet & 0x80)
                 ++state;
             else
-            {
                 //COTP fragment, flush and wait for data
-                *fp = tpkt_length;
-                reset_state();
-                return StreamSplitter::FLUSH;
-            }
+                return flush_frame(p, fp);
             break;
         }
         case S7COMMPLUS_PAF_STATE__S7_PROTOCOL_ID:
         {
             uint8_t s7_protocol_id = *processed_data;
             if (s7_protocol_id != S7COMMPLUS_PROTOCOL_ID)
-            {
-                reset_state();
-                return StreamSplitter::ABORT;
-            }
+                return paf_abort();
 
-            *fp = tpkt_length;
-            reset_state();
-            return StreamSplitter::FLUSH;
+            return flush_frame(p, fp);
+
+            break;
         }
         default:
             assert(false);
-            reset_state();
-            return StreamSplitter::ABORT;
+            return paf_abort();
         }
 
         bytes_processed++;
@@ -204,6 +183,36 @@ StreamSplitter::Status S7commplusSplitter::scan(
     }
 
     return StreamSplitter::SEARCH;
+}
+
+StreamSplitter::Status S7commplusSplitter::flush_frame(const Packet* p, uint32_t* fp)
+{
+    const uint16_t small_pdus_limit = get_s7commplus_small_pdus_limit(p);
+
+    if (small_pdus_limit != 0)
+    {
+        if (tpkt_length < S7COMMPLUS_MIN_DATA_FRAME_LEN)
+        {
+            if (++consecutive_small_pdus > small_pdus_limit)
+            {
+                ++s7commplus_stats.small_pdu_aborts;
+                consecutive_small_pdus = 0;
+                return paf_abort();
+            }
+        }
+        else
+            consecutive_small_pdus = 0;
+    }
+
+    *fp = tpkt_length;
+    reset_state();
+    return StreamSplitter::FLUSH;
+}
+
+StreamSplitter::Status S7commplusSplitter::paf_abort()
+{
+    reset_state();
+    return StreamSplitter::ABORT;
 }
 
 void S7commplusSplitter::reset_state()

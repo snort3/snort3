@@ -22,6 +22,8 @@
 #ifndef S7COMM_MODULE_H
 #define S7COMM_MODULE_H
 
+#include <cstdint>
+
 #include "framework/module.h"
 
 #define GID_S7COMMPLUS 149
@@ -29,6 +31,8 @@
 #define S7COMMPLUS_BAD_LENGTH        1
 #define S7COMMPLUS_BAD_PROTO_ID      2
 #define S7COMMPLUS_RESERVED_FUNCTION 3
+
+#define S7COMMPLUS_DEFAULT_SMALL_PDUS_LIMIT 64
 
 #define S7COMMPLUS_NAME "s7commplus"
 #define S7COMMPLUS_HELP "s7commplus inspection"
@@ -39,6 +43,8 @@ class S7commplusModule : public snort::Module
 {
 public:
     S7commplusModule();
+
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_S7COMMPLUS; }
@@ -56,6 +62,12 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    uint16_t get_small_pdus_limit() const
+    { return small_pdus_limit; }
+
+private:
+    uint16_t small_pdus_limit = S7COMMPLUS_DEFAULT_SMALL_PDUS_LIMIT;
 };
 
 #endif

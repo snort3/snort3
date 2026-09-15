@@ -26,8 +26,8 @@
 #include "s7comm.h"
 
 #include "detection/detection_engine.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
-#include "protocols/packet.h"
 
 #include "s7comm_decode.h"
 #include "s7comm_module.h"
@@ -79,21 +79,13 @@ S7commplusFlowData::~S7commplusFlowData()
 // class stuff
 //-------------------------------------------------------------------------
 
-class S7commplus : public Inspector
+S7commplus::S7commplus(uint16_t limit) : small_pdus_limit(limit)
+{ }
+
+void S7commplus::show(const SnortConfig*) const
 {
-public:
-    // default ctor / dtor
-    void eval(Packet*) override;
-
-    int get_message_type(int version, const char* name);
-    int get_info_type(int version, const char* name);
-
-    StreamSplitter* get_splitter(bool c2s) override
-    { return new S7commplusSplitter(c2s); }
-
-    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override
-    { return ( id == S7COMMPLUS_CONTENT_BUFID ) ? get_buf_s7commplus_content(p, b) : false; }
-};
+    ConfigLogger::log_value("small_pdus_limit", small_pdus_limit);
+}
 
 void S7commplus::eval(Packet* p)
 {
@@ -134,6 +126,12 @@ void S7commplus::eval(Packet* p)
         mfd->reset();
 }
 
+snort::StreamSplitter* S7commplus::get_splitter(bool c2s)
+{ return new S7commplusSplitter(c2s); }
+
+bool S7commplus::get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
+{ return ( id == S7COMMPLUS_CONTENT_BUFID ) ? get_buf_s7commplus_content(p, b) : false; }
+
 //-------------------------------------------------------------------------
 // plugin stuff
 //-------------------------------------------------------------------------
@@ -149,9 +147,11 @@ static void s7commplus_init()
     S7commplusFlowData::init();
 }
 
-static Inspector* s7commplus_ctor(Module*)
+// cppcheck-suppress constParameterCallback
+static Inspector* s7commplus_ctor(Module* m)
 {
-    return new S7commplus;
+    const S7commplusModule* mod = static_cast<const S7commplusModule*>(m);
+    return new S7commplus(mod->get_small_pdus_limit());
 }
 
 static void s7commplus_dtor(Inspector* p)
