@@ -39,9 +39,33 @@ class SO_PUBLIC PDFJSNorm : public JSNorm
 public:
     static bool is_pdf(const void* data, size_t len)
     {
-        constexpr char magic[] = "%PDF-1.";
-        constexpr int magic_len = sizeof(magic) - 1;
-        return magic_len < len and !strncmp((const char*)data, magic, magic_len);
+        constexpr char magic[] = "%PDF-";
+        constexpr size_t magic_len = sizeof(magic) - 1;
+        constexpr size_t major_version_offset = magic_len;
+        constexpr size_t separator_offset = major_version_offset + 1;
+        constexpr size_t minor_version_offset = separator_offset + 1;
+        constexpr size_t eol_offset = minor_version_offset + 1;
+        constexpr size_t header_len = eol_offset + 1;
+        constexpr size_t max_scan_len = 1024;
+
+        if (!data or len < header_len)
+            return false;
+
+        const auto* begin = static_cast<const char*>(data);
+        const auto scan_len = std::min(len, max_scan_len);
+        const auto* last_header = begin + scan_len - header_len;
+
+        for (const auto* header = begin; header <= last_header; ++header)
+        {
+            if (!std::memcmp(header, magic, magic_len) and
+                (header[major_version_offset] == '1' or header[major_version_offset] == '2') and
+                header[separator_offset] == '.' and
+                header[minor_version_offset] >= '0' and header[minor_version_offset] <= '9' and
+                (header[eol_offset] == '\r' or header[eol_offset] == '\n'))
+                return true;
+        }
+
+        return false;
     }
 
     PDFJSNorm(JSNormConfig* cfg, uint32_t gen_id) :

@@ -64,6 +64,7 @@ add_catch_test( pdf_tokenizer_test
     SOURCES
         ${pdf_tokenizer_OUTPUTS}
         ${CMAKE_SOURCE_DIR}/src/helpers/streambuf.cc
+        js_pdf_norm_test.cc
         js_test_stubs.cc
 )
 

@@ -142,3 +142,12 @@ Known limitations:
 * Compressed JavaScript streams are handled correctly only if PDF decompression is
   enabled (http_inspect.decompress_pdf = true, and the same option for other inspectors)
 
+Support for ISO 32000-2:2020 (PDF 2.0) is limited. The following features are
+not supported:
+* Encrypted JavaScript strings and streams are not decrypted or skipped. Ciphertext
+  may be passed to JavaScript normalization and trigger a syntax error.
+* JavaScript actions stored in object streams are not extracted.
+* Indirect literal and hexadecimal strings referenced by /JS are not resolved.
+* Escaped names are not decoded, so an escaped /JS dictionary key is not recognized.
+* Indirect object references do not distinguish generation numbers.
+* Some UTF-16BE characters above the surrogate range are not decoded correctly.
