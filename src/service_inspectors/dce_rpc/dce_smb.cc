@@ -361,8 +361,11 @@ void Dce2SmbInspector::eval(Packet* p)
     if (p == nullptr)
         return;
 
-    assert(p->has_tcp_data());
-    assert(p->flow);
+    if (!(p->has_tcp_data() || p->has_udp_quic_data()) || !p->flow)
+    {
+        assert(false);
+        return;
+    }
 
     reset_using_rpkt();
 

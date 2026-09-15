@@ -195,12 +195,11 @@ void DCE2_Smb2Setup(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr, const uint64_
 {
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
             DetectionEngine::get_current_packet(), "%s_RESP: error\n",
             smb2_command_string[SMB2_COM_SESSION_SETUP]);
@@ -230,12 +229,11 @@ void DCE2_Smb2TreeConnect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 {
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         dce2_smb_stats.v2_tree_cnct_err_resp++;
     }
     else if (structure_size == SMB2_TREE_CONNECT_RESPONSE_STRUC_SIZE)
@@ -547,12 +545,11 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         ttr = str->findTtracker(tid);
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         str->removeRtracker(ssd->flow_key, mid);
 
         dce2_smb_stats.v2_crt_err_resp++;
@@ -655,12 +652,11 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 {
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
             DetectionEngine::get_current_packet(), "%s_RESP: error\n",
             smb2_command_string[SMB2_COM_CLOSE]);
@@ -767,12 +763,11 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     // Using structure size to decide whether it is response or request
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
             DetectionEngine::get_current_packet(), "%s: error resp\n",
             smb2_command_string[SMB2_COM_SET_INFO]);
@@ -978,12 +973,11 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 {
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (rtr and rtr->get_file_id())
         {
@@ -1132,12 +1126,11 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 {
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         DCE2_Smb2RequestTracker* wtr = str->findRtracker(ssd->flow_key, mid);
         if (wtr and wtr->get_file_id())
         {
@@ -1215,12 +1208,11 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     {
         data_size = UINT16_MAX;
     }
+    if (Smb2AsyncInterim(smb_hdr, structure_size))
+        return;
+
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
-        if ((alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND) &&
-            (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
-            return;
-
         dce2_smb_stats.v2_ioctl_err_resp++;
         str->removeRtracker(ssd->flow_key, mid);
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,

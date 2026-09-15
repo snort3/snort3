@@ -139,9 +139,27 @@ inline uint64_t Smb2Mid(const Smb2Hdr* hdr)
     return LETOHLL_UNALIGNED(bytes + offsetof(Smb2SyncHdr, message_id));
 }
 
+// An async interim response (MS-SMB2 3.3.4.2) tells the client the operation is still running.
+// It carries an ERROR Response body with no error in it, so it must be dropped before
+// StructureSize is used to tell a request from a response -- 9 is also the TREE_CONNECT
+// Request and SESSION_SETUP Response size, and matches no CLOSE, READ, WRITE or SET_INFO body
+// at all.  STATUS_PENDING has severity SUCCESS, so Smb2Error() does not and should not
+// recognise it.  Only a server sends an interim response, hence the direction test: without it
+// a client could suppress inspection of its own traffic by setting two header bits.
+inline bool Smb2AsyncInterim(const Smb2Hdr* hdr, uint16_t structure_size)
+{
+    if (structure_size != SMB2_ERROR_RESPONSE_STRUC_SIZE)
+        return false;
+
+    const uint32_t flags = snort::alignedNtohl(&hdr->flags);
+
+    return (flags & SMB2_FLAGS_SERVER_TO_REDIR) and (flags & SMB2_FLAGS_ASYNC_COMMAND) and
+        SMB2_STATUS_PENDING == snort::alignedNtohl(&hdr->status);
+}
+
 inline bool Smb2Error(const Smb2Hdr* hdr)
 {
-    return (hdr->status != SMB_NT_STATUS__SUCCESS);
+    return (SMB_NT_STATUS_SEVERITY__ERROR == (uint8_t)(snort::alignedNtohl(&hdr->status) >> 30));
 }
 
 inline std::shared_ptr<DCE2_Smb2SessionTracker> DCE2_Smb2FindSidInSsd(DCE2_Smb2SsnData* ssd, const

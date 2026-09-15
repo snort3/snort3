@@ -415,7 +415,7 @@ IpsOption::EvalStatus Dce2IfaceOption::eval(Cursor& c, Packet* p)
 
     if (version.is_set())
     {
-        if (p->has_tcp_data())
+        if (p->has_tcp_data() || p->has_udp_quic_data())
         {
             if (!version.eval(ropts->iface_vers_maj))
             {
