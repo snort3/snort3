@@ -47,7 +47,7 @@ class ModbusSplitter : public snort::StreamSplitter
 public:
     ModbusSplitter(bool);
 
-    Status scan(snort::Packet*, const uint8_t* data, uint32_t len, uint32_t flags,
+    Status scan(snort::Packet* p, const uint8_t* data, uint32_t len, uint32_t flags,
         uint32_t* fp) override;
 
     bool is_paf() override { return true; }
@@ -55,9 +55,12 @@ public:
     void reset();
 
 private:
+    Status flush_frame(const snort::Packet*, uint32_t* fp, uint32_t bytes_processed);
+
     modbus_paf_state_t state;
     uint16_t modbus_length;
     uint32_t bytes_seen;
+    uint16_t consecutive_small_pdus;
 };
 
 #endif

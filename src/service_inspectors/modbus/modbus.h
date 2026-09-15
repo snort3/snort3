@@ -24,6 +24,8 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
+#include "framework/inspector.h"
+#include "protocols/packet.h"
 
 struct ModbusStats
 {
@@ -31,6 +33,7 @@ struct ModbusStats
     PegCount frames;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount small_pdu_aborts;
 };
 
 struct modbus_session_data_t
@@ -38,6 +41,29 @@ struct modbus_session_data_t
     uint16_t flags;
     uint8_t func;
     uint8_t unit;
+};
+
+class Modbus : public snort::Inspector
+{
+public:
+    Modbus(uint16_t small_pdus_limit);
+
+    void show(const snort::SnortConfig*) const override;
+    void eval(snort::Packet*) override;
+    bool get_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
+        snort::InspectionBuffer& b) override;
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
+
+    int get_message_type(int version, const char* name);
+    int get_info_type(int version, const char* name);
+
+    snort::StreamSplitter* get_splitter(bool c2s) override;
+
+    uint16_t get_small_pdus_limit() const
+    { return small_pdus_limit; }
+
+private:
+    uint16_t small_pdus_limit;
 };
 
 class ModbusFlowData : public snort::FlowData
@@ -67,4 +93,3 @@ extern THREAD_LOCAL ModbusStats modbus_stats;
 bool get_buf_modbus_data(snort::Packet* p, snort::InspectionBuffer& b);
 
 #endif
-

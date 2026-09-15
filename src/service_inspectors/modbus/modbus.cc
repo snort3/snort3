@@ -25,6 +25,7 @@
 #include "modbus.h"
 
 #include "detection/detection_engine.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
@@ -83,22 +84,13 @@ ModbusFlowData::~ModbusFlowData()
 // class stuff
 //-------------------------------------------------------------------------
 
-class Modbus : public Inspector
+Modbus::Modbus(uint16_t limit) : small_pdus_limit(limit)
+{ }
+
+void Modbus::show(const SnortConfig*) const
 {
-public:
-    // default ctor / dtor
-    void eval(Packet*) override;
-    bool get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b) override
-    { return (ibt == InspectionBuffer::IBT_BODY) ? get_buf_modbus_data(p, b) : false; }
-    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override
-    { return (id == MODBUS_DATA_BUFID) ? get_buf_modbus_data(p, b) : false; }
-
-    int get_message_type(int version, const char* name);
-    int get_info_type(int version, const char* name);
-
-    StreamSplitter* get_splitter(bool c2s) override
-    { return new ModbusSplitter(c2s); }
-};
+    ConfigLogger::log_value("small_pdus_limit", small_pdus_limit);
+}
 
 void Modbus::eval(Packet* p)
 {
@@ -139,6 +131,15 @@ void Modbus::eval(Packet* p)
         mfd->reset();
 }
 
+bool Modbus::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+{ return (ibt == InspectionBuffer::IBT_BODY) ? get_buf_modbus_data(p, b) : false; }
+
+bool Modbus::get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
+{ return (id == MODBUS_DATA_BUFID) ? get_buf_modbus_data(p, b) : false; }
+
+StreamSplitter* Modbus::get_splitter(bool c2s)
+{ return new ModbusSplitter(c2s); }
+
 //-------------------------------------------------------------------------
 // plugin stuff
 //-------------------------------------------------------------------------
@@ -154,9 +155,11 @@ static void modbus_init()
     ModbusFlowData::init();
 }
 
-static Inspector* modbus_ctor(Module*)
+// cppcheck-suppress constParameterCallback
+static Inspector* modbus_ctor(Module* m)
 {
-    return new Modbus;
+    const ModbusModule* mod = static_cast<const ModbusModule*>(m);
+    return new Modbus(mod->get_small_pdus_limit());
 }
 
 static void modbus_dtor(Inspector* p)

@@ -21,6 +21,8 @@
 #ifndef MODUBS_MODULE_H
 #define MODUBS_MODULE_H
 
+#include <cstdint>
+
 #include "framework/module.h"
 
 #define GID_MODBUS 144
@@ -28,6 +30,8 @@
 #define MODBUS_BAD_LENGTH        1
 #define MODBUS_BAD_PROTO_ID      2
 #define MODBUS_RESERVED_FUNCTION 3
+
+#define MODBUS_DEFAULT_SMALL_PDUS_LIMIT 32
 
 #define MODBUS_NAME "modbus"
 #define MODBUS_HELP "modbus inspection"
@@ -38,6 +42,8 @@ class ModbusModule : public snort::Module
 {
 public:
     ModbusModule();
+
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     unsigned get_gid() const override
     { return GID_MODBUS; }
@@ -55,6 +61,12 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    uint16_t get_small_pdus_limit() const
+    { return small_pdus_limit; }
+
+private:
+    uint16_t small_pdus_limit = MODBUS_DEFAULT_SMALL_PDUS_LIMIT;
 };
 
 #endif

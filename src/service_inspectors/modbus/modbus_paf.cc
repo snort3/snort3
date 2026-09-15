@@ -33,16 +33,27 @@
 
 using namespace snort;
 
+#define MODBUS_MBAP_LEN                 6     // Transaction ID + Protocol ID + Length
 #define MODBUS_MIN_HDR_LEN              2     // Enough for Unit ID + Function
+#define MODBUS_MIN_NON_EMPTY_HDR_LEN    3     // Minimal PDU size that contains data
 #define MODBUS_MAX_HDR_LEN              254   // Max PDU size is 260, 6 bytes already seen
 #define MODBUS_INVALID_CLIENT_FUNC_CODE 0x80  // Invalid function code for client requests
 #define MODBUS_INVALID_FUNC_CODE        0x00  // Invalid function code
+
+inline uint16_t get_modbus_small_pdus_limit(const snort::Packet* p)
+{
+    if ( !p or !p->flow or !p->flow->gadget )
+        return MODBUS_DEFAULT_SMALL_PDUS_LIMIT;
+
+    return static_cast<const Modbus*>(p->flow->gadget)->get_small_pdus_limit();
+}
 
 ModbusSplitter::ModbusSplitter(bool b) : StreamSplitter(b)
 {
     state = MODBUS_PAF_STATE__TRANS_ID_1;
     modbus_length = 0;
     bytes_seen = 0;
+    consecutive_small_pdus = 0;
 }
 
 void ModbusSplitter::reset()
@@ -59,7 +70,7 @@ StreamSplitter::Status ModbusSplitter::scan(
     Packet* p, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
-    bool isInvalid = false; 
+    bool isInvalid = false;
     /* Process this packet 1 byte at a time */
     /* Special case: when packet length equals the minimum Modbus frame size,
        we need to check the SET_FLUSH state even after processing all bytes
@@ -109,13 +120,7 @@ StreamSplitter::Status ModbusSplitter::scan(
             bytes_seen += len;
             return bytes_seen >= MODBUS_MAX_OCTETS ? StreamSplitter::ABORT : StreamSplitter::SEARCH;
         case MODBUS_PAF_STATE__SET_FLUSH:
-            // Length - The length field is a byte count of the following fields, including the Unit
-            // identifier and data fields. so we subtract 2 to account for the Unit ID and Function Code.
-            *fp = modbus_length + bytes_processed - 2;
-            bytes_seen = 0;
-            reset();
-            modbus_stats.frames++;
-            return StreamSplitter::FLUSH;
+            return flush_frame(p, fp, bytes_processed);
         }
 
         bytes_processed++;
@@ -125,3 +130,33 @@ StreamSplitter::Status ModbusSplitter::scan(
     return StreamSplitter::SEARCH;
 }
 
+StreamSplitter::Status ModbusSplitter::flush_frame(
+    const Packet* p, uint32_t* fp, uint32_t bytes_processed)
+{
+    const uint16_t small_pdus_limit = get_modbus_small_pdus_limit(p);
+
+    if (small_pdus_limit != 0)
+    {
+        if (modbus_length < MODBUS_MIN_NON_EMPTY_HDR_LEN)
+        {
+            if (++consecutive_small_pdus > small_pdus_limit)
+            {
+                ++modbus_stats.small_pdu_aborts;
+                consecutive_small_pdus = 0;
+                bytes_seen = 0;
+                reset();
+                return StreamSplitter::ABORT;
+            }
+        }
+        else
+            consecutive_small_pdus = 0;
+    }
+
+    // We subtract 2 bytes to account for the Unit ID and Function Code
+    // that count twice
+    *fp = modbus_length + bytes_processed - 2;
+    bytes_seen = 0;
+    reset();
+    modbus_stats.frames++;
+    return StreamSplitter::FLUSH;
+}
