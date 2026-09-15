@@ -123,7 +123,7 @@ const PegInfo base_pegs[] =
 
     // Per-flow memory accounting, sampled only at flow release/retire.
     // Live-flow numbers are available via the dump_flows control command.
-    { CountType::MAX, "released_max_flow_mem", "peak memory used by a single flow in bytes (life-of-flow high-water mark, sampled at release)" },
+    { CountType::MAX, "released_max_flow_mem", "peak memory used by a single logical flow in bytes (sampled at release)" },
     { CountType::SUM, "released_total_flow_mem", "cumulative memory of all flows sampled at release/retire (excludes still-active flows)" },
 
     // Keep the NOW stats at the bottom as it requires special sum_stats logic

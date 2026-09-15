@@ -182,8 +182,10 @@ channel.  Changes to side_channel{} require a process restart.
 ==== Per-Flow Memory Tracking
 
 Flow::get_mem_usage() returns a running byte count of heap allocations
-relevant to the flow. get_peak_mem_usage() returns the high water mark over the flow's
-lifetime. Both are intended to be O(1) so they can be queried often (e.g on pruning).
+relevant to the flow. get_peak_mem_usage() returns the high water mark for the current
+logical session. Flow::restart() resets the peak to the current retained footprint so a
+reused Flow object does not carry the previous session's peak forward. Both accessors are
+intended to be O(1) so they can be queried often (e.g on pruning).
 
 The choice to use a push model here, rather than summing the flow's allocations on demand
 is deliberate. It allows us to query the flow's memory utilization quickly (and frequently,
@@ -210,8 +212,14 @@ This is for objects and buffers not covered by a FlowData size_of(). Currently p
     allocate_session() would otherwise do, since it bypasses it.
 HTTP/HTTP2 reassembly buffers are not yet tracked.
 
-sub_mem stops at zero - if we are in a situation where allocated is less than deallocated,
-we set sub_mem to zero to avoid breaking the MAX/SUM pegs with a wrap around value.
+sub_mem's under-subtraction handling is deliberately two-tier. In debug builds
+assert(bytes + sizeof(Flow) <= mem_bytes) is a tripwire: any subtraction that would push
+mem_bytes below its sizeof(Flow) baseline is an alloc/dealloc mismatch and aborts loudly.
+In release builds (assert compiled out) the subtraction clamps at zero rather than back up
+to sizeof(Flow). This is intentional: it prevents an unsigned wrap-around that would blow
+up the MAX/SUM pegs with a ~2^64 value, and it leaves an out-of-range value (below
+sizeof(Flow), possibly zero) that visibly flags the mismatch in production -- clamping up
+to a plausible sizeof(Flow) would hide the bug instead.
 
 === Adding a new FlowData subclass
 
@@ -235,7 +243,23 @@ the above section.
     summary (count/total/avg/cur_max/peak_max), a current-bytes histogram, and the
     top-N flows by peak (optional arg: N, default 10).
 
-  * Stream base peg counters, sampled at release/retire (flow_cache.cc):
+  * dump_flows / dump_flows_binary controls (stream module): per-flow dump. The
+    text form prints "flow_mem N bytes"; the binary form serializes flow_mem
+    (get_mem_usage) and peak_flow_mem (get_peak_mem_usage) in the
+    DumpFlowsBinaryDescriptor wire record. That record is a raw byte image with no
+    version framing, so its layout is an external contract shared by tools/show_flows
+    and the out-of-tree correlate_conns consumer; the static_assert on its size is
+    the tripwire for keeping those consumers in sync.
+
+  * stream.flow_mem trace option (trace framework): logs each flow's current and
+    peak memory as it is released, retired, or reload-deleted (flow_cache.cc).
+    Emitted at debug
+    verbosity like the stream_tcp traces, so enable it with
+    trace = { modules = { stream = { flow_mem = 7 } } } -- a low-level
+    "enable all" won't trip it.
+
+  * Stream base peg counters, sampled at release/retire and reload-driven
+    delete (flow_cache.cc):
     - released_max_flow_mem (MAX): largest peak_mem_usage seen at release on
       this thread during the interval.
     - released_total_flow_mem (SUM): cumulative get_mem_usage() released

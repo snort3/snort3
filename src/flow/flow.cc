@@ -197,6 +197,11 @@ void Flow::restart(bool dump_flow_data)
     session_state = STREAM_STATE_NONE;
     expire_time = 0;
     previous_ssn_state = ssn_state;
+
+    // A restart begins a new logical session on this reusable Flow object.
+    // Retained allocations form the new session's starting point; peaks from
+    // the previous session must not contaminate its telemetry.
+    peak_mem_bytes = mem_bytes;
 }
 
 void Flow::restart(Packet& p, bool dump_flow_data)

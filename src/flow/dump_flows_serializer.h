@@ -44,6 +44,9 @@ public:
         dfd.print(ofile);
     }
 
+    // filled wire record; lets tests check the serialized fields
+    const DumpFlowsBinaryDescriptor& get_binary() const { return dfd.bin; }
+
 private:
     DumpFlowsDescriptor dfd;
 };

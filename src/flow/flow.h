@@ -246,8 +246,7 @@ public:
     }
     void sub_mem(size_t bytes)
     {
-        // make sure mem_bytes never drops below its sizeof(Flow) baseline
-        // (which would indicate an alloc/dealloc mismatch)
+        // under-subtraction is two-tier by design; see flow/dev_notes.txt
         assert(bytes + sizeof(Flow) <= mem_bytes);
         mem_bytes -= (bytes <= mem_bytes) ? bytes : mem_bytes;
     }

@@ -2041,6 +2041,9 @@ Configuration:
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.stream.all: enable all trace options { 0:255 }
+  * int trace.modules.stream.flow_mem: enable per-flow memory trace
+    logging { 0:255 }
   * int trace.modules.stream_tcp.all: enable all trace options {
     0:255 }
   * int trace.modules.stream_tcp.segments: enable stream TCP segments
@@ -6588,8 +6591,8 @@ Peg counts:
     tracking inspector configured (sum)
   * stream.no_flow_paf_no_flow: packets without flow: PAF payload but
     no flow exists (sum)
-  * stream.released_max_flow_mem: peak memory used by a single flow
-    in bytes (life-of-flow high-water mark, sampled at release) (max)
+  * stream.released_max_flow_mem: peak memory used by a single
+    logical flow in bytes (sampled at release) (max)
   * stream.released_total_flow_mem: cumulative memory of all flows
     sampled at release/retire (excludes still-active flows) (sum)
   * stream.allowlist_flows: number of flows moved to the allowlist
@@ -12699,6 +12702,9 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.stream.all: enable all trace options { 0:255 }
+  * int trace.modules.stream.flow_mem: enable per-flow memory trace
+    logging { 0:255 }
   * int trace.modules.stream_tcp.all: enable all trace options {
     0:255 }
   * int trace.modules.stream_tcp.segments: enable stream TCP segments
@@ -14188,8 +14194,8 @@ libraries see the Getting Started section of the manual.
     memcap (sum)
   * stream.pdu_timeout_prunes: number of PDU flows pruned due to
     timeout (sum)
-  * stream.released_max_flow_mem: peak memory used by a single flow
-    in bytes (life-of-flow high-water mark, sampled at release) (max)
+  * stream.released_max_flow_mem: peak memory used by a single
+    logical flow in bytes (sampled at release) (max)
   * stream.released_total_flow_mem: cumulative memory of all flows
     sampled at release/retire (excludes still-active flows) (sum)
   * stream.reload_allowed_deletes: number of allowed flows deleted by

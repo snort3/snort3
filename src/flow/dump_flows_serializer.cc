@@ -82,8 +82,8 @@ void DumpFlowsSerializer::initialize(const Flow& flow, const struct timeval& now
     dfd.bin.allowed_on_excess = flow.flags.allowed_on_excess;
     dfd.bin.in_allowlist = flow.flags.in_allowlist;
 
-    // text-only field, not part of the serialized binary record
-    dfd.flow_mem = flow.get_mem_usage();
+    dfd.bin.flow_mem = flow.get_mem_usage();
+    dfd.bin.peak_flow_mem = flow.get_peak_mem_usage();
 }
 
 void DumpFlowsSerializer::write (std::fstream& stream) const

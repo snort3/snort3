@@ -344,11 +344,13 @@ struct DumpFlowsBinaryDescriptor
     int remaining_time = 0;
     bool allowed_on_excess = false;
     bool in_allowlist = false;
+    uint64_t flow_mem = 0;       // Flow::get_mem_usage() at dump time
+    uint64_t peak_flow_mem = 0;  // Flow::get_peak_mem_usage() for the current logical session
 };
 
-// Size is ABI-dependent: 128 bytes on 64-bit, 116 on 32-bit. This assert is a
+// Size is ABI-dependent: 144 bytes on 64-bit, 132 on 32-bit. This assert is a
 // tripwire so a layout change can't slip through unnoticed.
-static_assert(sizeof(DumpFlowsBinaryDescriptor) == (sizeof(void*) == 8 ? 128 : 116),
+static_assert(sizeof(DumpFlowsBinaryDescriptor) == (sizeof(void*) == 8 ? 144 : 132),
     "binary flow record format may have changed; ensure all consumers are updated");
 
 class DumpFlowsDescriptor
@@ -358,9 +360,6 @@ public:
     ~DumpFlowsDescriptor() = default;
 
     DumpFlowsBinaryDescriptor bin;
-
-    // text-only fields below; these are never serialized to the binary dump
-    size_t flow_mem = 0;
 
     void print(std::fstream& text_stream) const
     {
@@ -427,7 +426,7 @@ public:
         else if ( bin.in_allowlist )
             allow_s = " (allowlist)";
 
-        out << " flow_mem " << flow_mem << " bytes";
+        out << " flow_mem " << bin.flow_mem << " bytes";
         text_stream << out.str() << proto.str() << allow_s << std::endl;
     }   
 };

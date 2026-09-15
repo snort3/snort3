@@ -83,14 +83,15 @@ void apply_daq_capability_gate(FlowCacheConfig& cfg)
     }
 }
 
-#ifdef DEBUG_MSGS
 static const TraceOption stream_trace_options[] =
 {
+    { "flow_mem", TRACE_FLOW_MEM, "enable per-flow memory trace logging" },
+#ifdef DEBUG_MSGS
     { "base", TRACE_BASE, "enable base stream trace logging" },
     { "flow", TRACE_FLOW, "enable flow trace logging" },
+#endif
     { nullptr, 0, nullptr }
 };
-#endif
 
 THREAD_LOCAL const Trace* stream_trace = nullptr;
 static uint32_t hold_time = 0;
@@ -203,13 +204,7 @@ void StreamModule::set_trace(const Trace* trace) const
 { stream_trace = trace; }
 
 const TraceOption* StreamModule::get_trace_options() const
-{
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
-    return stream_trace_options;
-#endif
-}
+{ return stream_trace_options; }
 
 enum DumpFlowsParams {FileName, Count, Protocol, ipA, ipB, portA, portB, Resume};
 struct DumpFlowsLuaParameters

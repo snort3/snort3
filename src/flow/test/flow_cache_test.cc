@@ -30,6 +30,7 @@
 #include "control/control.h"
 #include "detection/detection_engine.h"
 #include "flow/dump_flows.h"
+#include "flow/dump_flows_serializer.h"
 #include "flow/expect_cache.h"
 #include "flow/flow_cache.h"
 #include "flow/ha.h"
@@ -1723,6 +1724,31 @@ TEST(dump_flows, dump_flows_with_allowlist)
 TEST(dump_flows, dump_flows_no_flows_to_dump)
 {
     CHECK(df->execute(cache) == true);
+}
+
+TEST(dump_flows, serializer_captures_current_and_peak_mem)
+{
+    FlowKey flow_key;
+    flow_key.port_l = 1;
+    flow_key.pkt_type = PktType::UDP;
+    Flow* flow = cache->allocate(&flow_key);
+
+    // raise the high-water peak, then drop current below it, so the wire
+    // record must carry the current usage and the higher peak independently
+    flow->add_mem(256);
+    flow->add_mem(512);
+    flow->sub_mem(512);
+    CHECK(flow->get_peak_mem_usage() > flow->get_mem_usage());
+
+    DumpFlowsSerializer serializer;
+    const struct timeval now = { 0, 0 };
+    serializer.initialize(*flow, now);
+
+    const DumpFlowsBinaryDescriptor& bin = serializer.get_binary();
+    UNSIGNED_LONGS_EQUAL(flow->get_mem_usage(), bin.flow_mem);
+    UNSIGNED_LONGS_EQUAL(flow->get_peak_mem_usage(), bin.peak_flow_mem);
+
+    cache->purge();
 }
 
 TEST_GROUP(dump_flows_summary)

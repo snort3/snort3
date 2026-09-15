@@ -318,6 +318,25 @@ TEST(uni_candidacy, unchanged_block_state_is_inert)
     flow.key = nullptr;
 }
 
+TEST(flow_restart, resets_peak_memory_to_current_usage)
+{
+    Flow flow;
+    const size_t initial = flow.get_mem_usage();
+
+    // Model memory retained across a restart plus a transient old-session peak.
+    flow.add_mem(256);
+    flow.add_mem(512);
+    flow.sub_mem(512);
+    CHECK(flow.get_peak_mem_usage() > flow.get_mem_usage());
+
+    flow.restart(false);
+
+    UNSIGNED_LONGS_EQUAL(initial + 256, flow.get_mem_usage());
+    UNSIGNED_LONGS_EQUAL(flow.get_mem_usage(), flow.get_peak_mem_usage());
+
+    flow.sub_mem(256);
+}
+
 TEST_GROUP(inspection_time_presence)
 {
 };

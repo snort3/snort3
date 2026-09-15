@@ -51,13 +51,14 @@ static const std::map<std::string, PktType> protocol_to_type =
 };
 
 
-#ifdef DEBUG_MSGS
 enum
 {
-    TRACE_BASE = 0,
-    TRACE_FLOW
-};
+    TRACE_FLOW_MEM = 0,
+#ifdef DEBUG_MSGS
+    TRACE_BASE,
+    TRACE_FLOW,
 #endif
+};
 
 //-------------------------------------------------------------------------
 // stream module
