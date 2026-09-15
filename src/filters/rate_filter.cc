@@ -29,6 +29,7 @@
 
 #include "rate_filter.h"
 
+#include "detection/detection_engine.h"
 #include "detection/ips_context.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
@@ -36,6 +37,8 @@
 #include "hash/ghash.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
+#include "protocols/ip.h"
+#include "protocols/layer.h"
 #include "protocols/packet.h"
 #include "time/packet_time.h"
 #include "utils/util.h"
@@ -62,6 +65,21 @@ private:
 RateFilterFlowData::~RateFilterFlowData()
 {
     SFRF_ReleaseGauges(gauges);
+}
+
+static bool is_tunnel_carried(const Packet* p)
+{
+    if ( p->is_tunnel_encapsulated() || (p->proto_bits & PROTO_BIT__MPLS) )
+        return true;
+
+    ip::IpApi outer_ip;
+    int8_t layer_index = 0;
+
+    layer::set_outer_ip_api(p, outer_ip, layer_index);
+
+    // Plain IP tunnels such as GRE do not set the decapsulation marker.  A
+    // distinct outer IP layer still proves that this SYN arrived as a passenger.
+    return outer_ip.is_valid() && outer_ip != p->ptrs.ip_api;
 }
 
 RateFilterConfig* RateFilter_ConfigNew()
@@ -166,6 +184,15 @@ int RateFilter_SessionEvent(unsigned sid, Flow& flow, const SnortConfig& sc)
 {
     RateFilterConfig* rfc = sc.rate_filter_config;
     SFRFGaugeKeys gauges;
+    bool tunnel_carried = false;
+
+    if ( sid == SESSION_EVENT_SYN_RX )
+    {
+        const Packet* packet = DetectionEngine::get_current_packet();
+
+        if ( packet && packet->flow == &flow && packet->has_ip_hdr() )
+            tunnel_carried = is_tunnel_carried(packet);
+    }
 
     const unsigned fd_id = rf_flow_data_id.load(std::memory_order_relaxed);
 
@@ -174,7 +201,7 @@ int RateFilter_SessionEvent(unsigned sid, Flow& flow, const SnortConfig& sc)
 
     const int action = SFRF_TestThreshold(rfc, GID_SESSION, sid,
         get_inspection_policy()->policy_id, &flow.client_ip, &flow.server_ip,
-        packet_time(), SFRF_COUNT_INCREMENT, &gauges);
+        packet_time(), SFRF_COUNT_INCREMENT, &gauges, tunnel_carried);
 
     if ( !gauges.empty() && fd_id )
         flow.set_flow_data(new RateFilterFlowData(fd_id, std::move(gauges)));
@@ -191,4 +218,3 @@ void RateFilter_SessionRelease(Flow& flow)
 
     flow.free_flow_data(fd_id);
 }
-

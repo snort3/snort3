@@ -44,6 +44,37 @@ changed begins a new count, the old one being given back as the sessions
 holding it end.  Clearing the hash on reload instead would re-arm every
 concurrency cap and reset every sampling period.
 
+For a SYN-received session event carried through a tunnel, a source- or
+destination-tracked key also records that the attempt was tunneled.  The
+decoded inner source or destination remains the tracked address.  This keeps
+tunneled attempts from advancing the same address's direct-traffic counter,
+while all tunnel paths deliberately share one tunneled counter.  Rule-tracked
+filters remain global and do not use the discriminator.
+
+The direct and tunneled keys have independent counts and filter states.  An
+address observed in both forms can therefore reach the configured count once
+in each category before either action activates, and it occupies two tracking
+records.  This bounded split is intentional: sharing either state would allow
+tunnel traffic to activate the configured action for direct traffic again.
+
+This distinction applies only to the SYN-received session event.  The
+connection-established session event and rate filters for IPS rule events
+retain their existing accounting.
+
+The discriminator is packet ancestry, not Flow or DAQ connection ownership.
+It covers successful UDP-tunnel and TEB decapsulation, MPLS, and a visible IP
+ancestor distinct from the active IP layer, as occurs with plain GRE and
+IP-in-IP.  It is local to rate-filter accounting and does not redefine Flow
+identity.
+
+This discriminator changes only which counter an event uses.  It does not
+alter Flow identity or the configured rate-filter action semantics.
+
+The 16-bit discriminator replaces the tracking key's former explicit padding.
+On the current 64-bit build, the key remains 28 bytes and a hash allocation
+remains 132 bytes, so this distinction does not reduce the existing memcap's
+tracking capacity.
+
 The hash recovers its least recently used node when it needs room, and
 counts owed to a node that is gone are dropped, so the table has to be
 sized for the addresses being tracked.  A rate rebuilds its count from
@@ -127,4 +158,3 @@ event tracking facilities.
 Detection filter support the detection_filter rule option.  Rate and event
 filters have builtin modules defined in main/modules.cc.  Those module
 definitions should be refactored into the appropriate filter directory.
-

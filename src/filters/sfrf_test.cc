@@ -39,6 +39,7 @@ using namespace snort;
 
 #define IP4_SRC  "1.2.3.4"
 #define IP4_DST  "1.2.3.5"
+#define IP4_SRC_ALT "1.2.3.6" // distinct source still inside IP4_NET
 #define IP4_EXT  "2.2.3.6"     // doesn't match either src|dst
 
 #define IP4_NET  "1.2.0.0/16"
@@ -583,7 +584,7 @@ static int SetupCheck(int i)
     return 0;
 }
 
-static int EventTest(const EventData* p)
+static int EventTest(const EventData* p, bool tunnel_carried = false)
 {
     // now is a float to clarify the impact of
     // just using truncated seconds on thresholds
@@ -598,7 +599,7 @@ static int EventTest(const EventData* p)
     dip.set(p->dip);
 
     status = SFRF_TestThreshold(rfc, p->gid, p->sid, get_network_policy()->policy_id,
-        &sip, &dip, curtime, op);
+        &sip, &dip, curtime, op, nullptr, tunnel_carried);
 
     if ( status >= IpsAction::get_max_types() )
         status -= IpsAction::get_max_types();
@@ -1198,4 +1199,60 @@ TEST_CASE("sfrf a by_rule connect gauge is shared and given back", "[sfrf]")
 
     SFRF_Delete();
     RateFilter_ConfigFree(cf);
+}
+
+TEST_CASE("sfrf tunnel-scoped tracking", "[sfrf]")
+{
+    SnortConfig sc;
+    Init(&sc, MEM_DEFAULT);
+
+    SECTION("source counters separate tunneled and direct traffic")
+    {
+        EventData event = { 0, 200, 1110, IP4_SRC, IP4_DST, 0.0, RULE_ORIG };
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+        CHECK(EventTest(&event, true) == RULE_NEW);
+        CHECK(EventTest(&event) == RULE_ORIG);
+        CHECK(EventTest(&event) == RULE_NEW);
+
+        event.sip = IP4_EXT;
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+    }
+
+    SECTION("destination counters separate tunneled and direct traffic")
+    {
+        EventData event = { 0, 200, 2110, IP4_SRC, IP4_DST, 0.0, RULE_ORIG };
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+        CHECK(EventTest(&event, true) == RULE_NEW);
+
+        event.dip = IP4_EXT;
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+
+        event.dip = IP4_DST;
+        CHECK(EventTest(&event) == RULE_ORIG);
+        CHECK(EventTest(&event) == RULE_NEW);
+    }
+
+    SECTION("apply_to preserves tracked address and tunnel scope")
+    {
+        EventData event = { 0, 300, 1110, IP4_SRC, IP4_DST, 0.0, RULE_ORIG };
+
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+        CHECK(EventTest(&event) == RULE_ORIG);
+
+        event.sip = IP4_SRC_ALT;
+
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+        CHECK(EventTest(&event) == RULE_ORIG);
+        CHECK(EventTest(&event, true) == RULE_NEW);
+        CHECK(EventTest(&event) == RULE_NEW);
+    }
+
+    SECTION("rule counters remain shared across tunnel scope")
+    {
+        EventData event = { 0, 200, 3110, IP4_SRC, IP4_DST, 0.0, RULE_ORIG };
+        CHECK(EventTest(&event, true) == RULE_ORIG);
+        CHECK(EventTest(&event) == RULE_NEW);
+    }
+
+    Term();
 }

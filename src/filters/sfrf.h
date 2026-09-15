@@ -200,7 +200,8 @@ int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
 int SFRF_TestThreshold(RateFilterConfig *config, unsigned gid, unsigned sid,
     PolicyId policyid, const snort::SfIp *sip, const snort::SfIp *dip,
-    time_t curTime, SFRF_COUNT_OPERATION, SFRFGaugeKeys* = nullptr);
+    time_t curTime, SFRF_COUNT_OPERATION, SFRFGaugeKeys* = nullptr,
+    bool tunnel_carried = false);
 
 void SFRF_ReleaseGauges(const SFRFGaugeKeys&);
 
