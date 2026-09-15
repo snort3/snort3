@@ -55,6 +55,7 @@
 #include "lua_detector_flow_api.h"
 #include "lua_detector_module.h"
 #include "lua_detector_util.h"
+#include "service_inspectors/cip/cip.h"
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
 
@@ -3624,14 +3625,14 @@ static const luaL_Reg detector_methods[] =
     { "setUserDetectorDataItem",   set_user_detector_data_item },
 
      /* CIP registration */
-    {"addCipConnectionClass",    detector_add_cip_connection_class},
-    {"addCipPath",               detector_add_cip_path},
-    {"addCipSetAttribute",       detector_add_cip_set_attribute},
+    {"addCipConnectionClass",       detector_add_cip_connection_class},
+    {"addCipPath",                  detector_add_cip_path},
+    {"addCipSetAttribute",          detector_add_cip_set_attribute},
     {"addCipExtendedSymbolService", detector_add_cip_extended_symbol_service},
-    {"addCipService",            detector_add_cip_service},
-    {"addEnipCommand",           detector_add_enip_command},
+    {"addCipService",               detector_add_cip_service},
+    {"addEnipCommand",              detector_add_enip_command},
 
-    {"publishDeviceInfo",        detector_publish_device_info},
+    {"publishDeviceInfo",           detector_publish_device_info},
 
 #ifdef REG_TEST
     {"luaRemoveRegistryTableTest", lua_remove_registry_table_test},

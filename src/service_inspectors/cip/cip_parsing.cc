@@ -28,6 +28,7 @@
 #include "cip_parsing.h"
 
 #include "framework/data_bus.h"
+#include "protocols/packet.h"
 #include "utils/endian.h"
 
 #include "cip.h"

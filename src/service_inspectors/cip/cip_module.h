@@ -23,6 +23,8 @@
 
 // Interface to the CIP service inspector
 
+#include <cstdint>
+
 #include "framework/module.h"
 
 #include "cip_definitions.h"
@@ -33,6 +35,8 @@
 #define CIP_NON_CONFORMING    2
 #define CIP_CONNECTION_LIMIT  3
 #define CIP_REQUEST_LIMIT     4
+
+#define CIP_DEFAULT_SMALL_PDUS_LIMIT 32
 
 #define CIP_NAME "cip"
 #define CIP_HELP "cip inspection"

@@ -1,3 +1,5 @@
+add_subdirectory(test)
+
 set( FILE_LIST
     cip.cc
     cip.h

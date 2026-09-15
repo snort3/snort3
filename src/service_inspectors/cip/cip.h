@@ -24,8 +24,7 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
-#include "framework/data_bus.h"
-#include "protocols/packet.h"
+#include "framework/inspector.h"
 
 #include "cip_definitions.h"
 
@@ -84,6 +83,28 @@ struct CipEventData
     static unsigned pub_id;
 };
 
+class Cip : public snort::Inspector
+{
+public:
+    Cip(CipProtoConf*);
+    ~Cip() override;
+
+    bool configure(snort::SnortConfig*) override;
+    void show(const snort::SnortConfig*) const override;
+    void eval(snort::Packet*) override;
+
+    snort::StreamSplitter* get_splitter(bool c2s) override;
+
+    bool is_control_channel() const override
+    { return true; }
+
+    CipProtoConf* get_config() const
+    { return config; }
+
+private:
+    CipProtoConf* config;
+};
+
 class CipFlowData : public snort::FlowData
 {
 public:
@@ -107,6 +128,7 @@ struct CipStats
     PegCount sessions;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount small_pdu_aborts;
 };
 
 extern THREAD_LOCAL CipStats cip_stats;

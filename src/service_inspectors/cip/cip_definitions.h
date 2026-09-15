@@ -49,6 +49,9 @@ struct CipProtoConf
     bool embedded_cip_enabled;
     uint32_t embedded_cip_class_id;
     uint8_t embedded_cip_service_id;
+
+    // Consecutive number of small PDUs in packet before aborting scan.
+    uint16_t small_pdus_limit;
 };
 
 /// CIP Request/Response Management

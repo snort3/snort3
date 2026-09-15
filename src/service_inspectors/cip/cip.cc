@@ -27,7 +27,9 @@
 #include "cip.h"
 
 #include "detection/detection_engine.h"
+#include "framework/module.h"
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/cip_events.h"
@@ -245,28 +247,8 @@ static void snort_cip(CipProtoConf* config, Packet* p)
 // class stuff
 //-------------------------------------------------------------------------
 
-class Cip : public Inspector
-{
-public:
-    Cip(CipProtoConf*);
-    ~Cip() override;
-
-    bool configure(SnortConfig*) override;
-    void show(const SnortConfig*) const override;
-    void eval(Packet*) override;
-
-    class StreamSplitter* get_splitter(bool c2s) override
-    { return new CipSplitter(c2s); }
-
-    bool is_control_channel() const override
-    { return true; }
-
-private:
-    CipProtoConf* config;
-};
-
-Cip::Cip(CipProtoConf* pc)
-{ config = pc; }
+Cip::Cip(CipProtoConf* pc) : config(pc)
+{ }
 
 Cip::~Cip()
 { delete config; }
@@ -295,6 +277,7 @@ void Cip::show(const SnortConfig*) const
     ConfigLogger::log_value("unconnected_timeout", config->unconnected_timeout);
     ConfigLogger::log_value("max_cip_connections", config->max_cip_connections);
     ConfigLogger::log_value("max_unconnected_messages", config->max_unconnected_messages);
+    ConfigLogger::log_value("small_pdus_limit", config->small_pdus_limit);
 }
 
 void Cip::eval(Packet* p)
@@ -304,6 +287,9 @@ void Cip::eval(Packet* p)
     cip_stats.packets++;
     snort_cip(config, p);
 }
+
+snort::StreamSplitter* Cip::get_splitter(bool c2s)
+{ return new CipSplitter(c2s); }
 
 //-------------------------------------------------------------------------
 // api stuff

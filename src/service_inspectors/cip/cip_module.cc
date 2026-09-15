@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include "cip.h"
+#include "cip_parsing.h"
 
 using namespace snort;
 using namespace std;
@@ -47,6 +48,8 @@ static const Parameter c_params[] =
       "max cip connections" },
     { "max_unconnected_messages", Parameter::PT_INT, "1:10000", "100",
       "max unconnected cip messages" },
+    { "small_pdus_limit", Parameter::PT_INT, "0:65534", "32",
+      "max consecutive empty ENIP PDUs before PAF abort" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -67,6 +70,9 @@ static const PegInfo cip_pegs[] =
     { CountType::SUM, "session", "total sessions" },
     { CountType::NOW, "concurrent_sessions", "total concurrent SIP sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent SIP sessions" },
+    { CountType::SUM, "small_pdu_aborts",
+        "flows aborted after exceeding the small-frame flush budget" },
+
     { CountType::END, nullptr, nullptr },
 };
 
@@ -113,6 +119,9 @@ bool CipModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("max_unconnected_messages") )
         conf->max_unconnected_messages = v.get_uint32();
 
+    else if ( v.is("small_pdus_limit") )
+        conf->small_pdus_limit = v.get_uint16();
+
     return true;
 }
 
@@ -129,6 +138,7 @@ bool CipModule::begin(const char*, int, SnortConfig*)
     conf = new CipProtoConf;
 
     conf->embedded_cip_enabled = false;
+    conf->small_pdus_limit = CIP_DEFAULT_SMALL_PDUS_LIMIT;
 
     return true;
 }

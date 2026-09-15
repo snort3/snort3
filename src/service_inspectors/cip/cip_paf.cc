@@ -25,17 +25,68 @@
 #endif
 
 #include "cip_paf.h"
+
+#include "protocols/packet.h"
+
+#include "cip.h"
+#include "cip_definitions.h"
+#include "cip_module.h"
 #include "cip_parsing.h"              // For ENIP constants
 
 // PAF will skip over the ENIP Command and Length fields.
 static const uint16_t ENIP_PAF_FIELD_SIZE = 4;
 
+// ENIP Header + Interface Handle + Timeout
+// that SendRRData and SendUnitData require.
+static const uint32_t ENIP_MIN_USEFUL_PDU_SIZE = ENIP_HEADER_SIZE + 6;
+
 using namespace snort;
+
+inline uint16_t get_cip_small_pdus_limit(const Packet* p)
+{
+    if ( !p or !p->flow or !p->flow->gadget )
+        return CIP_DEFAULT_SMALL_PDUS_LIMIT;
+
+    const CipProtoConf* config = static_cast<const Cip*>(p->flow->gadget)->get_config();
+
+    if (!config)
+        return CIP_DEFAULT_SMALL_PDUS_LIMIT;
+
+    return config->small_pdus_limit;
+}
 
 static inline void reset_states(cip_paf_data* pafdata)
 {
     pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
     pafdata->enip_length = 0;
+}
+
+static StreamSplitter::Status flush_frame(const Packet* p, cip_paf_data* pafdata,
+    uint32_t total_length, uint32_t* fp)
+{
+    const uint16_t small_pdus_limit = get_cip_small_pdus_limit(p);
+
+    if (small_pdus_limit != 0)
+    {
+        if (total_length < ENIP_MIN_USEFUL_PDU_SIZE)
+        {
+            if (++pafdata->consecutive_small_pdus > small_pdus_limit)
+            {
+                ++cip_stats.small_pdu_aborts;
+                pafdata->consecutive_small_pdus = 0;
+                pafdata->bytes_seen = 0;
+                reset_states(pafdata);
+                return StreamSplitter::ABORT;
+            }
+        }
+        else
+            pafdata->consecutive_small_pdus = 0;
+    }
+
+    pafdata->bytes_seen = 0;
+    *fp = total_length;
+    pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
+    return StreamSplitter::FLUSH;
 }
 
 /* Function: CIPPaf()
@@ -46,8 +97,8 @@ static inline void reset_states(cip_paf_data* pafdata)
             The flushed PDU is a ENIP frame.
 */
 
-static StreamSplitter::Status cip_paf(cip_paf_data* pafdata, const uint8_t* data,
-    uint32_t len, uint32_t* fp)
+static StreamSplitter::Status cip_paf(const Packet* p, cip_paf_data* pafdata,
+    const uint8_t* data, uint32_t len, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
     uint16_t command = 0;
@@ -101,17 +152,12 @@ static StreamSplitter::Status cip_paf(cip_paf_data* pafdata, const uint8_t* data
             total_length = bytes_processed +
                 pafdata->enip_length + (ENIP_HEADER_SIZE - ENIP_PAF_FIELD_SIZE);
 
-            if(total_length > len)
+            if (total_length > len)
             {
                 pafdata->bytes_seen += len;
                 pafdata->paf_state = CIP_PAF_STATE__INVALID;
             } else
-            {
-                pafdata->bytes_seen = 0;
-                *fp = total_length;
-                pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
-                return StreamSplitter::FLUSH;
-            }
+                return flush_frame(p, pafdata, total_length, fp);
         break;
         default:
             // Will not happen.
@@ -129,12 +175,13 @@ CipSplitter::CipSplitter(bool c2s) : StreamSplitter(c2s)
     state.paf_state = CIP_PAF_STATE__COMMAND_1;
     state.enip_length = 0;
     state.bytes_seen = 0;
+    state.consecutive_small_pdus = 0;
 }
 
 StreamSplitter::Status CipSplitter::scan(
-    Packet*, const uint8_t* data, uint32_t len,
+    Packet* p, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     cip_paf_data* pfdata = &state;
-    return cip_paf(pfdata, data, len, fp);
+    return cip_paf(p, pfdata, data, len, fp);
 }

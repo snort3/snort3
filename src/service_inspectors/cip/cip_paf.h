@@ -25,8 +25,6 @@
 
 #include "stream/stream_splitter.h"
 
-#include "cip.h"
-
 #define CIP_MAX_OCTETS 15000 // using standard max ethernet frame times 10
 
 /* State-tracking structs */
@@ -45,6 +43,7 @@ struct cip_paf_data
     cip_paf_state paf_state;
     uint16_t enip_length;
     uint32_t bytes_seen;
+    uint16_t consecutive_small_pdus;
 };
 
 class CipSplitter : public snort::StreamSplitter
@@ -60,7 +59,6 @@ public:
         return true;
     }
 
-public:
     cip_paf_data state;
 };
 
