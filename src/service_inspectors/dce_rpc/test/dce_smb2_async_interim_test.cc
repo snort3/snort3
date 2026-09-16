@@ -331,6 +331,7 @@ void dce_alert(uint32_t, uint32_t, dce2CommonStats*, const DCE2_SsnData&)
 // response, because for each command 9 means something different.
 //--------------------------------------------------------------------------
 
+// cppcheck-suppress [syntaxError, unmatchedSuppression] ; Catch2 TEST_CASE is configuration-dependent
 TEST_CASE("ioctl async interim response is discarded", "[dce_smb2_async_interim]")
 {
     Fixture f;
