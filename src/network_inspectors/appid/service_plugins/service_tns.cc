@@ -138,8 +138,11 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         switch (ss->state)
         {
         case SVC_MSG_LEN:
-            // coverity[overrun]
+            if (ss->pos >= sizeof(ss->l.raw_len))
+                ss->pos = offset = 0;
+
             ss->l.raw_len[ss->pos++] = data[offset];
+
             if (ss->pos >= offsetof(ServiceTNSMsg, checksum))
             {
                 ss->stringlen = ntohs(ss->l.len);
@@ -224,7 +227,10 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
             break;
 
         case SVC_MSG_ACCEPT:
-            // coverity[overrun]
+            if (ss->pos < ACCEPT_VERSION_OFFSET ||
+                ss->pos >= (ACCEPT_VERSION_OFFSET + sizeof(ss->l.raw_len)))
+                goto fail;
+
             ss->l.raw_len[ss->pos - ACCEPT_VERSION_OFFSET] = data[offset];
             ss->pos++;
             if (ss->pos == (ACCEPT_VERSION_OFFSET + 2))
@@ -273,8 +279,14 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
-        nullptr, ss->version ? ss->version : nullptr);
+    {
+        ss->state = SVC_MSG_LEN;
+        ss->pos = 0;
+        auto res = add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_ORACLE_TNS,
+            nullptr, ss->version ? ss->version : nullptr);
+        ss->version = nullptr;
+        return res;
+    }
 
 fail:
     fail_service(args.asd, args.pkt, args.dir);
