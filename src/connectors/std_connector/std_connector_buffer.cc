@@ -25,6 +25,7 @@
 #include "std_connector_buffer.h"
 
 #include <algorithm>
+#include <climits>
 #include <vector>
 
 #include "log/text_log.h"
@@ -74,8 +75,11 @@ static void flusher(const SnortConfig* initial_config, const char* output,
             size_t data_len = 0;
             void* data = nullptr;
 
-            while ((data = reader.read(data_len)) and data_len > 0)
-                TextLog_Print(out, "%.*s\n", (int)data_len, (char*)data);
+            while ((data = reader.read(data_len)) and data_len > 0 and data_len < INT_MAX)
+            {
+                TextLog_Write(out, (const char*)data, (int)data_len);
+                TextLog_NewLine(out);
+            }
 
             reader.pop();
         }
@@ -104,8 +108,11 @@ static void flusher(const SnortConfig* initial_config, const char* output,
             size_t data_len = 0;
             void* data = nullptr;
 
-            while ((data = reader.read(data_len)) and data_len > 0)
-                TextLog_Print(out, "%.*s\n", (int)data_len, (char*)data);
+            while ((data = reader.read(data_len)) and data_len > 0 and data_len < INT_MAX)
+            {
+                TextLog_Write(out, (const char*)data, (int)data_len);
+                TextLog_NewLine(out);
+            }
 
             reader.pop();
         }

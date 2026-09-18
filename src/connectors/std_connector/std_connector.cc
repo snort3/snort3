@@ -27,6 +27,7 @@
 
 #include <iostream>
 #include <string>
+#include <climits>
 
 #include "profiler/profiler_defs.h"
 #include "log/text_log.h"
@@ -195,11 +196,12 @@ StdConnector::~StdConnector()
 
 bool StdConnector::internal_transmit_message(const ConnectorMsg& msg)
 {
-    if ( !msg.get_data() or msg.get_length() == 0 )
+    if ( !msg.get_data() or msg.get_length() == 0 or msg.get_length() >= INT_MAX )
         return false;
 
     if (!buffered)
-        return TextLog_Print(text_log, "%.*s\n", msg.get_length(), msg.get_data())
+        return TextLog_Write(text_log, (const char*)msg.get_data(), (int)msg.get_length())
+            and TextLog_NewLine(text_log)
             and ++std_connector_stats.messages_transmitted;
 
 #ifdef REG_TEST
