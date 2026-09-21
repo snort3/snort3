@@ -73,7 +73,6 @@ public:
     void touch_last_found(uint8_t type = 0);
 
     // set max hash nodes, 0 == no limit
-    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_max_nodes(int max)
     { max_nodes = max; }
 

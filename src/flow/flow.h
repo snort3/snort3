@@ -426,8 +426,8 @@ public:
     bool is_hard_expiration() const
     { return (ssn_state.session_flags & SSNFLAG_HARD_EXPIRATION) != 0; }
 
-    void set_deferred_trust(unsigned module_id, bool on)
-    { deferred_trust.set_deferred_trust(module_id, on); }
+    void set_deferred_trust(unsigned mod_id, bool on)
+    { deferred_trust.set_deferred_trust(mod_id, on); }
 
     bool cannot_trust() const
     { return deferred_trust.is_active(); }

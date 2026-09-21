@@ -148,11 +148,9 @@ public:
 #ifdef UNIT_TEST
     size_t count_flows_in_lru(uint8_t lru_index) const;
 
-    // cppcheck-suppress unusedFunction
     unsigned get_last_excess_examined() const
     { return last_excess_examined; }
 
-    // cppcheck-suppress unusedFunction
     unsigned get_excess_walk_calls() const
     { return excess_walk_calls; }
 #endif
