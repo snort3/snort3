@@ -1,3 +1,33 @@
+2026-09-21: 3.13.1.0
+
+* appid: fix tns validation flow
+* build: address warnings in unit test
+* cip: add pdu limiter
+* codecs/gtp: gate inner-IP version read on payload past the header
+* codecs: fix gtp_codec_test linker issue
+* control: load Lua sandbox during ControlConn initialization
+* cppcheck: clear shadowVariable and stale unusedFunction suppressions in flow and hash
+* dce_rpc: fix SMB error handling, QUIC transport gate, and list insertion checks
+* dce_rpc: suppress cppcheck error
+* flow: distinguish TEB-decapsulated flow keys
+* flow: drop uni prune candidacy when blocked and skip exhausted excess lrus
+* flow: per-flow memory tracking framework improvement 
+* flow: udp tunnel flowkey handling improvements
+* hash: bound the XHash LRU recovery walk
+* http_inspect: own rebuilt buffers in IPS context
+* imap: recognize bare LF as invalid in the client PAF state machine
+* js_norm: enable PDF 2.0 processing
+* main: run final housekeeping after packet shutdown
+* mime: use dynamically allocated encode buffer that grows based on needs rather than preallocated 64KB
+* modbus: add pdus limiter
+* pop: recognize bare LF as invalid in the client/server PAF state machines
+* rate_filter: make a seconds = 0 session filter a concurrency gauge
+* rate_filter: separate tunneled SYN tracking from direct traffic
+* s7commplus: add small pdus limit
+* smtp: recognize bare LF as invalid in the client/server PAF state machines
+* std_connector: enable printing for large strings
+* tcp_connector: release pending received messages
+
 2026-09-01: 3.13.0.0
 
 * api: make selected public APIs const-correct

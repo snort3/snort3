@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.13.0.0 2026-09-01 17:44:05 EDT TST
+Revision 3.13.1.0 2026-09-21 21:51:15 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3085,6 +3085,8 @@ Configuration:
     }
   * int cip.max_unconnected_messages = 100: max unconnected cip
     messages { 1:10000 }
+  * int cip.small_pdus_limit = 32: max consecutive empty ENIP PDUs
+    before PAF abort { 0:65534 }
 
 Rules:
 
@@ -3102,6 +3104,8 @@ Peg counts:
   * cip.concurrent_sessions: total concurrent SIP sessions (now)
   * cip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
+  * cip.small_pdu_aborts: flows aborted after exceeding the
+    small-frame flush budget (sum)
 
 
 5.7. cpeos_test
@@ -4949,6 +4953,11 @@ Usage: inspect
 
 Instance Type: multiton
 
+Configuration:
+
+  * int modbus.small_pdus_limit = 32: max consecutive empty Modbus
+    PDUs before PAF abort { 0:65534 }
+
 Rules:
 
   * 144:1 (modbus) length in Modbus MBAP header does not match the
@@ -4964,6 +4973,8 @@ Peg counts:
     (now)
   * modbus.max_concurrent_sessions: maximum concurrent modbus
     sessions (max)
+  * modbus.small_pdu_aborts: flows aborted after exceeding the
+    small-frame flush budget (sum)
 
 
 5.32. netflow
@@ -5947,6 +5958,11 @@ Usage: inspect
 
 Instance Type: multiton
 
+Configuration:
+
+  * int s7commplus.small_pdus_limit = 64: max consecutive
+    zero-payload TPKT PDUs before PAF abort { 0:65534 }
+
 Rules:
 
   * 149:1 (s7commplus) length in S7commplus MBAP header does not
@@ -5962,6 +5978,8 @@ Peg counts:
     sessions (now)
   * s7commplus.max_concurrent_sessions: maximum concurrent s7commplus
     sessions (max)
+  * s7commplus.small_pdu_aborts: flows aborted after exceeding the
+    small-frame flush budget (sum)
 
 
 5.43. sip
@@ -6598,8 +6616,10 @@ Peg counts:
   * stream.allowlist_flows: number of flows moved to the allowlist
     (now)
   * stream.current_flows: current number of flows in cache (now)
-  * stream.uni_flows: number of uni flows in cache (now)
-  * stream.uni_ip_flows: number of uni ip flows in cache (now)
+  * stream.uni_flows: number of uni flows in the uni prune candidate
+    list (now)
+  * stream.uni_ip_flows: number of uni ip flows in the uni prune
+    candidate list (now)
 
 
 5.51. stream_file
@@ -10624,6 +10644,8 @@ libraries see the Getting Started section of the manual.
   * int cip.max_unconnected_messages = 100: max unconnected cip
     messages { 1:10000 }
   * interval cip_service.~range: match CIP service { 0:127 }
+  * int cip.small_pdus_limit = 32: max consecutive empty ENIP PDUs
+    before PAF abort { 0:65534 }
   * interval cip_status.~range: match CIP response status { 0:255 }
   * int cip.unconnected_timeout = 300: unconnected timeout in seconds
     { 0:360 }
@@ -11427,6 +11449,8 @@ libraries see the Getting Started section of the manual.
     pairs
   * string mms_func.~: func to match
   * string modbus_func.~: function code to match
+  * int modbus.small_pdus_limit = 32: max consecutive empty Modbus
+    PDUs before PAF abort { 0:65534 }
   * int modbus_unit.~: Modbus unit ID { 0:255 }
   * bool mp_data_bus.debug = false: enable debugging
   * int mp_data_bus.max_eventq_size = 4096: maximum events to queue {
@@ -12061,6 +12085,8 @@ libraries see the Getting Started section of the manual.
   * string rpc.~ver: version number or * for any
   * string s7commplus_func.~: function code to match
   * string s7commplus_opcode.~: opcode code to match
+  * int s7commplus.small_pdus_limit = 64: max consecutive
+    zero-payload TPKT PDUs before PAF abort { 0:65534 }
   * string sd_pattern.~pattern: The pattern to search for
   * int sd_pattern.threshold = 1: number of matches before alerting {
     1:max32 }
@@ -12854,6 +12880,8 @@ libraries see the Getting Started section of the manual.
     (max)
   * cip.packets: total packets (sum)
   * cip.session: total sessions (sum)
+  * cip.small_pdu_aborts: flows aborted after exceeding the
+    small-frame flush budget (sum)
   * ciscometadata.invalid_hdr_len: total invalid Cisco Metadata
     header lengths (sum)
   * ciscometadata.invalid_hdr_ver: total invalid Cisco Metadata
@@ -13637,6 +13665,8 @@ libraries see the Getting Started section of the manual.
   * modbus.max_concurrent_sessions: maximum concurrent modbus
     sessions (max)
   * modbus.sessions: total sessions processed (sum)
+  * modbus.small_pdu_aborts: flows aborted after exceeding the
+    small-frame flush budget (sum)
   * mp_data_bus.total_messages_delivered: total messages delivered
     (sum)
   * mp_data_bus.total_messages_dropped: total messages dropped (sum)
@@ -13920,6 +13950,8 @@ libraries see the Getting Started section of the manual.
   * s7commplus.max_concurrent_sessions: maximum concurrent s7commplus
     sessions (max)
   * s7commplus.sessions: total sessions processed (sum)
+  * s7commplus.small_pdu_aborts: flows aborted after exceeding the
+    small-frame flush budget (sum)
   * sd_pattern.below_threshold: sd_pattern matched but missed
     threshold (sum)
   * sd_pattern.pattern_not_found: sd_pattern did not not match (sum)
@@ -14373,8 +14405,10 @@ libraries see the Getting Started section of the manual.
     timeout (sum)
   * stream_udp.timeouts: udp session timeouts (sum)
   * stream_udp.total_bytes: total number of bytes processed (sum)
-  * stream.uni_flows: number of uni flows in cache (now)
-  * stream.uni_ip_flows: number of uni ip flows in cache (now)
+  * stream.uni_flows: number of uni flows in the uni prune candidate
+    list (now)
+  * stream.uni_ip_flows: number of uni ip flows in the uni prune
+    candidate list (now)
   * stream.uni_prunes: uni sessions pruned (sum)
   * stream.user_eof_prunes: number of USER flows pruned due to EOF
     (sum)
