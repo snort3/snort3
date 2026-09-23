@@ -31,6 +31,12 @@ struct SnortConfig;
 extern THREAD_LOCAL const snort::Trace* stream_user_trace;
 extern THREAD_LOCAL snort::ProfileStats user_perf_stats;
 
+enum
+{
+    TRACE_USER_STATE = 0,
+    TRACE_USER_SEGMENTS,
+};
+
 //-------------------------------------------------------------------------
 // stream_user module
 //-------------------------------------------------------------------------

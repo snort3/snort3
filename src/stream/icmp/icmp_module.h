@@ -32,8 +32,11 @@ extern THREAD_LOCAL snort::ProfileStats icmp_perf_stats;
 
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
+
+extern THREAD_LOCAL const snort::Trace* stream_icmp_trace;
 
 struct IcmpStats
 {
@@ -46,6 +49,11 @@ struct IcmpStats
 
 #define MOD_NAME "stream_icmp"
 #define MOD_HELP "stream inspector for ICMP flow tracking"
+
+enum
+{
+    TRACE_ICMP_STATE = 0
+};
 
 class StreamIcmpModule : public snort::Module
 {
@@ -68,6 +76,9 @@ public:
     { return true; }
 
     StreamIcmpConfig* get_data();
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     StreamIcmpConfig* config = nullptr;

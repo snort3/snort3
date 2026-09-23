@@ -28,6 +28,7 @@
 
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
 
@@ -41,6 +42,7 @@ struct UdpStats
 extern const PegInfo udp_pegs[];
 extern THREAD_LOCAL struct UdpStats udpStats;
 extern THREAD_LOCAL snort::ProfileStats udp_perf_stats;
+extern THREAD_LOCAL const snort::Trace* stream_udp_trace;
 
 //-------------------------------------------------------------------------
 // stream_udp module
@@ -48,6 +50,11 @@ extern THREAD_LOCAL snort::ProfileStats udp_perf_stats;
 
 #define MOD_NAME "stream_udp"
 #define MOD_HELP "stream inspector for UDP flow tracking"
+
+enum
+{
+    TRACE_UDP_STATE = 0
+};
 
 class StreamUdpModule : public snort::Module
 {
@@ -69,6 +76,9 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
     StreamUdpConfig* config = nullptr;

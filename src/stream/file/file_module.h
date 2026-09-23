@@ -17,19 +17,21 @@
 //--------------------------------------------------------------------------
 // file_module.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef FILE_MODULE_H
-#define FILE_MODULE_H
+#ifndef STREAM_FILE_MODULE_H
+#define STREAM_FILE_MODULE_H
 
 #include "framework/module.h"
 
 namespace snort
 {
+class Trace;
 struct SnortConfig;
 }
 
 extern const PegInfo file_pegs[];
 extern THREAD_LOCAL struct FileStats file_stats;
 extern THREAD_LOCAL snort::ProfileStats file_perf_stats;
+extern THREAD_LOCAL const snort::Trace* stream_file_trace;
 
 //-------------------------------------------------------------------------
 // stream_file module
@@ -37,6 +39,11 @@ extern THREAD_LOCAL snort::ProfileStats file_perf_stats;
 
 #define MOD_NAME "stream_file"
 #define MOD_HELP "stream inspector for file flow tracking and processing"
+
+enum
+{
+    TRACE_FILE_STATE = 0
+};
 
 class StreamFileModule : public snort::Module
 {
@@ -51,6 +58,9 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 public:
     bool upload = false;

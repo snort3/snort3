@@ -59,15 +59,15 @@ StreamUserConfig* StreamUserModule::get_data()
 void StreamUserModule::set_trace(const Trace* trace) const
 { stream_user_trace = trace; }
 
-const TraceOption* StreamUserModule::get_trace_options() const
+static const TraceOption stream_user_trace_options[] =
 {
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
-    static const TraceOption stream_user_trace_options(nullptr, 0, nullptr);
-    return &stream_user_trace_options;
-#endif
-}
+    { "state",    TRACE_USER_STATE,    "enable stream user state trace logging" },
+    { "segments", TRACE_USER_SEGMENTS, "enable stream user segment reassembly trace logging" },
+    { nullptr, 0, nullptr }
+};
+
+const TraceOption* StreamUserModule::get_trace_options() const
+{ return stream_user_trace_options; }
 
 bool StreamUserModule::set(const char*, Value& v, SnortConfig*)
 {

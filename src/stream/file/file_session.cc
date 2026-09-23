@@ -29,7 +29,9 @@
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "target_based/snort_protocols.h"
+#include "trace/trace_api.h"
 
+#include "file_module.h"
 #include "stream_file.h"
 
 using namespace snort;
@@ -54,8 +56,10 @@ FileSession::~FileSession()
         flow->sub_mem(sizeof(*this));
 }
 
-bool FileSession::setup(Packet*)
+bool FileSession::setup(Packet* p)
 {
+    trace_logf(stream_file_trace, TRACE_FILE_STATE, p,
+        "session setup\n");
     return true;
 }
 
@@ -82,10 +86,16 @@ int FileSession::process(Packet* p)
     p->flow->ssn_state.snort_protocol_id = SNORT_PROTO_FILE;
     const StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
 
+    const FilePosition fpos = position(p);
+
+    trace_logf(stream_file_trace, TRACE_FILE_STATE, p,
+        "process: dsize=%hu position=%d upload=%s\n", p->dsize, fpos,
+        c->upload ? "true" : "false");
+
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
 
     if (file_flows &&
-        file_flows->file_process(p, p->data, p->dsize, position(p), c->upload))
+        file_flows->file_process(p, p->data, p->dsize, fpos, c->upload))
     {
         const char* file_name = SFDAQ::get_input_spec();
         if (file_name)

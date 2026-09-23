@@ -138,15 +138,15 @@ StreamIpModule::~StreamIpModule()
 void StreamIpModule::set_trace(const Trace* trace) const
 { stream_ip_trace = trace; }
 
-const TraceOption* StreamIpModule::get_trace_options() const
+static const TraceOption stream_ip_trace_options[] =
 {
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
-    static const TraceOption stream_ip_trace_options(nullptr, 0, nullptr);
-    return &stream_ip_trace_options;
-#endif
-}
+    { "state", TRACE_IP_STATE, "enable stream IP session and defrag state trace logging" },
+    { "frag",  TRACE_IP_FRAG,  "enable stream IP per-fragment reassembly trace logging" },
+    { nullptr, 0, nullptr }
+};
+
+const TraceOption* StreamIpModule::get_trace_options() const
+{ return stream_ip_trace_options; }
 
 const RuleMap* StreamIpModule::get_rules() const
 { return stream_ip_rules; }

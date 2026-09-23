@@ -23,8 +23,18 @@
 
 #include "file_module.h"
 
+#include "trace/trace.h"
+
 using namespace snort;
 using namespace std;
+
+THREAD_LOCAL const Trace* stream_file_trace = nullptr;
+
+static const TraceOption stream_file_trace_options[] =
+{
+    { "state", TRACE_FILE_STATE, "enable stream file state trace logging" },
+    { nullptr, 0, nullptr }
+};
 
 //-------------------------------------------------------------------------
 // stream_file module
@@ -54,4 +64,10 @@ bool StreamFileModule::set(const char*, Value& v, SnortConfig*)
     upload = v.get_bool();
     return true;
 }
+
+void StreamFileModule::set_trace(const Trace* trace) const
+{ stream_file_trace = trace; }
+
+const TraceOption* StreamFileModule::get_trace_options() const
+{ return stream_file_trace_options; }
 

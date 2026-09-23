@@ -32,6 +32,7 @@
 #include "pub_sub/intrinsic_event_ids.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
+#include "trace/trace_api.h"
 
 #include "udp_ha.h"
 #include "udp_module.h"
@@ -102,6 +103,10 @@ bool UdpSession::setup(Packet* p, bool is_restart)
     const StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
+    trace_logf(stream_udp_trace, TRACE_UDP_STATE, p,
+        "session setup (%s), timeout=%u\n", is_restart ? "restart" : "new",
+        pc->session_timeout);
+
     if ( is_restart )
         udpStats.created++;
     else
@@ -111,6 +116,9 @@ bool UdpSession::setup(Packet* p, bool is_restart)
 
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
+        trace_logf(stream_udp_trace, TRACE_UDP_STATE, p,
+            "session ignored (ignore_direction=%d)\n", flow->ssn_state.ignore_direction);
+
         if ( !is_restart )
             udpStats.sessions--; // incremented in SESSION_STATS_ADD
         return false;
@@ -184,6 +192,10 @@ int UdpSession::process_udp(Flow* lwssn, Packet* p)
         {
             lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
             DataBus::publish(Stream::get_pub_id(), StreamEventIds::UDP_BIDIRECTIONAL, p);
+
+            trace_logf(stream_udp_trace, TRACE_UDP_STATE, p,
+                "established: bidirectional (session_flags=0x%08x)\n",
+                lwssn->ssn_state.session_flags);
         }
     }
 
@@ -201,6 +213,9 @@ int UdpSession::process(Packet* p)
     // Should be done before we do something with the packet...
     if ( Stream::expired_flow(flow, p) )
     {
+        trace_logf(stream_udp_trace, TRACE_UDP_STATE, p,
+            "session expired\n");
+
         udpStats.timeouts++;
         UdpSessionCleanup(flow);
         flow->restart(*p);

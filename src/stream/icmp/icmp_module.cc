@@ -24,10 +24,20 @@
 
 #include "icmp_module.h"
 
+#include "trace/trace.h"
+
 #include "stream_icmp.h"
 
 using namespace snort;
 using namespace std;
+
+THREAD_LOCAL const Trace* stream_icmp_trace = nullptr;
+
+static const TraceOption stream_icmp_trace_options[] =
+{
+    { "state", TRACE_ICMP_STATE, "enable stream ICMP state trace logging" },
+    { nullptr, 0, nullptr }
+};
 
 //-------------------------------------------------------------------------
 // stream_icmp module
@@ -82,3 +92,9 @@ const PegInfo* StreamIcmpModule::get_pegs() const
 
 PegCount* StreamIcmpModule::get_counts() const
 { return reinterpret_cast<PegCount*>(&icmpStats); }
+
+void StreamIcmpModule::set_trace(const Trace* trace) const
+{ stream_icmp_trace = trace; }
+
+const TraceOption* StreamIcmpModule::get_trace_options() const
+{ return stream_icmp_trace_options; }

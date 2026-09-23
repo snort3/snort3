@@ -32,6 +32,12 @@ struct SnortConfig;
 
 extern THREAD_LOCAL const snort::Trace* stream_ip_trace;
 
+enum
+{
+    TRACE_IP_STATE = 0,
+    TRACE_IP_FRAG,
+};
+
 #define GLOBAL_KEYWORD "defrag"
 #define ENGINE_KEYWORD "defrag_engine"
 

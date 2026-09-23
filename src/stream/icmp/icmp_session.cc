@@ -33,6 +33,7 @@
 #include "protocols/vlan.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 
 #include "icmp_ha.h"
@@ -177,6 +178,9 @@ static int ProcessIcmpUnreach(Packet* p)
     {
         ssn->block();
         ssn->session_state |= STREAM_STATE_UNREACH;
+
+        trace_logf(stream_icmp_trace, TRACE_ICMP_STATE, p,
+            "icmp unreachable: blocked embedded flow\n");
     }
 
     return 0;
@@ -198,7 +202,7 @@ IcmpSession::~IcmpSession()
         flow->sub_mem(sizeof(*this));
 }
 
-bool IcmpSession::setup(Packet*)
+bool IcmpSession::setup(Packet* p)
 {
     echo_count = 0;
     ssn_time.tv_sec = 0;
@@ -208,6 +212,9 @@ bool IcmpSession::setup(Packet*)
 
     const StreamIcmpConfig* pc = get_icmp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
+
+    trace_logf(stream_icmp_trace, TRACE_ICMP_STATE, p,
+        "session setup, timeout=%u\n", pc->session_timeout);
 
     return true;
 }
@@ -228,6 +235,10 @@ int IcmpSession::process(Packet* p)
     {
         DataBus::publish(Stream::get_pub_id(), StreamEventIds::ICMP_BIDIRECTIONAL, p);
         flow->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
+
+        trace_logf(stream_icmp_trace, TRACE_ICMP_STATE, p,
+            "established: bidirectional (session_flags=0x%08x)\n",
+            flow->ssn_state.session_flags);
     }
 
     switch (p->ptrs.icmph->type)

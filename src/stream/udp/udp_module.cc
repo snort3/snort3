@@ -24,10 +24,20 @@
 
 #include "udp_module.h"
 
+#include "trace/trace.h"
+
 #include "stream_udp.h"
 
 using namespace snort;
 using namespace std;
+
+THREAD_LOCAL const Trace* stream_udp_trace = nullptr;
+
+static const TraceOption stream_udp_trace_options[] =
+{
+    { "state", TRACE_UDP_STATE, "enable stream UDP state trace logging" },
+    { nullptr, 0, nullptr }
+};
 
 //-------------------------------------------------------------------------
 // stream_udp module
@@ -81,3 +91,9 @@ const PegInfo* StreamUdpModule::get_pegs() const
 
 PegCount* StreamUdpModule::get_counts() const
 { return reinterpret_cast<PegCount*>(&udpStats); }
+
+void StreamUdpModule::set_trace(const Trace* trace) const
+{ stream_udp_trace = trace; }
+
+const TraceOption* StreamUdpModule::get_trace_options() const
+{ return stream_udp_trace_options; }

@@ -165,7 +165,8 @@ void UserTracker::detect(
     up->packet_flags |= (p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER));
     up->packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
-    debug_logf(stream_user_trace, up, "detect[%d]\n", up->dsize);
+    trace_logf(stream_user_trace, TRACE_USER_SEGMENTS, up,
+        "detect[%d]\n", up->dsize);
     PigPen::inspect_rebuilt(up);
 }
 
@@ -185,7 +186,8 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 
         flags = p->packet_flags & (PKT_FROM_CLIENT|PKT_FROM_SERVER);
         unsigned len = us->get_unused_len();
-        debug_logf(stream_user_trace, p, "scan[%d]\n", len);
+        trace_logf(stream_user_trace, TRACE_USER_SEGMENTS, p,
+            "scan[%u]\n", len);
 
         int32_t flush_amt = paf_check(
             splitter, &paf_state, p, us->get_unused_data(), len,
@@ -210,7 +212,8 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
 {
     unsigned bytes_flushed = 0;
-    debug_logf(stream_user_trace, p, "flush[%d]\n", flush_amt);
+    trace_logf(stream_user_trace, TRACE_USER_SEGMENTS, p,
+        "flush[%u]\n", flush_amt);
     uint32_t rflags = flags & ~PKT_PDU_TAIL;
     Packet* up = DetectionEngine::set_next_packet(p);
 
@@ -230,7 +233,8 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
             len = flush_amt;
         }
 
-        debug_logf(stream_user_trace, p, "reassemble[%d]\n", len);
+        trace_logf(stream_user_trace, TRACE_USER_SEGMENTS, p,
+            "reassemble[%u]\n", len);
         StreamBuffer sb = splitter->reassemble(
             p->flow, flush_amt, bytes_flushed, data, len, rflags, bytes_copied);
 
@@ -275,7 +279,8 @@ void UserTracker::process(Packet* p)
 
 void UserTracker::add_data(Packet* p)
 {
-    debug_logf(stream_user_trace, p, "add[%d]\n", p->dsize);
+    trace_logf(stream_user_trace, TRACE_USER_SEGMENTS, p,
+        "add[%d]\n", p->dsize);
     unsigned avail = 0;
 
     if ( !seg_list.empty() )
@@ -396,6 +401,10 @@ void UserSession::update(Packet* p, Flow* f)
             f->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
 
             f->set_ttl(p, false);
+
+            trace_logf(stream_user_trace, TRACE_USER_STATE, p,
+                "established: bidirectional (session_flags=0x%08x)\n",
+                f->ssn_state.session_flags);
         }
     }
 
@@ -435,13 +444,16 @@ UserSession::~UserSession()
         flow->sub_mem(sizeof(*this));
 }
 
-bool UserSession::setup(Packet*)
+bool UserSession::setup(Packet* p)
 {
     client.init();
     server.init();
 
     const StreamUserConfig* pc = get_user_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
+
+    trace_logf(stream_user_trace, TRACE_USER_STATE, p,
+        "session setup, timeout=%u\n", pc->session_timeout);
 
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
         return false;

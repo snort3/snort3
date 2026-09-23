@@ -29,6 +29,7 @@
 #include "protocols/packet.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
+#include "trace/trace_api.h"
 
 #include "ip_defrag.h"
 #include "ip_ha.h"
@@ -128,6 +129,10 @@ static inline void update_session(Packet* p, Flow* lws)
             {
                 DataBus::publish(Stream::get_pub_id(), StreamEventIds::IP_BIDIRECTIONAL, p);
             }
+
+            trace_logf(stream_ip_trace, TRACE_IP_STATE, p,
+                "established: bidirectional (session_flags=0x%08x)\n",
+                lws->ssn_state.session_flags);
         }
     }
 
@@ -186,6 +191,11 @@ bool IpSession::setup(const Packet* p, bool is_restart)
         ip_stats.trackers_created++;
         ip_stats.current_frags++;
     }
+
+    trace_logf(stream_ip_trace, TRACE_IP_STATE, p,
+        "session setup (%s), timeout=%u%s\n", is_restart ? "restart" : "new",
+        pc->session_timeout, (p->ptrs.decode_flags & DECODE_FRAG) ? " [fragmented]" : "");
+
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
         if ( !is_restart )
@@ -201,6 +211,9 @@ int IpSession::process(Packet* p)
 
     if ( Stream::expired_flow(flow, p) )
     {
+        trace_logf(stream_ip_trace, TRACE_IP_STATE, p,
+            "session expired\n");
+
         ip_stats.timeouts++;
         IpSessionCleanup(flow, &tracker, p);
 

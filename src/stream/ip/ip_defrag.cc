@@ -1043,6 +1043,10 @@ void Defrag::process(Packet* p, FragTracker* ft)
     {
         debug_log(stream_ip_trace, p, "[*] Fragment is complete, rebuilding!\n");
 
+        trace_logf(stream_ip_trace, TRACE_IP_STATE, p,
+            "datagram reassembly complete (frag_bytes=%u, size=%u, frags=%d)\n",
+            ft->frag_bytes, ft->calculated_size, ft->fraglist_count);
+
         /*
          * if the frag completes but it's bad we're just going to drop it
          * instead of wasting time on putting it back together
@@ -1226,7 +1230,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
 
     ft->frag_pkts++;
 
-    debug_logf(stream_ip_trace, p, "Walking frag list (%d nodes), new frag %d@%d\n",
+    trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+        "Walking frag list (%d nodes), new frag %d@%d\n",
         ft->fraglist_count, fragLength, frag_offset);
 
     /*
@@ -1261,7 +1266,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
      */
     if (left)
     {
-        debug_logf(stream_ip_trace, p, "Dealing with previous (left) frag %d@%d\n",
+        trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+            "Dealing with previous (left) frag %d@%d\n",
             left->size, left->offset);
 
         /*
@@ -1316,7 +1322,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                 frag_offset += (uint16_t)overlap;
                 slide = (uint16_t)overlap;
 
-                debug_logf(stream_ip_trace, p, "left overlap, new frag moves: %d bytes, slide: %d\n",
+                trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+                    "left overlap, new frag moves: %d bytes, slide: %d\n",
                     overlap, slide);
 
                 if (frag_end <= frag_offset)
@@ -1438,7 +1445,8 @@ left_overlap_last:
      */
     while (right && (right->offset < frag_end) && !done)
     {
-        debug_logf(stream_ip_trace, p, "Next (right)fragment %d@%d\n",
+        trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+            "Next (right)fragment %d@%d\n",
             right->size, right->offset);
 
         trunc = 0;
@@ -1471,7 +1479,8 @@ left_overlap_last:
             ip_stats.overlaps++;
             ft->overlap_count++;
 
-            debug_logf(stream_ip_trace, p, "Right-side overlap %d bytes\n", overlap);
+            trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+                "Right-side overlap %d bytes\n", overlap);
 
             /*
              * once again, engine-based policy processing
@@ -1619,7 +1628,8 @@ left_overlap_last:
                     trunc = (uint16_t)overlap;
                 }
 
-                debug_logf(stream_ip_trace, p, "right overlap, rejecting new overlap data (overlap: %d, "
+                trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+                    "right overlap, rejecting new overlap data (overlap: %d, "
                     "trunc: %d)\n", overlap, trunc);
 
                 if (frag_end - trunc <= frag_offset)
@@ -1716,7 +1726,8 @@ right_overlap_last:
                 dump_me = right;
                 ft->frag_bytes -= right->size;
 
-                debug_logf(stream_ip_trace, p, "retrans, dumping old frag (offset: %d overlap: %d)\n",
+                trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+                    "retrans, dumping old frag (offset: %d overlap: %d)\n",
                     dump_me->offset, overlap);
 
                 right = right->next;
@@ -1737,7 +1748,8 @@ right_overlap_last:
         (ft->overlap_count >= fe->max_overlaps))
     {
         // overlap limit exceeded. Raise event on all subsequent fragments
-        debug_log(stream_ip_trace, p, "Reached overlap limit.\n");
+        trace_logf(stream_ip_trace, TRACE_IP_FRAG, p,
+            "Reached overlap limit.\n");
 
         EventExcessiveOverlap(fe);
 
@@ -1835,6 +1847,9 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     ft->ordinal = 0;
     ft->frag_policy = p->flow->ssn_policy ? p->flow->ssn_policy : engine.frag_policy;
     ft->engine = &engine;
+
+    trace_logf(stream_ip_trace, TRACE_IP_STATE, p,
+        "new datagram tracker (frag_off=%hu, policy=%u)\n", frag_off, ft->frag_policy);
 
     /* initialize the fragment list */
     ft->fraglist = nullptr;
