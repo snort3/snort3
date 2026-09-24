@@ -314,6 +314,7 @@ TEST_GROUP(high_availability_manager_test)
 {
     void setup() override
     {
+        mock().setDataObject("s_side_channel", "SideChannel", nullptr);
         mock().setDataObject("s_handler", "SCProcessMsgFunc", nullptr);
     }
 
@@ -1031,6 +1032,8 @@ TEST_GROUP(ha_reload_test)
     {
         s_packet_time = {};
         mock().setDataObject("packet_tv", "struct timeval", &s_packet_time);
+        mock().setDataObject("s_side_channel", "SideChannel", nullptr);
+        mock().setDataObject("s_handler", "SCProcessMsgFunc", nullptr);
         memset(&ha_stats, 0, sizeof(ha_stats));
     }
 

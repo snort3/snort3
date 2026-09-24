@@ -107,7 +107,10 @@ const PegInfo mem_pegs[] =
     { CountType::NOW, "active", "total bytes allocated in active pages" },
     { CountType::NOW, "resident", "maximum bytes physically resident" },
     { CountType::NOW, "retained", "total bytes not returned to OS" },
-
+    { CountType::NOW, "dpf_n_added", "number of entries added to dpf tracker" },
+    { CountType::NOW, "dpf_n_freed", "number of entries freed from dpf tracker" },
+    { CountType::NOW, "dpf_n_overwrites", "number of overwrites in dpf ring-buffer" },
+    { CountType::NOW, "dpf_n_bytes_buffered", "current bytes in dpf buffer" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -146,7 +149,10 @@ const PegInfo* MemoryModule::get_pegs() const
 { return mem_pegs; }
 
 PegCount* MemoryModule::get_counts() const
-{ return reinterpret_cast<PegCount*>(&memory::MemoryCap::get_mem_stats()); }
+{
+    memory::MemoryCap::refresh_stats();
+    return reinterpret_cast<PegCount*>(&memory::MemoryCap::get_mem_stats());
+}
 
 void MemoryModule::prep_counts(bool dump_stats)
 {

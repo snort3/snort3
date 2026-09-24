@@ -27,8 +27,11 @@
 #include <cassert>
 #include <cstring>
 
-#ifdef HAVE_JEMALLOC
+#if defined(HAVE_JEMALLOC) && !defined(UNIT_TEST_BUILD)
 #include <jemalloc/jemalloc.h>
+#ifdef HAVE_CISCO_SHIM
+#include "shim.h"
+#endif
 #endif
 
 #include "control/control.h"
@@ -38,11 +41,20 @@ namespace memory
 {
 
 // -----------------------------------------------------------------------------
-#ifdef HAVE_JEMALLOC
-// -----------------------------------------------------------------------------
-
+#if defined(HAVE_JEMALLOC) && !defined(UNIT_TEST_BUILD)
 class JemallocInterface : public HeapInterface
 {
+public:
+    JemallocInterface()
+    {
+#ifdef HAVE_CISCO_SHIM
+        char shim_cfg[1024];
+        snort::LogMessage("%s", shim_print_config(shim_cfg, sizeof(shim_cfg)));
+#endif
+    }
+
+    ~JemallocInterface() override { }
+
     void main_init() override;
     void thread_init() override;
 
@@ -56,6 +68,7 @@ class JemallocInterface : public HeapInterface
     void profile_config(bool enable, uint64_t sample_rate) override;
     void dump_profile(ControlConn*) override;
     void show_profile_config(ControlConn*) override;
+    void get_debug_stats(uint64_t&, uint64_t&, uint64_t&, uint64_t&) override;
 };
 
 static size_t stats_mib[2], mib_len = 2;
@@ -194,6 +207,21 @@ void JemallocInterface::show_profile_config(ControlConn* ctrlcon)
     }
 }
 
+void JemallocInterface::get_debug_stats(uint64_t& fnadd, uint64_t& freen,
+    uint64_t& foverwrite, uint64_t& fbuffered)
+{
+#ifdef HAVE_CISCO_SHIM
+    shim_stats_t stats;
+    shim_get_stats(&stats);
+    fnadd = stats.dpf_n_added;
+    freen = stats.dpf_n_freed;
+    foverwrite = stats.dpf_n_overwrites;
+    fbuffered = stats.dpf_n_bytes_buffered;
+#else
+    fnadd = freen = foverwrite = fbuffered = 0;
+#endif
+}
+
 //--------------------------------------------------------------------------
 #else  // disabled interface
 //--------------------------------------------------------------------------
@@ -215,7 +243,7 @@ public:
 
 HeapInterface* HeapInterface::get_instance()
 {
-#ifdef HAVE_JEMALLOC
+#if defined(HAVE_JEMALLOC) && !defined(UNIT_TEST_BUILD)
     return new JemallocInterface;
 #else
     return new NerfedInterface;
@@ -223,4 +251,3 @@ HeapInterface* HeapInterface::get_instance()
 }
 
 }  // memory
-

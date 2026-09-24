@@ -207,8 +207,17 @@ void MemoryCap::thread_init()
 
 void MemoryCap::thread_term()
 {
+    refresh_stats();
+}
+
+void MemoryCap::refresh_stats()
+{
+    if (!heap)
+        return;
     MemoryCounts& mc = get_mem_stats();
     heap->get_thread_allocs(mc.allocated, mc.deallocated);
+    heap->get_debug_stats(mc.dpf_n_added, mc.dpf_n_freed,
+        mc.dpf_n_overwrites, mc.dpf_n_bytes_buffered);
 }
 
 MemoryCounts& MemoryCap::get_mem_stats()
@@ -317,6 +326,10 @@ void MemoryCap::reset_thread_stats()
     mc.reap_aborts = 0;
     mc.reap_decrease = 0;
     mc.reap_increase = 0;
+    mc.dpf_n_added = 0;
+    mc.dpf_n_freed = 0;
+    mc.dpf_n_overwrites = 0;
+    mc.dpf_n_bytes_buffered = 0;
 
     start_dealloc = 0;
     start_alloc = mc.allocated;

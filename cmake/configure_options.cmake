@@ -230,6 +230,13 @@ if ( ENABLE_JEMALLOC )
     find_package ( JEMalloc REQUIRED )
     set ( JEMALLOC_C_FLAGS "-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free" )
     set ( HAVE_JEMALLOC "1" )
+    # If the jemalloc install includes the generic shim headers, enable shim support.
+    # The shim headers live alongside jemalloc headers: <jemalloc-install>/include/shim.h
+    if ( EXISTS "${JEMALLOC_INCLUDE_DIR}/shim.h" )
+        set ( HAVE_CISCO_SHIM "1" )
+        set ( SHIM_INCLUDE_DIR "${JEMALLOC_INCLUDE_DIR}" )
+        message ( STATUS "Cisco shim found at ${SHIM_INCLUDE_DIR}" )
+    endif ()
 endif ( ENABLE_JEMALLOC )
 
 if ( ENABLE_CODE_COVERAGE )

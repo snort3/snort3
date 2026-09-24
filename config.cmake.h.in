@@ -156,6 +156,9 @@
 /* jemalloc available */
 #cmakedefine HAVE_JEMALLOC 1
 
+/* Cisco generic shim layer available */
+#cmakedefine HAVE_CISCO_SHIM 1
+
 /* uuid available */
 #cmakedefine HAVE_UUID 1
 

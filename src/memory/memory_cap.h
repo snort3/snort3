@@ -53,6 +53,11 @@ struct MemoryCounts
     PegCount active;
     PegCount resident;
     PegCount retained;
+    // shim stats
+    PegCount dpf_n_added;
+    PegCount dpf_n_freed;
+    PegCount dpf_n_overwrites;
+    PegCount dpf_n_bytes_buffered;
 };
 
 typedef bool (*PruneHandler)();
@@ -83,6 +88,7 @@ public:
     static MemoryCounts& get_mem_stats();
     static MemoryCounts& get_global_stats();
     static void update_global_stats(bool dump_stats = true);
+    static void refresh_stats();
 
     static void dump_mem_stats(ControlConn*);
     static void heap_profile_config(bool enable, uint64_t sample_rate);
@@ -93,6 +99,5 @@ public:
 #endif
 };
 
-}
-
+} // namespace memory
 #endif

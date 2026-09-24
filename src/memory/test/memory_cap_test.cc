@@ -121,7 +121,11 @@ public:
     void get_thread_allocs(uint64_t& a, uint64_t& d) override
     { a = alloc; d = dealloc; }
 
+    void get_debug_stats(uint64_t& na, uint64_t& nf, uint64_t& no, uint64_t& nb) override
+    { na = n_added; nf = n_freed; no = n_overwrites; nb = n_bytes_buffered; }
+
     uint64_t alloc = 2, dealloc = 1;
+    uint64_t n_added = 11, n_freed = 7, n_overwrites = 3, n_bytes_buffered = 4096;
     uint64_t epoch = 0, total = 0;
 
     unsigned main_init_calls = 0;
@@ -598,6 +602,53 @@ TEST(memory, module_show_stats_preserves_aggregated_thread_alloc_counts)
     UNSIGNED_LONGS_EQUAL(2, shown_counts[epochs_idx]);
     UNSIGNED_LONGS_EQUAL(240, shown_counts[allocated_idx]);
     UNSIGNED_LONGS_EQUAL(240, shown_counts[deallocated_idx]);
+
+    MemoryCap::stop();
+}
+
+TEST(memory, refresh_stats_reports_debug_stats)
+{
+    MemoryConfig config { 0, 100, 0, 1, true };
+    MemoryCap::start(config, pruner);
+
+    // refresh_stats() must copy the backend's debug stats into the pegs; the
+    // default HeapInterface zeroes them, so a backend that reports non-zero
+    // values (MockHeap) proves the plumbing is wired end to end.
+    MemoryCap::refresh_stats();
+
+    const MemoryCounts& mc = MemoryCap::get_mem_stats();
+    UNSIGNED_LONGS_EQUAL(11, mc.dpf_n_added);
+    UNSIGNED_LONGS_EQUAL(7, mc.dpf_n_freed);
+    UNSIGNED_LONGS_EQUAL(3, mc.dpf_n_overwrites);
+    UNSIGNED_LONGS_EQUAL(4096, mc.dpf_n_bytes_buffered);
+
+    MemoryCap::stop();
+}
+
+TEST(memory, module_reports_debug_stat_pegs)
+{
+    MemoryConfig config { 0, 100, 0, 1, true };
+    MemoryCap::start(config, pruner);
+
+    MemoryModule mod;
+    const PegInfo* pegs = mod.get_pegs();
+    const int added_idx = find_peg_idx(pegs, "dpf_n_added");
+    const int freed_idx = find_peg_idx(pegs, "dpf_n_freed");
+    const int overwrites_idx = find_peg_idx(pegs, "dpf_n_overwrites");
+    const int bytes_idx = find_peg_idx(pegs, "dpf_n_bytes_buffered");
+
+    CHECK(added_idx >= 0);
+    CHECK(freed_idx >= 0);
+    CHECK(overwrites_idx >= 0);
+    CHECK(bytes_idx >= 0);
+
+    // get_counts() runs refresh_stats() and returns the peg array, so this
+    // covers the reporting path from the backend through module aggregation.
+    const PegCount* counts = mod.get_counts();
+    UNSIGNED_LONGS_EQUAL(11, counts[added_idx]);
+    UNSIGNED_LONGS_EQUAL(7, counts[freed_idx]);
+    UNSIGNED_LONGS_EQUAL(3, counts[overwrites_idx]);
+    UNSIGNED_LONGS_EQUAL(4096, counts[bytes_idx]);
 
     MemoryCap::stop();
 }

@@ -37,7 +37,8 @@ public:
 
     virtual void get_process_total(uint64_t& epoch, uint64_t& total, bool bump_epoch = true) = 0;
     virtual void get_thread_allocs(uint64_t& alloc, uint64_t& dealloc) = 0;
-
+    virtual void get_debug_stats(uint64_t& n_added, uint64_t& n_freed, uint64_t& n_overwrites, uint64_t& n_bytes_buffered)
+    { n_added = n_freed = n_overwrites = n_bytes_buffered = 0; }
     virtual void print_stats(ControlConn*) { }
     virtual void get_aux_counts(uint64_t& app_all, uint64_t& active, uint64_t& resident, uint64_t& retained)
     { app_all = active = resident = retained = 0; }
@@ -55,4 +56,3 @@ protected:
 }
 
 #endif
-
