@@ -286,6 +286,7 @@ private:
 public:
     void set_header(OleHeader* h) { header = h; }
     void set_dir_list(DirectoryList* d) { dir_list = d; }
+    DirectoryList* get_dir_list() { return dir_list; }
     void set_fat_list(int32_t* f, int32_t len) { fat_list = f; fat_list_len = len; }
 #endif
 };

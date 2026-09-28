@@ -100,7 +100,8 @@ void OleFile :: walk_directory_list()
             else
                 utf_state.set_decode_utf_state_charset(CHARSET_UTF16BE);
             utf_state.decode_utf(buf, OLE_MAX_FILENAME_LEN_UTF16, name_buf,
-                OLE_MAX_FILENAME_ASCII, &bytes_copied);
+                OLE_MAX_FILENAME_ASCII - 1, &bytes_copied);
+            name_buf[bytes_copied] = '\0';
 
             node->set_name(name_buf);
 
@@ -778,7 +779,7 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
             get_file_data(node, data, data_len);
             uint8_t* data1 = data;
             int32_t offset = get_file_offset(data, data_len);
-            if (offset <= 0)
+            if (offset < 4)
             {
                 VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
                     CURRENT_PACKET,

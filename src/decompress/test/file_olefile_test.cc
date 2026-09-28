@@ -26,11 +26,13 @@
 #include "../file_oleheader.h"
 
 #include "detection/detection_engine.h"
+#include "helpers/boyer_moore_search.h"
 #include "helpers/literal_search.h"
 #include "helpers/utf.h"
 
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -43,6 +45,14 @@ THREAD_LOCAL const snort::Trace* vba_data_trace = nullptr;
 snort::LiteralSearch::Handle* search_handle = nullptr;
 const snort::LiteralSearch* searcher = nullptr ;
 
+// Configurable by tests (default: 0, matching the previous hardcoded stub)
+// so that walk_directory_list() tests can drive the decode_utf() output at
+// the OLE_MAX_FILENAME_ASCII - 1 (31) boundary and inspect the resulting
+// name, instead of every test always seeing an empty decode. Reset to 0 in
+// each test group's setup()/teardown() to avoid cross-test leakage.
+static int stub_decode_utf_bytes_copied = 0;
+static uint8_t stub_decode_utf_fill_byte = 'A';
+
 namespace snort
 {
 LiteralSearch::Handle* LiteralSearch::setup() { return nullptr; }
@@ -50,8 +60,27 @@ void LiteralSearch::cleanup(LiteralSearch::Handle*) { }
 LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*, unsigned, bool,
     bool) { return nullptr; }
 void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode, CharsetSrc) { }
-bool UtfDecodeSession::decode_utf(unsigned char const*, unsigned int, unsigned char*, unsigned int,
-    int*) { return true; }
+
+bool UtfDecodeSession::decode_utf(unsigned char const*, unsigned int, unsigned char* dst,
+    unsigned int dst_len, int* bytes_copied)
+{
+    // Callers (walk_directory_list()) index name_buf with the value written
+    // here. Always clamp to the caller-supplied capacity and initialize it,
+    // so a stubbed "success" never yields an indeterminate or out-of-range
+    // index into name_buf, mirroring the real decoder's dst_len contract.
+    int copied = stub_decode_utf_bytes_copied;
+    if (copied < 0)
+        copied = 0;
+    else if ((unsigned int)copied > dst_len)
+        copied = (int)dst_len;
+
+    if (dst and copied > 0)
+        memset(dst, stub_decode_utf_fill_byte, (size_t)copied);
+
+    if (bytes_copied)
+        *bytes_copied = copied;
+    return true;
+}
 Packet* DetectionEngine::get_current_packet() { return nullptr; }
 void trace_vprintf(char const*, unsigned char, char const*, snort::Packet const*, char const*, va_list) { }
 uint8_t TraceApi::get_constraints_generation() { return 0; }
@@ -567,6 +596,175 @@ TEST(GetMiniFatOffsetInfiniteLoop, FullAttackVector)
 
     CHECK_EQUAL(-1, rv);
     CHECK(elapsed_ms < 1000.0);
+
+    delete olefile;
+}
+
+TEST_GROUP(OleFileVbaOffsetGuard)
+{
+    void teardown() override
+    {
+        // The searcher/search_handle globals are process-wide; restore them
+        // to the file's default (unset) state so later tests such as
+        // Olefile_ole::get_file_offset keep exercising the searcher==nullptr
+        // guard rather than inheriting this group's real searcher.
+        searcher = nullptr;
+        search_handle = nullptr;
+    }
+};
+
+// Regression test for the Copilot review on PR #5829: exercise
+// find_and_extract_vba()'s "offset < 4" guard with a *real* LiteralSearch
+// implementation (BoyerMooreSearchNoCase, matching the production/fuzz
+// wiring in file_olefile_fuzz.cc) instead of the searcher==nullptr
+// short-circuit in get_file_offset(). A prior test attempt left the global
+// searcher unset, so it never reached the "data += offset - 4" arithmetic
+// that the guard protects. This builds a minimal single-sector FAT stream
+// whose raw bytes contain the "ATTRIBUT" literal at attribut_offset, and
+// confirms the stream is safely skipped (no vba data produced) for every
+// offset value the guard is meant to catch (0..3), without an out-of-bounds
+// or pointer-underflow access.
+static void check_short_attribut_offset_is_skipped(uint32_t attribut_offset)
+{
+    static const uint8_t pattern[] = { 'A', 'T', 'T', 'R', 'I', 'B', 'U', 'T' };
+    snort::BoyerMooreSearchNoCase local_searcher(pattern, sizeof(pattern));
+    searcher = &local_searcher;
+    search_handle = nullptr;
+
+    const uint16_t sector_size = 512;
+    const uint32_t buf_len = OLE_HEADER_LEN + sector_size;
+    std::vector<uint8_t> file_buf(buf_len, 0);
+    memcpy(file_buf.data() + OLE_HEADER_LEN + attribut_offset, pattern, sizeof(pattern));
+
+    OleHeader* header = new OleHeader();
+    const uint8_t sec_size_bytes[2] = { 0x09, 0x00 };
+    header->set_sector_size(sec_size_bytes);
+
+    FileProperty* node = new FileProperty();
+    const uint8_t stream_type_byte = static_cast<uint8_t>(STREAM);
+    node->set_file_type(&stream_type_byte);
+    const uint8_t starting_sector_bytes[4] = { 0x00, 0x00, 0x00, 0x00 };
+    node->set_starting_sector(starting_sector_bytes, LITL_END);
+    const uint8_t stream_size_bytes[8] = { 16, 0, 0, 0, 0, 0, 0, 0 };
+    node->set_stream_size(stream_size_bytes, LITL_END);
+
+    DirectoryList* dir_list = new DirectoryList();
+    dir_list->oleentry.push_back(node);
+
+    int32_t* fat = new int32_t[1];
+    fat[0] = -1;
+
+    OleFile* olefile = new OleFile(file_buf.data(), buf_len);
+    olefile->set_header(header);
+    olefile->set_dir_list(dir_list);
+    olefile->set_fat_list(fat, 1);
+
+    uint8_t* vba_buf = nullptr;
+    uint32_t vba_buf_len = 0;
+    olefile->find_and_extract_vba(vba_buf, vba_buf_len);
+
+    CHECK(vba_buf == nullptr);
+    CHECK_EQUAL(0u, vba_buf_len);
+
+    delete olefile;
+}
+
+TEST(OleFileVbaOffsetGuard, AttributAtOffset0)
+{
+    check_short_attribut_offset_is_skipped(0);
+}
+
+TEST(OleFileVbaOffsetGuard, AttributAtOffset1)
+{
+    check_short_attribut_offset_is_skipped(1);
+}
+
+TEST(OleFileVbaOffsetGuard, AttributAtOffset2)
+{
+    check_short_attribut_offset_is_skipped(2);
+}
+
+TEST(OleFileVbaOffsetGuard, AttributAtOffset3)
+{
+    check_short_attribut_offset_is_skipped(3);
+}
+
+TEST_GROUP(OleFileFilenameTruncation)
+{
+    void setup() override
+    {
+        stub_decode_utf_bytes_copied = 0;
+    }
+
+    void teardown() override
+    {
+        // stub_decode_utf_bytes_copied is a process-wide global; restore it
+        // to the default (0) "empty decode" behavior other test groups rely
+        // on so this group's boundary value never leaks into later tests.
+        stub_decode_utf_bytes_copied = 0;
+    }
+};
+
+// Regression test for the Copilot review on PR #5829: walk_directory_list()
+// requests at most OLE_MAX_FILENAME_ASCII - 1 (31) bytes from decode_utf()
+// into the 32-byte name_buf, then writes the null terminator itself at
+// name_buf[bytes_copied]. No prior test exercised that boundary because the
+// decode_utf stub always reported bytes_copied == 0. This drives the stub
+// to report the maximum permitted length (31) and fills the output with a
+// recognizable pattern, then walks a single-entry OLE directory sector and
+// verifies the resulting stored name is exactly 31 characters and is
+// correctly terminated at index 31 -- the last valid index of the 32-byte
+// allocation -- so the fix's truncation/termination logic is actually
+// covered, not just its crash-safety.
+TEST(OleFileFilenameTruncation, MaxLengthNameIsTruncatedAndTerminated)
+{
+    const uint16_t sector_size = 512;
+    const uint32_t buf_len = OLE_HEADER_LEN + sector_size;
+    std::vector<uint8_t> ole_buf(buf_len, 0);
+
+    // Single directory sector holding sector_size / DIR_ENTRY_SIZE == 4
+    // entries. Entry 0 is a real STREAM (kept by walk_directory_list());
+    // entries 1-3 stay EMPTY (0x00) and are discarded, but still exercise
+    // the decode_utf()/terminator path on the way there.
+    ole_buf[OLE_HEADER_LEN + DIR_FILE_TYPE_OFFSET] = STREAM;
+    const uint8_t stream_size_bytes[8] = { 4, 0, 0, 0, 0, 0, 0, 0 };
+    memcpy(ole_buf.data() + OLE_HEADER_LEN + DIR_STREAM_SIZE_OFFSET, stream_size_bytes, 8);
+
+    OleHeader* header = new OleHeader();
+    const uint8_t sec_size_bytes[2] = { 0x09, 0x00 }; // 2^9 == 512
+    header->set_sector_size(sec_size_bytes);
+    const uint8_t first_dir_bytes[4] = { 0x00, 0x00, 0x00, 0x00 };
+    header->set_first_dir(first_dir_bytes);
+
+    int32_t* fat = new int32_t[1];
+    fat[0] = -1; // single-sector directory: no next sector to chase
+
+    OleFile* olefile = new OleFile(ole_buf.data(), buf_len);
+    olefile->set_header(header);
+    olefile->set_fat_list(fat, 1);
+
+    // Simulate a decoder that has a full 32-character UTF-16 name available
+    // and would happily fill the entire destination buffer it's given --
+    // exactly the CSCwq23367 scenario. The stub clamps this sentinel to
+    // whatever dst_len walk_directory_list() actually passes, so if that
+    // call site regresses to requesting OLE_MAX_FILENAME_ASCII (32) instead
+    // of OLE_MAX_FILENAME_ASCII - 1 (31), this test will both observe a
+    // 32-character name below and let ASAN catch the resulting
+    // name_buf[32] = '\0' heap-buffer-overflow (name_buf is only 32 bytes,
+    // valid indices 0-31).
+    stub_decode_utf_bytes_copied = OLE_MAX_FILENAME_LEN_UTF16;
+
+    olefile->walk_directory_list();
+
+    DirectoryList* dir_list = olefile->get_dir_list();
+    CHECK(dir_list != nullptr);
+    CHECK_EQUAL((size_t)1, dir_list->oleentry.size());
+
+    const char* name = dir_list->oleentry.front()->get_name();
+    CHECK(name != nullptr);
+    CHECK_EQUAL((size_t)(OLE_MAX_FILENAME_ASCII - 1), strlen(name));
+    for (int i = 0; i < OLE_MAX_FILENAME_ASCII - 1; i++)
+        CHECK_EQUAL('A', name[i]);
 
     delete olefile;
 }
