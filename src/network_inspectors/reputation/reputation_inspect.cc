@@ -54,7 +54,7 @@ const PegInfo reputation_peg_names[] =
 { CountType::SUM, "monitored", "number of packets monitored" },
 { CountType::SUM, "memory_allocated", "total memory allocated" },
 { CountType::SUM, "aux_ip_blocked", "number of auxiliary ip packets blocked" },
-{ CountType::SUM, "aux_ip_trusted", "number of auxiliary ip packets trusted" },
+{ CountType::SUM, "aux_ip_trusted", "number of packets with auxiliary ip allowlist matches" },
 { CountType::SUM, "aux_ip_monitored", "number of auxiliary ip packets monitored" },
 { CountType::END, nullptr, nullptr }
 };
@@ -288,10 +288,10 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
         }
         else if (decision == TRUSTED)
         {
+            // don't allow trusting based solely on aux-ip
             DetectionEngine::queue_event(GID_REPUTATION, REPUTATION_EVENT_ALLOWLIST_DST);
             ReputationVerdictEvent event(p, REP_VERDICT_TRUSTED, iplist_id, false);
             DataBus::publish(pub_id, ReputationEventIds::REP_MATCHED, event);
-            p->active->trust_session(p, true);
             reputationstats.aux_ip_trusted++;
         }
     }

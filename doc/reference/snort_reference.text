@@ -5628,8 +5628,8 @@ Peg counts:
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.aux_ip_blocked: number of auxiliary ip packets blocked
     (sum)
-  * reputation.aux_ip_trusted: number of auxiliary ip packets trusted
-    (sum)
+  * reputation.aux_ip_trusted: number of packets with auxiliary ip
+    allowlist matches (sum)
   * reputation.aux_ip_monitored: number of auxiliary ip packets
     monitored (sum)
 
@@ -13903,8 +13903,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * reputation.aux_ip_monitored: number of auxiliary ip packets
     monitored (sum)
-  * reputation.aux_ip_trusted: number of auxiliary ip packets trusted
-    (sum)
+  * reputation.aux_ip_trusted: number of packets with auxiliary ip
+    allowlist matches (sum)
   * reputation.blocked: number of packets blocked (sum)
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.monitored: number of packets monitored (sum)

@@ -12,3 +12,21 @@ file is interface.info. For each line of the manifest file, the format is:
   file_name, list_id, action (block, allow, monitor), [interface information]
 
 If interface information is empty, this means all interfaces are applied
+
+Besides the source and destination addresses of a packet, this inspector also looks
+up auxiliary IPs. Those are addresses another inspector parsed out of application
+content and stashed on the flow: http_inspect takes one from the authority of an
+absolute-form request URI, and appid takes one from a URI reported by a third party.
+They reach this inspector as the AUXILIARY_IP event and through the flow's auxiliary
+ip list, and their verdicts are counted by aux_ip_blocked, aux_ip_trusted and
+aux_ip_monitored.
+
+An auxiliary IP can block or monitor a flow but never trusts one, not even when allow
+is set to trust. Nothing ties a flow's addresses to what its content names, so any
+client can put an allowlisted address in a request URI. Blocking or monitoring on an
+address the flow never proved it owns fails closed, whereas trusting on one would let
+that client turn off inspection of its own connection. An allowlist hit on an
+auxiliary IP still raises 136:5 and still publishes the trusted verdict, so the match
+stays visible to the operator; only the flow-wide trust is withheld. Nothing is lost
+when the address really is the flow's destination, because the destination lookup
+trusts the flow on its own.
