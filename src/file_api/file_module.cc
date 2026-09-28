@@ -29,13 +29,19 @@
 
 #include "file_module.h"
 
+#include <cctype>
+#include <limits>
+
+#include "control/control.h"
 #include "log/messages.h"
+#include "lua/lua.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
 #include "packet_io/active.h"
 #include "trace/trace.h"
 
+#include "file_cache.h"
 #include "file_service.h"
 #include "file_stats.h"
 
@@ -271,3 +277,103 @@ void FileIdModule::reset_stats()
     file_stats_clear();
     Module::reset_stats();
 }
+
+static int dump_file_cache(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    FileCache* cache = FileService::get_file_cache();
+
+    if ( !cache )
+    {
+        LogRespond(ctrlcon, "File cache not available\n");
+        return 0;
+    }
+
+    // -1 is the sentinel for "dump every entry"; otherwise the count must be
+    // >= 1. Any other value (0 prints nothing; negatives would wrap to a huge
+    // unsigned count) is rejected.
+    int max_entries = luaL_optint(L, 1, 100);
+    if ( max_entries < 1 and max_entries != -1 )
+    {
+        LogRespond(ctrlcon,
+            "Invalid row count: %d. Use -1 for all entries, or a value >= 1\n", max_entries);
+        return 0;
+    }
+
+    unsigned count = (max_entries == -1) ?
+        std::numeric_limits<unsigned>::max() : (unsigned)max_entries;
+    cache->dump_cache(ctrlcon, count);
+    return 0;
+}
+
+static int dump_file_cache_detail(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    FileCache* cache = FileService::get_file_cache();
+
+    if ( !cache )
+    {
+        LogRespond(ctrlcon, "File cache not available\n");
+        return 0;
+    }
+
+    const char* sha = luaL_optstring(L, 1, nullptr);
+    if ( !sha or !*sha )
+    {
+        LogRespond(ctrlcon, "Usage: file_inspect.dump_file_cache_detail(<sha256_prefix>)\n");
+        return 0;
+    }
+
+    // A SHA256 is 32 bytes == 64 hex characters, so a prefix must be 1..64 hex
+    // digits. Validate up front to avoid walking the whole cache (under lock)
+    // for input that can never match.
+    std::string sha_prefix(sha);
+    if ( sha_prefix.length() > 64 )
+    {
+        LogRespond(ctrlcon, "Invalid SHA256 prefix: length must be 1-64 hex characters\n");
+        return 0;
+    }
+
+    for ( char& c : sha_prefix )
+    {
+        if ( !isxdigit((unsigned char)c) )
+        {
+            LogRespond(ctrlcon,
+                "Invalid SHA256 prefix: only hex characters (0-9, a-f, A-F) are allowed\n");
+            return 0;
+        }
+        // Normalize to uppercase to match sha_to_hex()'s uppercase output.
+        c = (char)toupper((unsigned char)c);
+    }
+
+    cache->dump_cache_entry(ctrlcon, sha_prefix);
+    return 0;
+}
+
+static const Parameter dump_file_cache_params[] =
+{
+    { "max_entries", Parameter::PT_INT, nullptr, "100",
+      "number of cache entries to dump (default 100; -1 for all)" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter dump_file_cache_detail_params[] =
+{
+    { "sha256_prefix", Parameter::PT_STRING, nullptr, nullptr,
+      "SHA256 hex prefix of the cache entry" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Command file_inspect_cmds[] =
+{
+    { "dump_file_cache", dump_file_cache, dump_file_cache_params,
+      "dump file cache summary (default 100 entries; optional row count arg, -1 for all)" },
+    { "dump_file_cache_detail", dump_file_cache_detail, dump_file_cache_detail_params,
+      "dump details for a file cache entry by SHA256 prefix" },
+    { nullptr, nullptr, nullptr, nullptr }
+};
+
+const Command* FileIdModule::get_commands() const
+{ return file_inspect_cmds; }

@@ -75,6 +75,7 @@ public:
     void set_trace(const snort::Trace*) const override;
     const snort::TraceOption* get_trace_options() const override;
     const snort::RuleMap* get_rules() const override;
+    const snort::Command* get_commands() const override;
 
 private:
     FileMeta rule;

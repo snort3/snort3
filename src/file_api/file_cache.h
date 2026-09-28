@@ -22,12 +22,16 @@
 #define FILE_CACHE_H
 
 #include <atomic>
+#include <functional>
 #include <mutex>
+#include <string>
 
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
 #include "file_config.h"
+
+class ControlConn;
 
 class ExpectedFileCache;
 
@@ -75,6 +79,9 @@ public:
     bool cached_context_not_cacheable(snort::Flow*, uint64_t file_id);
     void store_shared_verdict(const FileHashKey&, int64_t timeout, snort::FileInfo& src);
 
+    void dump_cache(ControlConn*, unsigned max_entries);
+    void dump_cache_entry(ControlConn*, const std::string& sha_hex);
+
 private:
     void make_key(snort::Flow*, uint64_t file_id, FileHashKey&) const;
     static bool verdict_publish_blocked(FileVerdict cached, FileVerdict incoming);
@@ -88,6 +95,9 @@ private:
     FileVerdict check_verdict(snort::Packet*, snort::FileInfo*, snort::FilePolicyBase*,const uint8_t* current_data, uint32_t current_data_len);
     int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout, bool &cache_full, bool is_cacheable);
     void publish_file_cache_event(snort::Flow* flow, snort::FileInfo* file, int64_t timeout);
+
+    unsigned walk_locked(unsigned max_entries,
+        const std::function<bool(snort::FileContext*)>& visit);
 
     /* The hash table of expected files */
     ExpectedFileCache* fileHash = nullptr;

@@ -24,7 +24,12 @@
 #include "file_cache.h"
 
 #include <cinttypes>
+#include <cstring>
 
+#include <limits>
+#include <vector>
+
+#include "control/control.h"
 #include "flow/flow_key.h"
 #include "hash/hash_defs.h"
 #include "hash/hashes.h"
@@ -872,3 +877,232 @@ FileVerdict FileCache::resume_pending_verdict(Packet* p, FileInfo* dup,
     return resolved;
 }
 
+namespace
+{
+// Raw snapshot of the fields dump_cache()/dump_cache_entry() need. Two locks
+// are involved: cache_mutex (held by walk_locked) keeps the node itself alive
+// for the walk, but the node's user_file_data_mutex is what guards the entry's
+// contents -- resume_pending_verdict() rewrites file_name/url/host holding
+// only that lock, so copying those std::strings under cache_mutex alone would
+// race with a reassignment that frees the buffer being read. verdict is still
+// written unlocked by apply_verdict(), so it may be momentarily stale.
+// Formatting into display strings is deferred until both locks are released.
+struct FileCacheRow
+{
+    uint8_t sha[SHA256_HASH_SIZE] = {};
+    bool has_sha = false;
+    std::string name;
+    uint32_t type_id = 0;
+    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
+
+    std::string sha_str;
+    std::string type_name;
+    std::string verdict_name;
+};
+
+struct FileCacheDetailRow : FileCacheRow
+{
+    uint64_t size = 0;
+    bool is_download = false;
+    std::string direction;
+    uint64_t file_id = 0;
+    std::string url;
+    std::string host;
+};
+
+// Caller must hold cache_mutex and the node's user_file_data_mutex.
+void snapshot_common_row(FileCacheRow& row, FileContext* file)
+{
+    uint8_t* sha = file->get_file_sig_sha256();
+    row.has_sha = sha != nullptr;
+    if ( row.has_sha )
+        memcpy(row.sha, sha, SHA256_HASH_SIZE);
+
+    const std::string& name = file->get_file_name();
+    row.name = name.empty() ? "<empty>" : name;
+
+    row.type_id = file->get_file_type();
+    row.verdict = file->verdict;
+}
+
+inline char hex_digit(uint8_t byte, bool low_nibble)
+{
+    static const char conv[] = "0123456789ABCDEF";
+    return low_nibble ? conv[byte & 0x0F] : conv[(byte >> 4) & 0x0F];
+}
+
+std::string sha_to_hex(const uint8_t* digest)
+{
+    std::string out;
+    out.reserve(2 * SHA256_HASH_SIZE);
+    for ( unsigned i = 0; i < SHA256_HASH_SIZE; ++i )
+    {
+        out.push_back(hex_digit(digest[i], false));
+        out.push_back(hex_digit(digest[i], true));
+    }
+    return out;
+}
+
+// Allocation-free equivalent of comparing hex_prefix against the leading
+// characters of sha_to_hex(sha256). Used under cache_mutex so that
+// non-matching entries incur only a cheap byte comparison (no per-node string
+// allocation) while the lock is held.
+bool sha_hex_prefix_matches(const uint8_t* sha256, const std::string& hex_prefix)
+{
+    if ( hex_prefix.length() > 2 * SHA256_HASH_SIZE )
+        return false;
+
+    for ( size_t i = 0; i < hex_prefix.length(); ++i )
+    {
+        if ( hex_digit(sha256[i / 2], (i & 1) != 0) != hex_prefix[i] )
+            return false;
+    }
+    return true;
+}
+
+// Called after cache_mutex is released: formatting/allocation only.
+// When truncate_name is true (default), long file names are shortened for
+// column output; pass false for detail output to preserve the full name.
+void format_common_row(FileCacheRow& row, bool truncate_name = true)
+{
+    row.sha_str = row.has_sha ? sha_to_hex(row.sha) : "<pending>";
+
+    if ( truncate_name and row.name.length() > 20 )
+        row.name = row.name.substr(0, 17) + "...";
+
+    row.type_name = file_type_name(row.type_id);
+    row.verdict_name = VerdictName[row.verdict];
+}
+}
+
+unsigned FileCache::walk_locked(unsigned max_entries,
+    const std::function<bool(FileContext*)>& visit)
+{
+    std::lock_guard<std::mutex> lock(cache_mutex);
+
+    unsigned total = fileHash ? fileHash->get_num_nodes() : 0;
+    if ( !total )
+        return 0;
+
+    HashNode* hash_node = fileHash->find_first_node();
+    unsigned visited = 0;
+
+    while ( hash_node and visited < max_entries )
+    {
+        FileNode* node = (FileNode*)hash_node->data;
+        if ( node and node->file )
+        {
+            visited++;
+            if ( !visit(node->file) )
+                break;
+        }
+        hash_node = fileHash->find_next_node();
+    }
+
+    return total;
+}
+
+void FileCache::dump_cache(ControlConn* ctrlcon, unsigned max_entries)
+{
+    std::vector<FileCacheRow> rows;
+
+    // Field copies only (one short std::string each), under cache_mutex plus
+    // the node's user_file_data_mutex.
+    unsigned total = walk_locked(max_entries, [&rows](FileContext* file)
+    {
+        FileCacheRow row;
+        {
+            std::lock_guard<std::recursive_mutex> udlock(file->user_file_data_mutex);
+            snapshot_common_row(row, file);
+        }
+        rows.emplace_back(std::move(row));
+        return true;
+    });
+
+    // Formatting/allocation happens here, after cache_mutex is released.
+    for ( auto& row : rows )
+        format_common_row(row);
+
+    LogRespond(ctrlcon, "\nTotal number of cache entries: %u\n", total);
+
+    if ( !total )
+        return;
+
+    LogRespond(ctrlcon, "%-20s | %-10s | %-12s | %s\n",
+        "File Name", "File Type", "Verdict", "SHA256");
+
+    for ( const auto& row : rows )
+    {
+        LogRespond(ctrlcon, "%-20s   %-10s   %-12s   %s\n",
+            row.name.c_str(),
+            row.type_name.c_str(),
+            row.verdict_name.c_str(),
+            row.sha_str.c_str());
+    }
+
+    if ( rows.size() < total )
+        LogRespond(ctrlcon, "... displayed %zu of %u entries\n", rows.size(), total);
+}
+
+void FileCache::dump_cache_entry(ControlConn* ctrlcon, const std::string& sha_hex)
+{
+    std::vector<FileCacheDetailRow> rows;
+
+    // Per-node work is one allocation-free SHA prefix comparison; every entry
+    // whose SHA matches the prefix is copied (the same file seen on multiple
+    // flows yields multiple cache entries sharing a SHA). Each copy is done
+    // holding the node's user_file_data_mutex so the row is internally
+    // consistent and the string copies cannot race with a concurrent
+    // set_url()/set_host(). All hex/string formatting is deferred until after
+    // the locks are released.
+    unsigned total = walk_locked(std::numeric_limits<unsigned>::max(), [&](FileContext* file)
+    {
+        std::lock_guard<std::recursive_mutex> udlock(file->user_file_data_mutex);
+        uint8_t* sha = file->get_file_sig_sha256();
+        if ( !sha )
+            return true;
+
+        if ( !sha_hex_prefix_matches(sha, sha_hex) )
+            return true;
+
+        FileCacheDetailRow row;
+        snapshot_common_row(row, file);
+        row.size = file->get_file_size();
+        row.is_download = file->get_file_direction() == FILE_DOWNLOAD;
+        row.file_id = file->get_file_id();
+        row.url = file->get_url();
+        row.host = file->get_host_name();
+
+        rows.emplace_back(std::move(row));
+        return true;
+    });
+
+    if ( rows.empty() )
+    {
+        if ( !total )
+            LogRespond(ctrlcon, "File cache is empty\n");
+        else
+            LogRespond(ctrlcon, "No cache entry found matching SHA256: %s\n", sha_hex.c_str());
+        return;
+    }
+
+    for ( auto& row : rows )
+    {
+        format_common_row(row, false);
+        row.direction = row.is_download ? "Download" : "Upload";
+
+        LogRespond(ctrlcon, "\nSHA256: %s\n", row.sha_str.c_str());
+        LogRespond(ctrlcon, "File Name: %s\n", row.name.c_str());
+        LogRespond(ctrlcon, "File Type: %s (id: %u)\n", row.type_name.c_str(), row.type_id);
+        LogRespond(ctrlcon, "File Size: %" PRIu64 "\n", row.size);
+        LogRespond(ctrlcon, "Verdict: %s\n", row.verdict_name.c_str());
+        LogRespond(ctrlcon, "Direction: %s\n", row.direction.c_str());
+        LogRespond(ctrlcon, "File ID: %" PRIu64 "\n", row.file_id);
+
+        if ( !row.url.empty() )
+            LogRespond(ctrlcon, "URL: %s\n", row.url.c_str());
+
+        if ( !row.host.empty() )
+            LogRespond(ctrlcon, "Host: %s\n", row.host.c_str());
+    }
+}
