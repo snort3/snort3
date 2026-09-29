@@ -564,9 +564,11 @@ public:
     void* dce2_smb_session_data;
 };
 
-// Used for reassembled packets
-#define DCE2_MOCK_HDR_LEN__SMB_CLI \
-    ((unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq)))
+// Used for reassembled packets.  The client region is sized per SMB version:
+// SMB2 lays a larger Smb2WriteRequestHdr where SMB1 lays SmbWriteAndXReq.
+unsigned get_smb_cli_mock_hdr_len();
+
+#define DCE2_MOCK_HDR_LEN__SMB_CLI get_smb_cli_mock_hdr_len()
 #define DCE2_MOCK_HDR_LEN__SMB_SRV \
     ((unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp)))
 

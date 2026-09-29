@@ -511,6 +511,9 @@ void* DCE2_QueueNext(DCE2_Queue*) { return nullptr; }
 void DCE2_QueueDestroy(DCE2_Queue*) { }
 
 void set_smb_reassembled_data(uint8_t*, uint16_t) { }
+// The tests exercise SMB1 geometry only; return the SMB1-sized region.
+unsigned get_smb_cli_mock_hdr_len()
+{ return (unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq)); }
 
 void DceExpSsnManager::create_expected_session(const SfIp*, uint16_t, const char*) { }
 

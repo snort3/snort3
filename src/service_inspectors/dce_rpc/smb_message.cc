@@ -2693,6 +2693,29 @@ DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
         return nullptr;
 }
 
+// Mock header DCE2_GetRpkt reserves ahead of a reassembled client CO PDU.  Uses the
+// same version test as set_smb_reassembled_data(), so size and writer cannot disagree.
+unsigned get_smb_cli_mock_hdr_len()
+{
+    const snort::Packet* p = DetectionEngine::get_current_packet();
+    const snort::Flow* flow = p ? p->flow : nullptr;
+
+    if (flow)
+    {
+        const Dce2SmbFlowData* fd = static_cast<const Dce2SmbFlowData*>(
+            flow->get_flow_data(Dce2SmbFlowData::inspector_id));
+
+        if (fd and fd->dce2_smb_session_data and fd->smb_version == DCE2_SMB_VERSION_2)
+            return (unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(Smb2WriteRequestHdr));
+    }
+
+    return (unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq));
+}
+
+// Server region stays SMB1-sized; fails the build if that ever stops being safe.
+static_assert(sizeof(Smb2ReadResponseHdr) <= sizeof(SmbReadAndXResp),
+    "SMB2 server mock header no longer fits the SMB1-sized reassembly region");
+
 void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
 {
     const snort::Flow* flow = DetectionEngine::get_current_packet()->flow;
