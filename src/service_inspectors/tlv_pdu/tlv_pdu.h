@@ -34,6 +34,7 @@ struct TlvPduConfig
     unsigned offset = 0;
     unsigned skip = 0;
     bool relative = false;
+    unsigned max_pipelined = 65535;
 };
 
 struct PduCounts
@@ -55,6 +56,9 @@ public:
     Status scan(struct snort::Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
 
 private:
+    void scan_reset();
+    bool scan_once(unsigned, const uint8_t*, uint32_t, uint32_t&);
+
     TlvPduConfig config;
     unsigned index = 0;
     uint32_t value = 0;

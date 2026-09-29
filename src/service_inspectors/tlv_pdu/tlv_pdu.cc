@@ -25,6 +25,7 @@
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
 
 #include "tlv_pdu.h"
@@ -69,6 +70,9 @@ static const Parameter s_params[] =
     { "relative", Parameter::PT_BOOL, nullptr, "false",
       "extracted length follows field (instead of whole PDU)" },
 
+    { "max_pipelined", Parameter::PT_INT, "1:65535", "65535",
+      "maximum number of pipelined PDUs flushed at once" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -105,16 +109,19 @@ private:
 bool TlvPduModule::set(const char*, Value& v, SnortConfig*)
 {
     if (v.is("offset"))
-        config.offset = v.get_int32();
+        config.offset = v.get_uint16();
 
     else if (v.is("size"))
         config.size = v.get_uint8();
 
     else if (v.is("skip"))
-        config.skip = v.get_uint8();
+        config.skip = v.get_uint16();
 
     else if (v.is("relative"))
         config.relative = v.get_bool();
+
+    else if (v.is("max_pipelined"))
+        config.max_pipelined = v.get_uint16();
 
     return true;
 }
@@ -128,12 +135,22 @@ class TlvPdu : public Inspector
 public:
     TlvPdu(TlvPduConfig& c) : config(c) { }
 
+    void show(const SnortConfig*) const override;
     StreamSplitter* get_splitter(bool c2s) override
     { return new TlvPduSplitter(c2s, config); }
 
 private:
     TlvPduConfig config;
 };
+
+void TlvPdu::show(const SnortConfig*) const
+{
+    ConfigLogger::log_value("size", config.size);
+    ConfigLogger::log_value("offset", config.offset);
+    ConfigLogger::log_value("skip", config.skip);
+    ConfigLogger::log_value("relative", config.relative);
+    ConfigLogger::log_value("max_pipelined", config.max_pipelined);
+}
 
 //-------------------------------------------------------------------------
 // api foo

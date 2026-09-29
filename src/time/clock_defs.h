@@ -50,7 +50,7 @@ inline long clock_scale() { return 1; }
 using hr_duration = SnortClock::duration;
 using hr_time = SnortClock::time_point;
 
-inline constexpr hr_duration operator "" _ticks (unsigned long long int v)
+inline constexpr hr_duration operator""_ticks (unsigned long long int v)
 { return hr_duration(v); }
 
 template<typename Clock,

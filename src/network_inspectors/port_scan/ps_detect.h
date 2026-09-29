@@ -68,50 +68,50 @@ struct Packet;
 
 struct PS_ALERT_CONF
 {
-    short connection_count;
-    short priority_count;
-    short u_ip_count;
-    short u_port_count;
+    short connection_count{0};
+    short priority_count{0};
+    short u_ip_count{0};
+    short u_port_count{0};
 };
 
 struct PortscanConfig
 {
-    size_t memcap;
+    size_t memcap{0};
 
-    int detect_scans;
-    int detect_scan_type;
-    int proto_cnt;
-    int include_midstream;
-    int print_tracker;
+    int detect_scans{0};
+    int detect_scan_type{0};
+    int proto_cnt{0};
+    int include_midstream{0};
+    int print_tracker{0};
 
-    bool alert_all;
-    bool logfile;
+    bool alert_all = false;
+    bool logfile = false;
 
-    unsigned tcp_window;
-    unsigned udp_window;
-    unsigned ip_window;
-    unsigned icmp_window;
+    unsigned tcp_window{0};
+    unsigned udp_window{0};
+    unsigned ip_window{0};
+    unsigned icmp_window{0};
 
-    IPSET* ignore_scanners;
-    IPSET* ignore_scanned;
-    IPSET* watch_ip;
+    IPSET* ignore_scanners{nullptr};
+    IPSET* ignore_scanned{nullptr};
+    IPSET* watch_ip{nullptr};
 
-    PS_ALERT_CONF tcp_ports;
-    PS_ALERT_CONF tcp_decoy;
-    PS_ALERT_CONF tcp_sweep;
-    PS_ALERT_CONF tcp_dist;
+    PS_ALERT_CONF tcp_ports{};
+    PS_ALERT_CONF tcp_decoy{};
+    PS_ALERT_CONF tcp_sweep{};
+    PS_ALERT_CONF tcp_dist{};
 
-    PS_ALERT_CONF udp_ports;
-    PS_ALERT_CONF udp_decoy;
-    PS_ALERT_CONF udp_sweep;
-    PS_ALERT_CONF udp_dist;
+    PS_ALERT_CONF udp_ports{};
+    PS_ALERT_CONF udp_decoy{};
+    PS_ALERT_CONF udp_sweep{};
+    PS_ALERT_CONF udp_dist{};
 
-    PS_ALERT_CONF ip_proto;
-    PS_ALERT_CONF ip_decoy;
-    PS_ALERT_CONF ip_sweep;
-    PS_ALERT_CONF ip_dist;
+    PS_ALERT_CONF ip_proto{};
+    PS_ALERT_CONF ip_decoy{};
+    PS_ALERT_CONF ip_sweep{};
+    PS_ALERT_CONF ip_dist{};
 
-    PS_ALERT_CONF icmp_sweep;
+    PS_ALERT_CONF icmp_sweep{};
 
     PortscanConfig();
     ~PortscanConfig();

@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <stdint.h>
+
 #include "tlv_pdu.h"
 
 using namespace snort;
@@ -30,44 +32,107 @@ using namespace snort;
 // splitter foo
 //-------------------------------------------------------------------------
 
+void TlvPduSplitter::scan_reset()
+{
+    value = 0;
+    index = 0;
+}
+
+bool TlvPduSplitter::scan_once(unsigned prefix, const uint8_t* data, uint32_t len, uint32_t& fp)
+{
+    // tag
+    while (index < config.offset and 0 < len)
+    {
+        ++index;
+        ++data;
+        --len;
+    }
+
+    // length
+    while (index < prefix and 0 < len)
+    {
+        value <<= 8;
+        value |= *data;
+        ++index;
+        ++data;
+        --len;
+    }
+
+    // not enough data
+    if (index < prefix)
+        return false;
+
+    // full TLV found
+    fp = value;
+    scan_reset();
+
+    return true;
+}
+
 StreamSplitter::Status TlvPduSplitter::scan(Packet*, const uint8_t* data, uint32_t len, uint32_t, uint32_t* fp)
 {
     ++pdu_counts.scans;
-    unsigned prefix = config.offset + config.size;
 
-    for ( unsigned i = 0; i < len; ++i )
+    const auto* guard = data + len;
+    const auto prefix = config.offset + config.size;
+    const auto header = config.offset + config.size + config.skip;
+
+    auto pdus = config.max_pipelined;
+    uint32_t carry = index;
+    uint32_t fpc = 0;
+
+    *fp = 0;
+
+    // try to find as many as possible in the current segment
+    while (data < guard and pdus and scan_once(prefix, data, len, fpc))
     {
-        if ( index < config.offset )
-            ++index;
+        --pdus;
 
-        else if ( index < prefix )
+        if (config.relative)
         {
-            ++index;
-            value <<= 8;
-            value |= data[i];
+            if (fpc > UINT32_MAX - header)
+            {
+                ++pdu_counts.aborts;
+                return ABORT;
+            }
+            fpc += header;
         }
-        else
+        else if (fpc < header)
+        {
+            ++pdu_counts.aborts;
+            return ABORT;
+        }
+
+        if (fpc < carry)
+        {
+            ++pdu_counts.aborts;
+            return ABORT;
+        }
+
+        // adjust for data found in the previous scan
+        fpc -= carry;
+        carry = 0;
+
+        // do not delay flush if a complete TLV has become available in the current scan
+        if (*fp > 0 and fpc > len)
             break;
+
+        // proceed to the next TLV
+        *fp += fpc;
+
+        if (fpc > len)
+             break;
+
+        data += fpc;
+        len -= fpc;
     }
-    if ( index == prefix )
-    {
-        unsigned header = config.offset + config.size + config.skip;
 
-        if ( config.relative )
-            value += header;
+    if (!*fp)
+        return SEARCH;
 
-        *fp = value;
-        value = 0;
-        index = 0;
+    ++pdu_counts.flushes;
 
-        if ( config.relative or (*fp >= header) )
-        {
-            ++pdu_counts.flushes;
-            return FLUSH;
-        }
-        ++pdu_counts.aborts;
-        return ABORT;
-    }
-    return SEARCH;
+    scan_reset();
+
+    return FLUSH;
 }
-

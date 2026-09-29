@@ -97,7 +97,6 @@ PS_PKT::PS_PKT(Packet* p)
 
 PortscanConfig::PortscanConfig()
 {
-    memset(this, 0, sizeof(*this));
 }
 
 PortscanConfig::~PortscanConfig()
