@@ -172,9 +172,9 @@ AppId AppIdSession::pick_ss_referred_payload_app_id() const
     return APPID_UT_ID;
 }
 
-AppIdHttpSession* AppIdSession::create_http_session(int64_t)
+AppIdHttpSession* AppIdSession::create_http_session(int64_t stream_id)
 {
-    auto hsession = std::make_unique<MockAppIdHttpSession>(*this);
+    auto hsession = std::make_unique<MockAppIdHttpSession>(*this, stream_id);
     auto tmp_hsession = hsession.get();
 
     AppidChangeBits change_bits;

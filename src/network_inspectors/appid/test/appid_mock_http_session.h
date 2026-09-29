@@ -76,8 +76,8 @@ void AppIdHttpSession::update_url(AppidChangeBits&)
 class MockAppIdHttpSession : public AppIdHttpSession
 {
 public:
-    MockAppIdHttpSession(AppIdSession& asd)
-        : AppIdHttpSession(asd, 0)
+    MockAppIdHttpSession(AppIdSession& asd, int64_t stream_id = 0)
+        : AppIdHttpSession(asd, stream_id)
     {
         meta_data[REQ_AGENT_FID] = new std::string(USERAGENT);
         meta_data[REQ_HOST_FID] = new std::string(HOST);

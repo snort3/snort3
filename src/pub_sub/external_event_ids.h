@@ -28,6 +28,7 @@ struct ExternalEventIds
     CPE_OS_INFO,
     DATA_DECRYPT,
     EVE_PROCESS,
+    MCP_DETECTED,
 
     num_ids
 }; };

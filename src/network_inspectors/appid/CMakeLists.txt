@@ -165,6 +165,8 @@ set ( APPID_SOURCES
     appid_http_session.cc
     appid_http_session.h
     appid_httpx_req_body_event_handler.h
+    appid_mcp_event_handler.cc
+    appid_mcp_event_handler.h
     appid_http_end_of_transaction_event_handler.h
     appid_opportunistic_tls_event_handler.h
     appid_peg_counts.h

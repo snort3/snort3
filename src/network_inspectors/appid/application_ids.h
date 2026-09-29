@@ -1030,6 +1030,7 @@ enum ApplicationIds : AppId
     APP_ID_REGTEST1                       = 10001,
     APP_ID_REGTEST2                       = 10002,
 #endif
+    APP_ID_MCP                            = 10824,
     APP_ID_PXGRID                         = 11086
 };
 

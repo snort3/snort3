@@ -49,6 +49,7 @@
 #include "appid_ha.h"
 #include "appid_http_event_handler.h"
 #include "appid_httpx_req_body_event_handler.h"
+#include "appid_mcp_event_handler.h"
 #include "appid_http_end_of_transaction_event_handler.h"
 #include "appid_opportunistic_tls_event_handler.h"
 #include "appid_peg_counts.h"
@@ -174,6 +175,9 @@ bool AppIdInspector::configure(SnortConfig* sc)
 
     DataBus::subscribe_global(external_pub_key, ExternalEventIds::EVE_PROCESS,
         new AppIdEveProcessEventHandler(*this), *sc);
+
+    DataBus::subscribe_global(external_pub_key, ExternalEventIds::MCP_DETECTED,
+        new AppIdMcpEventHandler(*this), *sc);
 
     DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS,
         new AppIdOpportunisticTlsEventHandler(), *sc);

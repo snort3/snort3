@@ -28,6 +28,7 @@ set (PUB_SUB_INCLUDES
     http_transaction_end_event.h
     intrinsic_event_ids.h
     netflow_event.h
+    mcp_detection_event.h
     opportunistic_tls_event.h
     packet_events.h
     quic_events.h
