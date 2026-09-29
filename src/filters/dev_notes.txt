@@ -44,12 +44,12 @@ changed begins a new count, the old one being given back as the sessions
 holding it end.  Clearing the hash on reload instead would re-arm every
 concurrency cap and reset every sampling period.
 
-For a SYN-received session event carried through a tunnel, a source- or
-destination-tracked key also records that the attempt was tunneled.  The
-decoded inner source or destination remains the tracked address.  This keeps
-tunneled attempts from advancing the same address's direct-traffic counter,
-while all tunnel paths deliberately share one tunneled counter.  Rule-tracked
-filters remain global and do not use the discriminator.
+For a packet-backed event carried through a tunnel, a source- or
+destination-tracked key also records that the event was tunneled.  The decoded
+inner source or destination remains the tracked address.  This keeps tunneled
+events from advancing the same address's direct-traffic counter, while all
+tunnel paths deliberately share one tunneled counter.  Rule-tracked filters
+remain global and do not use the discriminator.
 
 The direct and tunneled keys have independent counts and filter states.  An
 address observed in both forms can therefore reach the configured count once
@@ -57,15 +57,21 @@ in each category before either action activates, and it occupies two tracking
 records.  This bounded split is intentional: sharing either state would allow
 tunnel traffic to activate the configured action for direct traffic again.
 
-This distinction applies only to the SYN-received session event.  The
-connection-established session event and rate filters for IPS rule events
-retain their existing accounting.
+The distinction applies to packet-backed session events and IPS rule events.
+A connection gauge keeps the discriminator with its flow-owned release key so
+that teardown returns the count to the same direct or tunneled tracking node
+without needing packet context.  On the current x86-64 build, adding that
+discriminator uses existing tail padding and the release key remains 40 bytes.
 
-The discriminator is packet ancestry, not Flow or DAQ connection ownership.
-It covers successful UDP-tunnel and TEB decapsulation, MPLS, and a visible IP
-ancestor distinct from the active IP layer, as occurs with plain GRE and
-IP-in-IP.  It is local to rate-filter accounting and does not redefine Flow
-identity.
+For decoded packets, the discriminator is packet ancestry, not Flow or DAQ
+connection ownership.  It covers successful UDP-tunnel and TEB decapsulation,
+MPLS, and a visible IP ancestor distinct from the active IP layer, as occurs
+with plain GRE and IP-in-IP.  Derived pseudo-packets instead inherit the
+Flow-key discriminator because their decoder ancestry is not authoritative.
+That key currently distinguishes successful UDP-tunnel and TEB decapsulation;
+exact GRE, IP-in-IP, and MPLS provenance across stream reassembly would require
+preserving it with the queued data.  The discriminator is local to rate-filter
+accounting and does not redefine Flow identity.
 
 This discriminator changes only which counter an event uses.  It does not
 alter Flow identity or the configured rate-filter action semantics.

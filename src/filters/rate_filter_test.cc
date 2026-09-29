@@ -104,7 +104,7 @@ static void SetFlowIps(Flow& flow)
 
 static int Setup(Flow& flow, const SnortConfig& sc)
 {
-    int status = RateFilter_SessionEvent(SESSION_EVENT_SETUP, flow, sc);
+    int status = RateFilter_SessionEvent(SESSION_EVENT_SETUP, flow, sc, nullptr);
 
     if ( status >= IpsAction::get_max_types() )
         status -= IpsAction::get_max_types();
@@ -112,7 +112,7 @@ static int Setup(Flow& flow, const SnortConfig& sc)
     return status;
 }
 
-static int GaugeReads(const SfIp& client, const SfIp& server)
+static int GaugeReads(const SfIp& client, const SfIp& server, bool tunnel_carried = false)
 {
     // each read is past the revert timeout of the one before, so the gauge is
     // re-evaluated rather than left latched; GaugeConfig() rewinds it per case
@@ -122,7 +122,7 @@ static int GaugeReads(const SfIp& client, const SfIp& server)
     SFRFGaugeKeys gauges;
 
     int status = SFRF_TestThreshold(rfc, GID_SESSION, SESSION_EVENT_SETUP, policy_id,
-        &client, &server, gauge_time, SFRF_COUNT_INCREMENT, &gauges);
+        &client, &server, gauge_time, SFRF_COUNT_INCREMENT, &gauges, tunnel_carried);
 
     if ( status >= IpsAction::get_max_types() )
         status -= IpsAction::get_max_types();
@@ -150,6 +150,22 @@ TEST_CASE("rate filter gauge count comes back when the flow is reclaimed", "[rat
         CHECK(GaugeReads(client, server) == RULE_NEW);
     }
 
+    CHECK(GaugeReads(client, server) == RULE_ORIG);
+
+    GaugeTerm(sc);
+}
+
+TEST_CASE("rate filter returns a tunneled gauge to its tunneled counter", "[rate_filter]")
+{
+    SnortConfig sc;
+    GaugeInit(sc);
+
+    SfIp client, server;
+    client.set(IP4_CLIENT);
+    server.set(IP4_SERVER);
+
+    CHECK(GaugeReads(client, server, true) == RULE_ORIG);
+    CHECK(GaugeReads(client, server, true) == RULE_ORIG);
     CHECK(GaugeReads(client, server) == RULE_ORIG);
 
     GaugeTerm(sc);

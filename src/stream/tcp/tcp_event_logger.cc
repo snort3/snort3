@@ -86,7 +86,8 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid, Flow& flow)
 
     tcpStats.internalEvents++;
 
-    const int action = RateFilter_SessionEvent(eventSid, flow, *sc);
+    const int action = RateFilter_SessionEvent(
+        eventSid, flow, *sc, ours ? context->packet : nullptr);
 
     // a teardown with no packet of its own must not log against another flow's packet
     if ( action >= 0 and ours )

@@ -40,7 +40,8 @@ void RateFilter_Cleanup();
 int RateFilter_Create(snort::SnortConfig* sc, RateFilterConfig*, tSFRFConfigNode*);
 int RateFilter_Test(const OptTreeNode*, snort::Packet*);
 
-int RateFilter_SessionEvent(unsigned sid, snort::Flow&, const snort::SnortConfig&);
+int RateFilter_SessionEvent(unsigned sid, snort::Flow&, const snort::SnortConfig&,
+    const snort::Packet*);
 void RateFilter_SessionRelease(snort::Flow&);
 
 #endif

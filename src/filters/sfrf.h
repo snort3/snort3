@@ -182,6 +182,7 @@ struct SFRFGaugeKey
     int tid = 0;
     uint64_t generation = 0;
     snort::SfIp ip;
+    uint16_t tunnel_carried = 0;
 };
 
 typedef std::vector<SFRFGaugeKey> SFRFGaugeKeys;

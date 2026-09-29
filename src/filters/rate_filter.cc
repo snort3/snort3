@@ -29,11 +29,11 @@
 
 #include "rate_filter.h"
 
-#include "detection/detection_engine.h"
 #include "detection/ips_context.h"
 #include "detection/rules.h"
 #include "detection/treenodes.h"
 #include "flow/flow.h"
+#include "flow/flow_key.h"
 #include "hash/ghash.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
@@ -67,7 +67,7 @@ RateFilterFlowData::~RateFilterFlowData()
     SFRF_ReleaseGauges(gauges);
 }
 
-static bool is_tunnel_carried(const Packet* p)
+static bool has_tunnel_ancestry(const Packet* p)
 {
     if ( p->is_tunnel_encapsulated() || (p->proto_bits & PROTO_BIT__MPLS) )
         return true;
@@ -78,8 +78,18 @@ static bool is_tunnel_carried(const Packet* p)
     layer::set_outer_ip_api(p, outer_ip, layer_index);
 
     // Plain IP tunnels such as GRE do not set the decapsulation marker.  A
-    // distinct outer IP layer still proves that this SYN arrived as a passenger.
+    // distinct outer IP layer still proves that this event came from a passenger.
     return outer_ip.is_valid() && outer_ip != p->ptrs.ip_api;
+}
+
+static bool is_tunnel_carried(const Packet* p)
+{
+    // Derived pseudo-packets do not retain authoritative decoder ancestry.
+    // Use the Flow-key discriminator that survives reassembly when available.
+    if ( p->was_set() && !p->is_defrag() )
+        return p->flow && p->flow->key && p->flow->key->flags.tunnel_encapsulated;
+
+    return has_tunnel_ancestry(p);
 }
 
 RateFilterConfig* RateFilter_ConfigNew()
@@ -157,15 +167,21 @@ int RateFilter_Test(const OptTreeNode* otn, Packet* p)
 {
     unsigned gid = otn->sigInfo.gid;
     unsigned sid = otn->sigInfo.sid;
+    RateFilterConfig* rfc = p->context->conf->rate_filter_config;
 
     const SfIp* sip;
     const SfIp* dip;
     SfIp cleared;
+    bool tunnel_carried = false;
 
     if ( p->has_ip_hdr() )
     {
         sip = p->ptrs.ip_api.get_src();
         dip = p->ptrs.ip_api.get_dst();
+
+        // Most events have no rate filter.  Avoid walking their decoder layers.
+        if ( gid < SFRF_MAX_GENID && rfc->genHash[gid] )
+            tunnel_carried = is_tunnel_carried(p);
     }
     else
     {
@@ -174,25 +190,19 @@ int RateFilter_Test(const OptTreeNode* otn, Packet* p)
         dip = &cleared;
     }
 
-    RateFilterConfig* rfc = p->context->conf->rate_filter_config;
-
     return SFRF_TestThreshold(rfc, gid, sid, get_inspection_policy()->policy_id,
-        sip, dip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT);
+        sip, dip, p->pkth->ts.tv_sec, SFRF_COUNT_INCREMENT, nullptr, tunnel_carried);
 }
 
-int RateFilter_SessionEvent(unsigned sid, Flow& flow, const SnortConfig& sc)
+int RateFilter_SessionEvent(
+    unsigned sid, Flow& flow, const SnortConfig& sc, const Packet* packet)
 {
     RateFilterConfig* rfc = sc.rate_filter_config;
     SFRFGaugeKeys gauges;
     bool tunnel_carried = false;
 
-    if ( sid == SESSION_EVENT_SYN_RX )
-    {
-        const Packet* packet = DetectionEngine::get_current_packet();
-
-        if ( packet && packet->flow == &flow && packet->has_ip_hdr() )
-            tunnel_carried = is_tunnel_carried(packet);
-    }
+    if ( packet && packet->flow == &flow && packet->has_ip_hdr() )
+        tunnel_carried = is_tunnel_carried(packet);
 
     const unsigned fd_id = rf_flow_data_id.load(std::memory_order_relaxed);
 

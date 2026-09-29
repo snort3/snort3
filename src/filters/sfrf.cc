@@ -171,7 +171,7 @@ void SFRF_ReleaseGauges(const SFRFGaugeKeys& gauges)
         tSFRFTrackingNodeKey key;
 
         key.ip = gauge.ip;
-        key.tunnel_carried = 0;
+        key.tunnel_carried = gauge.tunnel_carried;
         key.tid = gauge.tid;
         key.policyId = gauge.policyId;
 
@@ -338,7 +338,10 @@ static int SFRF_TestObject(const tSFRFConfigNode* cfgNode, const SfIp* ip,
             dynNode->count++;
 
             if ( gauge )
-                gauges->push_back( { policy_id, cfgNode->tid, dynNode->generation, *ip } );
+            {
+                gauges->push_back(
+                    { policy_id, cfgNode->tid, dynNode->generation, *ip, tunnel_carried } );
+            }
         }
         break;
     case SFRF_COUNT_RESET:
