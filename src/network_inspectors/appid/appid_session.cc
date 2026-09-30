@@ -210,6 +210,7 @@ AppIdSession::~AppIdSession()
     }
 
     delete tsession;
+    tsession = nullptr;
     free_flow_data();
     service_candidates.clear();
     client_candidates.clear();
@@ -818,6 +819,7 @@ void AppIdSession::delete_session_data()
     api.payload.reset();
     api.delete_session_data();
     delete tsession;
+    tsession = nullptr;
 }
 
 int AppIdSession::add_flow_data(AppIdFlowData* data, unsigned id)
