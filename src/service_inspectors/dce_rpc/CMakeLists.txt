@@ -113,3 +113,12 @@ add_catch_test( dce_smb2_async_interim_test
         dce_smb2.cc
         dce_smb2_utils.cc
 )
+
+add_catch_test( dce_smb2_inspect_bounds_test
+    NO_TEST_SOURCE
+    SOURCES
+        test/dce_smb2_inspect_bounds_test.cc
+        dce_smb2_commands.cc
+        dce_smb2.cc
+        dce_smb2_utils.cc
+)

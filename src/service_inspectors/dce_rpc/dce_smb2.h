@@ -676,6 +676,7 @@ struct Smb2NegotiateResponseHdr
     uint64_t server_start_time;
     uint16_t security_buffer_offset;
     uint16_t security_buffer_length;
+    uint32_t reserved2;
 };
 
 struct Smb2WriteRequestHdr
@@ -880,6 +881,9 @@ struct Smb2IoctlResponseHdr
 
 #define SMB2_ERROR_RESPONSE_STRUC_SIZE 9
 #define SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE 65
+
+static_assert(sizeof(Smb2NegotiateResponseHdr) == SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE - 1,
+    "SMB2 negotiate response header must match the wire format");
 
 #define SMB2_CREATE_REQUEST_STRUC_SIZE 57
 #define SMB2_CREATE_RESPONSE_STRUC_SIZE 89

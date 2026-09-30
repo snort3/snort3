@@ -1200,14 +1200,8 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     DCE2_Smb2TreeTracker* ttr, uint64_t mid)
 {
     uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
-    const uint8_t* file_data = (const uint8_t*)smb_data + structure_size - 1;
-    int data_size = end - file_data;
     uint64_t fileId_persistent = 0;
     Packet* p = DetectionEngine::get_current_packet();
-    if (data_size > UINT16_MAX)
-    {
-        data_size = UINT16_MAX;
-    }
     if (Smb2AsyncInterim(smb_hdr, structure_size))
         return;
 
@@ -1218,10 +1212,18 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
             p, "%s_RESP: error\n",
             smb2_command_string[SMB2_COM_IOCTL]);
+        return;
     }
     // Using structure size to decide whether it is response or request
     else if (structure_size == SMB2_IOCTL_REQUEST_STRUC_SIZE)
     {
+        if (static_cast<size_t>(end - smb_data) < sizeof(Smb2IoctlRequestHdr))
+        {
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                "%s : smb truncated data detected\n", smb2_command_string[SMB2_COM_IOCTL]);
+            dce2_smb_stats.v2_hdr_err++;
+            return;
+        }
         const Smb2IoctlRequestHdr* ioctl_request = reinterpret_cast<const Smb2IoctlRequestHdr*>(smb_data);
         if ((ioctl_request->ctl_code != FSCTL_PIPE_PEEK) and (ioctl_request->ctl_code !=
             FSCTL_PIPE_WAIT) and (ioctl_request->ctl_code != FSCTL_PIPE_TRANSCEIVE))
@@ -1251,6 +1253,13 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else if (structure_size == SMB2_IOCTL_RESPONSE_STRUC_SIZE)
     {
+        if (static_cast<size_t>(end - smb_data) < sizeof(Smb2IoctlResponseHdr))
+        {
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                "%s : smb truncated data detected\n", smb2_command_string[SMB2_COM_IOCTL]);
+            dce2_smb_stats.v2_hdr_err++;
+            return;
+        }
         const Smb2IoctlResponseHdr* ioctl_response = reinterpret_cast<const Smb2IoctlResponseHdr*>(smb_data);
         if ((ioctl_response->ctl_code != FSCTL_PIPE_PEEK) and (ioctl_response->ctl_code !=
             FSCTL_PIPE_WAIT) and (ioctl_response->ctl_code != FSCTL_PIPE_TRANSCEIVE))
@@ -1268,6 +1277,9 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         dce2_smb_stats.v2_ioctl_inv_str_sz++;
         return;
     }
+    const uint8_t* file_data = smb_data + structure_size - 1;
+    const size_t remaining = static_cast<size_t>(end - file_data);
+    const uint16_t data_size = remaining > UINT16_MAX ? UINT16_MAX : remaining;
     DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(fileId_persistent);
     if (ftracker and ftracker->co_tracker)
     {

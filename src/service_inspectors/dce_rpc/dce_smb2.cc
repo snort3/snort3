@@ -345,6 +345,12 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     case SMB2_COM_NEGOTIATE:
         if (structure_size == SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE)
         {
+            // Avoid forming a pointer beyond one-past-the-end for the check.
+            if (static_cast<size_t>(end - smb_data) < SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE - 1)
+            {
+                dce2_smb_stats.v2_hdr_err++;
+                break;
+            }
             const Smb2NegotiateResponseHdr* neg_resp_hdr = reinterpret_cast<const Smb2NegotiateResponseHdr*>(smb_data);
             if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
             {
@@ -575,10 +581,34 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
         // multiple requests up to the maximum size<88> that is supported by the transport."
         do
         {
-            DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
+            // Compound requests advance smb_hdr by a sender-controlled offset;
+            // revalidate the remaining bytes before reading the next header.
+            const uint8_t* const hdr_start = reinterpret_cast<const uint8_t*>(smb_hdr);
+            const uint8_t* const packet_end = data_ptr + data_len;
+            const size_t remaining = static_cast<size_t>(packet_end - hdr_start);
+            if (remaining < SMB2_HEADER_LENGTH + sizeof(uint16_t))
+            {
+                dce2_smb_stats.v2_hdr_err++;
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
+                    "truncated smb2 header\n");
+                return;
+            }
+
             // In case of message compounding, find the offset of the next smb command
             next_command_offset = alignedNtohl(&(smb_hdr->next_command));
-            if (next_command_offset + reinterpret_cast<const uint8_t*>(smb_hdr) > (data_ptr + data_len))
+            const bool bad_next_command_offset = next_command_offset and
+                (next_command_offset < SMB2_HEADER_LENGTH + sizeof(uint16_t) or
+                next_command_offset > remaining);
+
+            // Preserve inspection of the current command before reporting a bad
+            // following offset.  Existing stats account the current command even
+            // when its NextCommand field is malformed.
+            const uint8_t* const command_end =
+                next_command_offset and not bad_next_command_offset
+                ? hdr_start + next_command_offset : packet_end;
+            DCE2_Smb2Inspect(ssd, smb_hdr, command_end);
+
+            if (bad_next_command_offset)
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
                     reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
@@ -587,19 +617,10 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
                 dce2_smb_stats.v2_bad_next_cmd_offset++;
                 return;
             }
+
             if (next_command_offset)
             {
-                // Check if adding next_command_offset would cause integer overflow
-                if (next_command_offset > SIZE_MAX - reinterpret_cast<uintptr_t>(smb_hdr))
-                {
-                    dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
-                        reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
-                    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-                        p, "integer overflow in next command offset\n");
-                    dce2_smb_stats.v2_bad_next_cmd_offset++;
-                    return;
-                }
-                smb_hdr = reinterpret_cast<const Smb2Hdr*>(reinterpret_cast<const uint8_t*>(smb_hdr) + next_command_offset);
+                smb_hdr = reinterpret_cast<const Smb2Hdr*>(command_end);
                 compound_request_index++;
             }
 
