@@ -24,7 +24,8 @@
 
 #include "side_channel_format.h"
 
-#include <cmath>
+#include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <sstream>
@@ -70,7 +71,7 @@ ConnectorMsg from_text(const char* str_ptr, uint32_t size)
     if ( !str_ptr or size == 0 )
         return ConnectorMsg();
 
-    const char* txt_data_ptr = strchr(str_ptr, ',');
+    const char* txt_data_ptr = (const char*)memchr(str_ptr, ',', size);
 
     if ( !txt_data_ptr )
         return ConnectorMsg();
@@ -80,18 +81,27 @@ ConnectorMsg from_text(const char* str_ptr, uint32_t size)
     if ( hdr_len < sizeof("1:1.1") - 1 )
         return ConnectorMsg();
 
-    uint8_t* new_data = new uint8_t[sizeof(SCMsgHdr) + (uint32_t)ceil((double)(size - hdr_len) / TXT_UNIT_LEN)]();
-    SCMsgHdr sc_hdr;
+    // sscanf needs a terminated string and the connector buffer is not one
+    char hdr_txt[sizeof("65535:18446744073709551615.4294967295")];
+
+    if ( hdr_len >= sizeof(hdr_txt) )
+        return ConnectorMsg();
+
+    memcpy(hdr_txt, str_ptr, hdr_len);
+    hdr_txt[hdr_len] = '\0';
 
     uint16_t port;
     uint64_t time_seconds;
     uint32_t time_u_seconds;
 
-    if ( sscanf(str_ptr, "%hu:%" SCNu64 ".%" SCNu32, &port, &time_seconds, &time_u_seconds) != 3 )
-    {
-        delete[] new_data;
+    if ( sscanf(hdr_txt, "%hu:%" SCNu64 ".%" SCNu32, &port, &time_seconds, &time_u_seconds) != 3 )
         return ConnectorMsg();
-    }
+
+    // a separator plus one hex digit is the least an encoded byte can cost
+    const uint32_t data_capacity = (size - hdr_len) / 2;
+
+    uint8_t* new_data = new uint8_t[sizeof(SCMsgHdr) + data_capacity]();
+    SCMsgHdr sc_hdr;
 
     sc_hdr.port = port;
     sc_hdr.time_seconds = time_seconds;
@@ -102,20 +112,31 @@ ConnectorMsg from_text(const char* str_ptr, uint32_t size)
     uint32_t data_pos = sizeof(SCMsgHdr);
     const char* txt_data_end = str_ptr + size;
 
-    do
+    while ( txt_data_ptr < txt_data_end )
     {
-        int bytes_consumed = 0;
+        char unit[TXT_UNIT_LEN] = { };   // two hex digits and a terminator
+        unsigned digits = 0;
 
         txt_data_ptr += 1;   // step to the character after the comma
 
-        if ( sscanf(txt_data_ptr, "%hhx%n", (unsigned char*)&(new_data[data_pos++]), &bytes_consumed) != 1 )
+        while ( digits < sizeof(unit) - 1 and txt_data_ptr < txt_data_end and
+            isxdigit((unsigned char)*txt_data_ptr) )
+            unit[digits++] = *txt_data_ptr++;
+
+        if ( digits == 0 or data_pos == sizeof(SCMsgHdr) + data_capacity or
+            (txt_data_ptr < txt_data_end and *txt_data_ptr != ',') )
         {
             delete[] new_data;
             return ConnectorMsg();
         }
 
-        txt_data_ptr += bytes_consumed;
-    } while ( txt_data_ptr < txt_data_end and (txt_data_ptr = strchr(txt_data_ptr, (int)',')) != nullptr );
+        new_data[data_pos++] = (uint8_t)strtoul(unit, nullptr, 16);
+
+        txt_data_ptr = (const char*)memchr(txt_data_ptr, ',', txt_data_end - txt_data_ptr);
+
+        if ( !txt_data_ptr )
+            break;
+    }
 
     if ( data_pos <= sizeof(SCMsgHdr) )
     {
@@ -308,6 +329,67 @@ TEST_CASE("from_text", "[side_channel]")
         SECTION("invalid_msg_format")
         {
             std::string txt_msg("1:2.3.foobar");
+
+            const ConnectorMsg cmsg = from_text(txt_msg.c_str(), txt_msg.size());
+            CHECK_NO_CMSG(cmsg);
+        }
+    }
+    SECTION("bounds")
+    {
+        // the connectors hand over a buffer sized exactly to the message, so
+        // nothing here may be NUL-terminated
+        SECTION("single_digit_tokens")
+        {
+            std::string txt_msg("1:2.3");
+            uint8_t expected_data[60];
+
+            for ( unsigned i = 0; i < sizeof(expected_data); i++ )
+            {
+                txt_msg += ",1";
+                expected_data[i] = 0x01;
+            }
+
+            SCMsgHdr expected_hdr = {1, 0, 3, 2};
+
+            ConnectorMsg cmsg = from_text(txt_msg.c_str(), txt_msg.size());
+            CHECK_CMSG(cmsg, expected_hdr, expected_data);
+        }
+        SECTION("token_truncated_by_length")
+        {
+            const char txt_msg[] = "1:2.3,AA,BB";
+
+            SCMsgHdr expected_hdr = {1, 0, 3, 2};
+            uint8_t expected_data[] = {0xaa, 0x0b};
+
+            // declare "1:2.3,AA,B" -- the final B is the whole token in range
+            ConnectorMsg cmsg = from_text(txt_msg, 10);
+            CHECK_CMSG(cmsg, expected_hdr, expected_data);
+        }
+        SECTION("separator_at_end_of_length")
+        {
+            const char txt_msg[] = "1:2.3,AA,BB";
+
+            // declare "1:2.3,AA," -- no digit follows the last separator
+            const ConnectorMsg cmsg = from_text(txt_msg, 9);
+            CHECK_NO_CMSG(cmsg);
+        }
+        SECTION("over_long_hex_run")
+        {
+            std::string txt_msg("1:2.3,ABCDEF");
+
+            const ConnectorMsg cmsg = from_text(txt_msg.c_str(), txt_msg.size());
+            CHECK_NO_CMSG(cmsg);
+        }
+        SECTION("whitespace_padded_token")
+        {
+            std::string txt_msg("1:2.3, 41");
+
+            const ConnectorMsg cmsg = from_text(txt_msg.c_str(), txt_msg.size());
+            CHECK_NO_CMSG(cmsg);
+        }
+        SECTION("header_longer_than_any_valid_one")
+        {
+            std::string txt_msg("65535:18446744073709551615.42949672950,00");
 
             const ConnectorMsg cmsg = from_text(txt_msg.c_str(), txt_msg.size());
             CHECK_NO_CMSG(cmsg);
