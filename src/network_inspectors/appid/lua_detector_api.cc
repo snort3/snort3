@@ -288,6 +288,12 @@ static int service_register_pattern(lua_State* L)
     }
 
     const char* pattern = lua_tostring(L, ++index);
+    if (!pattern)
+    {
+        lua_pushnumber(L, -1);
+        return 1;
+    }
+
     size_t size;
     ++index;
     LUA_GET_UINTEGER_OR_RETURN(size, L, index, 1);
@@ -362,7 +368,7 @@ static int detector_log_message(lua_State* L)
     const auto& name = (*UserData<LuaObject>::check(L, DETECTOR, 1))->get_detector()->get_name();
 
     unsigned int level = lua_tonumber(L, 2);
-    const char* message = lua_tostring(L, 3);
+    const char* message = lua_message_log(lua_tostring(L, 3));
 
     switch (level)
     {
@@ -399,7 +405,7 @@ static int detector_log_snort_message(lua_State* L)
     const auto& name = (*UserData<LuaObject>::check(L, DETECTOR, 1))->get_detector()->get_name();
 
     unsigned int level = lua_tonumber(L, 2);
-    const char* message = lua_tostring(L, 3);
+    const char* message = lua_message_log(lua_tostring(L, 3));
 
     switch (level)
     {
@@ -441,6 +447,9 @@ static int service_add_netbios_domain(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     const char* netbios_domain = lua_tostring(L, 2);
+    if (!netbios_domain)
+        return 0;
+
     lsd->ldp.asd->set_netbios_domain(*lsd->ldp.change_bits, netbios_domain);
     return 0;
 }
@@ -597,6 +606,12 @@ static int service_set_validator(lua_State* L)
     if (!init(L, 1)) return 1;
 
     const char* pValidator = lua_tostring(L, 2);
+    if (!pValidator)
+    {
+        lua_pushnumber(L, -1);
+        return 1;
+    }
+
     lua_getfield(L, LUA_REGISTRYINDEX, ud->lsd.package_info.name.c_str());
     lua_getfield(L, -1, pValidator);
     if (!lua_isfunction(L, -1))
@@ -783,12 +798,12 @@ static int detector_get_pcre_groups(lua_State* L)
     unsigned int offset = lua_tonumber(L, 3);     /*offset can be zero, no check necessary. */
 
     /*compile the regular expression pattern, and handle errors */
-    pcre2_code* re = pcre2_compile((PCRE2_SPTR)pattern,  // the pattern
-        PCRE2_ZERO_TERMINATED,         // assume zero terminated strings
-        PCRE2_DOTALL,                  // default options - dot matches all inc \n
-        &errorcode,                    // for error message
-        &erroffset,                    // for error offset
-        nullptr);                      // default character tables
+    pcre2_code* re = pcre2_compile((PCRE2_SPTR)pattern, // the pattern (handles nullptr case)
+        PCRE2_ZERO_TERMINATED, // assume zero terminated strings
+        PCRE2_DOTALL, // default options - dot matches all inc \n
+        &errorcode, // for error message
+        &erroffset, // for error offset
+        nullptr); // default character tables
 
     if (re == nullptr)
     {
@@ -887,6 +902,8 @@ static int detector_find_substr(lua_State* L)
     unsigned int offset = lua_tonumber(L, 2);
     size_t substr_len = 0;
     const char* substr = lua_tolstring(L, 3, &substr_len);
+    if(!substr or !substr_len)
+        return 0;
 
     for (unsigned int i = 0; i + offset <= lsd->ldp.size - substr_len; i++)
     {
@@ -932,6 +949,9 @@ static int detector_memcmp(lua_State* L)
     const LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* pattern = lua_tostring(L, 2);
+    if (!pattern)
+        return 0;
+
     unsigned int patternLen = lua_tonumber(L, 3);
     unsigned int offset = lua_tonumber(L, 4);     /*offset can be zero, no check necessary. */
     int rc = memcmp(lsd->ldp.data + offset, pattern, patternLen);
@@ -1065,6 +1085,12 @@ static int client_register_pattern(lua_State* L)
     }
 
     const char* pattern = lua_tostring(L, ++index);
+    if (!pattern)
+    {
+        lua_pushnumber(L, -1);
+        return 1;
+    }
+
     size_t size;
     ++index;
     LUA_GET_UINTEGER_OR_RETURN(size, L, index, 1);
@@ -1159,6 +1185,9 @@ static int client_add_user(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* userName = lua_tostring(L, 2);
+    if (!userName)
+        return 0;
+
     unsigned int service_id = lua_tonumber(L, 3);
     ud->cd->add_user(*lsd->ldp.asd, userName,
         lsd->ldp.asd->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id), true,
@@ -1682,7 +1711,7 @@ static int detector_add_host_port_application(lua_State* L)
     const char* ip_str= lua_tolstring(L, ++index, &ipaddr_size);
     if (!ip_str or !ipaddr_size or !convert_string_to_address(ip_str, &ip_address))
     {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s: Invalid IP address: %s\n", __func__, ip_str);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s: Invalid IP address: %s\n", __func__, lua_message_log(ip_str));
         return 0;
     }
 
@@ -1896,7 +1925,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     if (lua_pcall(my_lua_state, 0, 1, 0))
     {
         APPID_LOG(&p, TRACE_ERROR_LEVEL, "Detector %s: Error validating %s\n", detector_name,
-            lua_tostring(my_lua_state, -1));
+            lua_message_log(lua_tostring(my_lua_state, -1)));
         ud.lsd.ldp.pkt = nullptr;
         lua_settop(my_lua_state, 0);
         return -10;
@@ -3091,13 +3120,13 @@ static int create_future_flow(lua_State* L)
     SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     const char* pattern = lua_tostring(L, 2);
-    if (!convert_string_to_address(pattern, &client_addr))
+    if (!pattern or !convert_string_to_address(pattern, &client_addr))
         return 0;
 
     uint16_t client_port = lua_tonumber(L, 3);
 
     pattern = lua_tostring(L, 4);
-    if (!convert_string_to_address(pattern, &server_addr))
+    if (!pattern or !convert_string_to_address(pattern, &server_addr))
         return 0;
 
     uint16_t server_port = lua_tonumber(L, 5);
@@ -3737,7 +3766,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
         // efficiency and with minimum defensive checks. Errors are dealt as exceptions
         // that don't impact processing by other detectors or future packets by the same detector.
         APPID_LOG(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: error validating %s\n",
-            package_info.name.c_str(), lua_tostring(my_lua_state, -1));
+            package_info.name.c_str(), lua_message_log(lua_tostring(my_lua_state, -1)));
         ldp.pkt = nullptr;
         odp_thread_local_ctxt->free_detector_flow();
         lua_settop(my_lua_state, 0);

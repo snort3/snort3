@@ -44,6 +44,9 @@ class AppInfoTableEntry;
 
 #define LUA_STATE_GLOBAL_SC_ID  "snort_config"
 
+inline const char* lua_message_log(const char* message)
+{ return message ? message : "(null)"; }
+
 struct DetectorPackageInfo
 {
     std::string initFunctionName;

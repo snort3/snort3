@@ -222,7 +222,7 @@ LuaDetectorManager::~LuaDetectorManager()
                         if ( lua_pcall(L, 1, 1, 0) )
                         {
                             APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not cleanup the %s client app element: %s\n",
-                                lsd->package_info.name.c_str(), lua_tostring(L, -1));
+                                lsd->package_info.name.c_str(), lua_message_log(lua_tostring(L, -1)));
                         }
                     }
                 }
@@ -430,7 +430,7 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         if (luaL_loadbuffer(L, buf.c_str(), buf.length(), detector_filename))
         {
             if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector, %s\n", lua_message_log(lua_tostring(L, -1)));
             lua_pop(L, 1);
             return false;
         }
@@ -440,14 +440,14 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         if (luaL_loadfile(L, detector_filename))
         {
             if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector, %s\n", lua_tostring(L, -1));
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector, %s\n", lua_message_log(lua_tostring(L, -1)));
             lua_pop(L, 1);
             return false;
         }
         if (lua_dump(L, dump, &buf))
         {
             if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not compile Lua detector, %s\n", lua_tostring(L, -1));
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not compile Lua detector, %s\n", lua_message_log(lua_tostring(L, -1)));
             lua_pop(L, 1);
             return false;
         }
@@ -477,7 +477,7 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
     if (lua_pcall(L, 0, 0, 0))
     {
         APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not set env of Lua detector %s : %s\n",
-            detector_filename, lua_tostring(L, -1));
+            detector_filename, lua_message_log(lua_tostring(L, -1)));
         lua_pop(L, 1);
         return false;
     }
@@ -543,7 +543,7 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
         if (lua_pcall(L, 2, 1, 0))
         {
             if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not run DetectorInit, %s\n", lua_tostring(L, -1));
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not run DetectorInit, %s\n", lua_message_log(lua_tostring(L, -1)));
             if (!(*lo)->get_detector()->is_custom_detector())
                 num_odp_detectors--;
             lua_settop(L, 0);
