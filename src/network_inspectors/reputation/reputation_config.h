@@ -104,6 +104,8 @@ struct ReputationStats
     PegCount aux_ip_blocked;
     PegCount aux_ip_trusted;
     PegCount aux_ip_monitored;
+    PegCount do_not_block;
+    PegCount aux_ip_do_not_block;
 };
 
 extern const PegInfo reputation_peg_names[];

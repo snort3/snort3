@@ -56,6 +56,9 @@ const PegInfo reputation_peg_names[] =
 { CountType::SUM, "aux_ip_blocked", "number of auxiliary ip packets blocked" },
 { CountType::SUM, "aux_ip_trusted", "number of packets with auxiliary ip allowlist matches" },
 { CountType::SUM, "aux_ip_monitored", "number of auxiliary ip packets monitored" },
+{ CountType::SUM, "do_not_block", "number of packets exempted from blocking" },
+{ CountType::SUM, "aux_ip_do_not_block",
+  "number of auxiliary ip packets exempted from blocking" },
 { CountType::END, nullptr, nullptr }
 };
 
@@ -75,9 +78,10 @@ static inline const IPrepInfo* reputation_lookup(const ReputationConfig& config,
 
 static inline IPdecision get_reputation(const ReputationConfig& config,
     const ReputationData& data, const IPrepInfo* rep_info, uint32_t& listid,
-    uint32_t ingress_intf, uint32_t egress_intf)
+    uint32_t ingress_intf, uint32_t egress_intf, bool& block_exempted)
 {
     IPdecision decision = DECISION_NULL;
+    bool do_not_block = false;
 
     /*Walk through the IPrepInfo lists*/
     const uint8_t* base = reinterpret_cast<const uint8_t*>(data.ip_list);
@@ -97,7 +101,10 @@ static inline IPdecision get_reputation(const ReputationConfig& config,
                 list_info[list_index]->intfs.count(egress_intf))
             {
                 if (TRUSTED_DO_NOT_BLOCK == (IPdecision)list_info[list_index]->list_type)
-                    return DECISION_NULL;
+                {
+                    do_not_block = true;
+                    continue;
+                }
                 if (config.priority == (IPdecision)list_info[list_index]->list_type )
                 {
                     listid = list_info[list_index]->list_id;
@@ -116,19 +123,27 @@ static inline IPdecision get_reputation(const ReputationConfig& config,
         rep_info = reinterpret_cast<const IPrepInfo*>(&base[rep_info->next]);
     }
 
+    // exempts this address from blocking only, so a monitor verdict still stands
+    if (do_not_block and BLOCKED == decision)
+    {
+        block_exempted = true;
+        return DECISION_NULL;
+    }
+
     return decision;
 }
 
 static bool decision_per_layer(const ReputationConfig& config, ReputationData& data,
     uint32_t& iplist_id, uint32_t ingress_intf, uint32_t egress_intf, const ip::IpApi& ip_api,
-    IPdecision* decision_final)
+    IPdecision* decision_final, bool& block_exempted)
 {
     const SfIp* ip = ip_api.get_src();
     const IPrepInfo* result = reputation_lookup(config, data, ip);
     if (result)
     {
-        IPdecision decision = get_reputation(config, data, result, iplist_id, ingress_intf,
-            egress_intf);
+        uint32_t listid = 0;
+        IPdecision decision = get_reputation(config, data, result, listid, ingress_intf,
+            egress_intf, block_exempted);
 
         if (decision == BLOCKED)
             *decision_final = BLOCKED_SRC;
@@ -139,6 +154,10 @@ static bool decision_per_layer(const ReputationConfig& config, ReputationData& d
         else
             *decision_final = decision;
 
+        // the list id must travel with the verdict that was kept, never with a discarded one
+        if (DECISION_NULL != decision)
+            iplist_id = listid;
+
         if ( config.priority == decision)
             return true;
     }
@@ -147,8 +166,9 @@ static bool decision_per_layer(const ReputationConfig& config, ReputationData& d
     result = reputation_lookup(config, data, ip);
     if (result)
     {
-        IPdecision decision = get_reputation(config, data, result, iplist_id, ingress_intf,
-            egress_intf);
+        uint32_t listid = 0;
+        IPdecision decision = get_reputation(config, data, result, listid, ingress_intf,
+            egress_intf, block_exempted);
 
         if (decision == BLOCKED)
             *decision_final = BLOCKED_DST;
@@ -156,8 +176,11 @@ static bool decision_per_layer(const ReputationConfig& config, ReputationData& d
             *decision_final = MONITORED_DST;
         else if (decision == TRUSTED)
             *decision_final = TRUSTED_DST;
-        else
+        else if (DECISION_NULL == *decision_final)
             *decision_final = decision;
+
+        if (DECISION_NULL != decision)
+            iplist_id = listid;
 
         if ( config.priority == decision)
             return true;
@@ -167,7 +190,7 @@ static bool decision_per_layer(const ReputationConfig& config, ReputationData& d
 }
 
 static IPdecision reputation_decision(const ReputationConfig& config, ReputationData& data,
-    Packet* p, uint32_t& iplist_id)
+    Packet* p, uint32_t& iplist_id, bool& block_exempted)
 {
     IPdecision decision_final = DECISION_NULL;
     uint32_t ingress_intf = 0;
@@ -184,7 +207,8 @@ static IPdecision reputation_decision(const ReputationConfig& config, Reputation
 
     if (config.nested_ip == INNER)
     {
-        decision_per_layer(config, data, iplist_id, ingress_intf, egress_intf, p->ptrs.ip_api, &decision_final);
+        decision_per_layer(config, data, iplist_id, ingress_intf, egress_intf, p->ptrs.ip_api,
+            &decision_final, block_exempted);
         return decision_final;
     }
 
@@ -197,7 +221,8 @@ static IPdecision reputation_decision(const ReputationConfig& config, Reputation
     if (config.nested_ip == OUTER)
     {
         layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer);
-        decision_per_layer(config, data, iplist_id, ingress_intf, egress_intf, p->ptrs.ip_api, &decision_final);
+        decision_per_layer(config, data, iplist_id, ingress_intf, egress_intf, p->ptrs.ip_api,
+            &decision_final, block_exempted);
     }
     else if (config.nested_ip == ALL)
     {
@@ -207,7 +232,7 @@ static IPdecision reputation_decision(const ReputationConfig& config, Reputation
         while (!done and layer::set_outer_ip_api(p, p->ptrs.ip_api, p->ip_proto_next, num_layer))
         {
             done = decision_per_layer(config, data, iplist_id, ingress_intf, egress_intf, p->ptrs.ip_api,
-                &decision_current);
+                &decision_current, block_exempted);
             if (decision_current != DECISION_NULL)
             {
                 if (decision_current == BLOCKED_SRC or decision_current == BLOCKED_DST)
@@ -253,8 +278,22 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
     if (result)
     {
         uint32_t iplist_id;
+        bool block_exempted = false;
         decision = get_reputation(config, data, result, iplist_id, ingress_intf,
-            egress_intf);
+            egress_intf, block_exempted);
+
+        if (block_exempted)
+        {
+            reputationstats.aux_ip_do_not_block++;
+            if (PacketTracer::is_active())
+            {
+                char ip_str[INET6_ADDRSTRLEN];
+                sfip_ntop(ip, ip_str, sizeof(ip_str));
+                PacketTracer::log(
+                    "Reputation: block exempted for auxiliary ip %s by do not block list\n",
+                    ip_str);
+            }
+        }
 
         if (decision == BLOCKED)
         {
@@ -359,7 +398,8 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         return;
 
     uint32_t iplist_id;
-    decision = reputation_decision(config, data, p, iplist_id);
+    bool block_exempted = false;
+    decision = reputation_decision(config, data, p, iplist_id, block_exempted);
     Active* act = p->active;
 
     if (BLOCKED_SRC == decision or BLOCKED_DST == decision)
@@ -384,6 +424,14 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
             populate_trace_data(decision, p, iplist_id);
 
         return;
+    }
+
+    // below the blocked arm, so an exemption that a peer's block overrode is not reported
+    if (block_exempted)
+    {
+        reputationstats.do_not_block++;
+        if (PacketTracer::is_active())
+            PacketTracer::log("Reputation: block exempted by do not block list\n");
     }
 
     if ( p->flow and p->flow->reload_id > 0 )
