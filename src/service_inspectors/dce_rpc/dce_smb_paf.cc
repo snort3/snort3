@@ -47,12 +47,11 @@ using namespace snort;
  *          junk states, header type must be Session Message.
  *
  *********************************************************************/
-static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, const SmbNtHdr* nt_hdr,
+static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, uint32_t smb_id,
     uint32_t* nb_len, uint32_t* nbs_hdr_out = nullptr)
 {
     uint8_t type = (uint8_t)(nb_hdr >> 24);
     uint8_t bit = (uint8_t)((nb_hdr & 0x00ff0000) >> 16);
-    uint32_t smb_id = nt_hdr ? SmbId(nt_hdr) : 0;
     uint32_t nbs_hdr = htonl(nb_hdr);
 
     if (junk)
@@ -156,8 +155,10 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
                 nt_hdr = reinterpret_cast<const SmbNtHdr*>(data + n + 1);
             else
                 nt_hdr = nullptr;   // nt_hdr is loop-scoped; don't reuse a prior frame's
+            uint32_t smb_id = nt_hdr ? SmbId(nt_hdr) : 0;
             uint32_t nbs_hdr_val = 0;
-            if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, nt_hdr, &nb_len, &nbs_hdr_val))
+            if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, smb_id,
+                &nb_len, &nbs_hdr_val))
             {
                 // Frames with a zero length field carry no SMB message, so one
                 // rebuilt PDU per four wire bytes buys a pseudo-packet build and
@@ -183,16 +184,11 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
         case DCE2_PAF_SMB_STATES__7:
             DCE2_SMB_PAF_SHIFT(ss->nb_hdr, data[n]);
 
-            //(data + n - sizeof(DCE2_SMB_ID) + 1) points to the smb_idf field
-            //in SmbNtHdr (0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
-            // Guard against reading before the buffer start when n is small.
-            if ( n + 1 < DCE2_SMB_ID_SIZE )
-                break;
-            nt_hdr = reinterpret_cast<const SmbNtHdr*>(data + n - DCE2_SMB_ID_SIZE + 1);
             //ss->nb_hdr is the value to 4 bytes of NetBIOS header + 4 bytes of
-            //SMB header protocol identifier . Right shift by 32 bits to get the value of NetBIOS
-            // header
-            if (!DCE2_PafSmbIsValidNetbiosHdr((uint32_t)(ss->nb_hdr >> 32), true, nt_hdr, &nb_len))
+            //SMB header protocol identifier. Use both halves directly so a
+            //protocol identifier that spans scan buffers remains valid.
+            if (!DCE2_PafSmbIsValidNetbiosHdr((uint32_t)(ss->nb_hdr >> 32), true,
+                (uint32_t)ss->nb_hdr, &nb_len) || nb_len < DCE2_SMB_ID_SIZE)
             {
                 break;
             }
