@@ -214,10 +214,11 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
                 length = dend - dptr;
             }
 
+            const int encoded_needed = (length * 4 + 2) / 3;
             length = (length * 4) / 3;
 
             /*check if src buffer has enough encoded data*/
-            if ( (end - (ptr + 1)) < length)
+            if ( (end - (ptr + 1)) < encoded_needed)
             {
                 /*not enough data to decode. We will wait for the next packet*/
                 break;
