@@ -123,7 +123,9 @@ public:
     bool set_search_method(const char*);
     const char* get_search_method() const;
 
+#ifdef ENABLE_DETECTION_OFFLOAD
     bool set_offload_search_method(const char*);
+#endif
     void set_max_pattern_len(unsigned);
     void set_queue_limit(unsigned);
 

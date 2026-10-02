@@ -12,7 +12,6 @@ Some things Snort++ can do today that Snort can not do:
 * rule remarks (comment is part of rule, not just in it)
 * process raw files (eg read a PDF and do file processing)
 * process raw payload (eg bridge 2 sockets and do inspection)
-* fast pattern offload to separate thread (experimental)
 * add or override any config item on command line
 * set CPU affinity
 * pause and resume commands

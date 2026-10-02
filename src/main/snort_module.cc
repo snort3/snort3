@@ -1285,8 +1285,10 @@ bool SnortModule::end(const char*, int, SnortConfig* sc)
 {
     cli_mode = false;
 
+#ifdef ENABLE_DETECTION_OFFLOAD
     if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
         ParseError("You can not enable experimental offload with more than one packet thread.");
+#endif
 
     if ( no_warn_flowbits )
     {

@@ -26,7 +26,6 @@ usability.  Some of the key features of Snort 3.0 are:
 Additional features are on the road map:
 
 * Use a shared network map
-* Support hardware offload for fast pattern acceleration
 * Provide support for DPDK and ODP
 * Support pipelining of packet processing
 * Support proxy mode

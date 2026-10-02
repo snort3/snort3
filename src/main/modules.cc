@@ -199,7 +199,11 @@ static const Parameter search_engine_params[] =
       "set fast pattern algorithm - choose available search engine" },
 
     { "offload_search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, nullptr,
+#ifdef ENABLE_DETECTION_OFFLOAD
       "set fast pattern offload algorithm - choose available search engine" },
+#else
+      "detection offload is disabled (no-op): formerly the fast pattern offload algorithm" },
+#endif
 
 #ifdef HAVE_HYPERSCAN
     { "rule_db_dir", Parameter::PT_STRING, nullptr, nullptr,
@@ -314,8 +318,12 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     }
     else if ( v.is("offload_search_method") )
     {
+#ifdef ENABLE_DETECTION_OFFLOAD
         if ( !fp->set_offload_search_method(v.get_string()) )
             return false;
+#else
+        ParseWarning(WARN_CONF, "search_engine.offload_search_method is deprecated and has no effect");
+#endif
     }
 
     else if ( v.is("split_any_any") )
