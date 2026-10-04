@@ -79,6 +79,8 @@ DceHttpServerSplitter::DceHttpServerSplitter(bool c2s) :   StreamSplitter(c2s)
 // mocks
 //--------------------------------------------------------------------------
 
+// Linker-only StreamSplitter mocks are not called by these scan tests.
+// LCOV_EXCL_START
 unsigned StreamSplitter::max(Flow*) { return 16384; }
 
 const StreamBuffer StreamSplitter::reassemble(
@@ -87,6 +89,7 @@ const StreamBuffer StreamSplitter::reassemble(
 {
     return { nullptr, 0 };
 }
+// LCOV_EXCL_STOP
 
 //--------------------------------------------------------------------------
 // unit tests

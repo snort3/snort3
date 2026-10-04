@@ -280,7 +280,7 @@ IpsPolicy* get_ips_policy()
 Packet::Packet(bool) { }
 Packet::~Packet() { }
 // cppcheck-suppress functionStatic ; test double must retain the production member signature
-void Packet::reset() { }
+void Packet::reset() { } // LCOV_EXCL_LINE
 
 Packet* DetectionEngine::get_current_packet()
 { return &test_packet; }
@@ -307,9 +307,12 @@ int DetectionEngine::queue_event(unsigned gid, unsigned sid)
     return 0;
 }
 
+// Linker-only stub; fragment-budget cases never parse an address.
+// LCOV_EXCL_START
 // cppcheck-suppress functionStatic ; test double must retain the production member signature
 SfIpRet SfIp::set(const void*, int)
 { return SFIP_SUCCESS; }
+// LCOV_EXCL_STOP
 
 // cppcheck-suppress functionStatic ; test double must retain the production member signature
 void Active::block_session(Packet* p, bool force)
@@ -337,8 +340,10 @@ void DceEndianness::reset()
     data_byte_order = DCE2_SENTINEL;
     stub_data_offset = DCE2_SENTINEL;
 }
+// LCOV_EXCL_START
 bool DceEndianness::get_offset_endianness(int32_t, uint8_t&)
 { return false; }
+// LCOV_EXCL_STOP
 
 void DCE2_SmbInitRdata(uint8_t*, int);
 
@@ -427,8 +432,11 @@ Packet* DCE2_GetRpkt(Packet* parent, DCE2_RpktType type, const uint8_t* data, ui
 uint16_t DCE2_GetRpktMaxData(DCE2_RpktType)
 { return rpkt_max_data; }
 
+// Linker-only stub; the test provides its own reassembled packet buffer.
+// LCOV_EXCL_START
 DCE2_Ret DCE2_AddDataToRpkt(Packet*, const uint8_t*, uint32_t)
 { return DCE2_RET__ERROR; }
+// LCOV_EXCL_STOP
 
 void DCE2_SmbInitRdata(uint8_t*, int) { }
 
@@ -499,15 +507,18 @@ DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree)
     return &test_queue;
 }
 
+// Linker-only queue operations are not used by the fragment-budget cases.
+// LCOV_EXCL_START
 DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue*, void*)
 { return DCE2_RET__SUCCESS; }
 
 void* DCE2_QueueDequeue(DCE2_Queue*)
 { return nullptr; }
+// LCOV_EXCL_STOP
 
-void DCE2_QueueEmpty(DCE2_Queue*) { }
-void* DCE2_QueueFirst(DCE2_Queue*) { return nullptr; }
-void* DCE2_QueueNext(DCE2_Queue*) { return nullptr; }
+void DCE2_QueueEmpty(DCE2_Queue*) { } // LCOV_EXCL_LINE
+void* DCE2_QueueFirst(DCE2_Queue*) { return nullptr; } // LCOV_EXCL_LINE
+void* DCE2_QueueNext(DCE2_Queue*) { return nullptr; } // LCOV_EXCL_LINE
 void DCE2_QueueDestroy(DCE2_Queue*) { }
 
 void set_smb_reassembled_data(uint8_t*, uint16_t) { }
@@ -515,7 +526,7 @@ void set_smb_reassembled_data(uint8_t*, uint16_t) { }
 unsigned get_smb_cli_mock_hdr_len()
 { return (unsigned)(sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq)); }
 
-void DceExpSsnManager::create_expected_session(const SfIp*, uint16_t, const char*) { }
+void DceExpSsnManager::create_expected_session(const SfIp*, uint16_t, const char*) { } // LCOV_EXCL_LINE
 
 // --- test cases ---
 
@@ -549,35 +560,35 @@ TEST_CASE("fragment reassembly budget fires at the configured limit", "[dce_co]"
     DCE2_CoInitTracker(&cot);
     cot.pending_ctx_ids = DCE2_QueueNew(nullptr);
 
-    REQUIRE(cot.frag_budget_tripped == false);
+    REQUIRE(cot.frag_budget_tripped == false); // LCOV_EXCL_BR_LINE
 
     reset_state(data.data(), static_cast<uint16_t>(data.size()));
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
     // Exactly the configured number of reassemblies are allowed; the next
     // attempt alerts and blocks without building another pseudo packet.
-    CHECK(cot.frag_reassembled == config.max_frag_reassemblies);
-    CHECK(reassembled_packet_requests == config.max_frag_reassemblies);
-    CHECK(pseudo_packet_detects == config.max_frag_reassemblies);
-    CHECK(dce_detect_calls == config.max_frag_reassemblies + 1U);
-    CHECK(engine_detect_calls == config.max_frag_reassemblies + 1U);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1);
-    CHECK(top_packet_detects == 1);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
+    CHECK(cot.frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == config.max_frag_reassemblies + 1U); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == config.max_frag_reassemblies + 1U); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
 
     // Budget fires exactly once (SID 133:66).
-    CHECK(budget_events == 1);
+    CHECK(budget_events == 1); // LCOV_EXCL_BR_LINE
 
     // Latch prevents further reassemblies.
-    CHECK(cot.frag_budget_tripped == true);
-    CHECK(block_session_calls == 1);
-    CHECK(blocked_packet == &test_packet);
-    CHECK(block_session_forced == true);
-    CHECK(drop_reason_calls == 1);
-    CHECK(recorded_drop_reason == "dce_tcp");
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(blocked_packet == &test_packet); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_forced == true); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(recorded_drop_reason == "dce_tcp"); // LCOV_EXCL_BR_LINE
 
     // The latch is flow-scoped, unlike the counter. A later flush on the same
     // tracker must not reassemble or emit the event/action a second time.
@@ -592,23 +603,23 @@ TEST_CASE("fragment reassembly budget fires at the configured limit", "[dce_co]"
     reset_state(followup.data(), static_cast<uint16_t>(followup.size()));
     DCE2_CoProcess(&sd, &cot, followup.data(), static_cast<uint16_t>(followup.size()));
 
-    CHECK(dce2_tcp_stats.co_request - requests_before == followup_pdus);
-    CHECK(dce2_tcp_stats.co_req_fragments - fragments_before == followup_pdus);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled - reassemblies_before == 0);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1);
-    CHECK(cot.frag_reassembled == 0);
-    CHECK(reassembled_packet_requests == 0);
-    CHECK(pseudo_packet_detects == 0);
-    CHECK(top_packet_detects == 1);
-    CHECK(dce_detect_calls == 1);
-    CHECK(engine_detect_calls == 1);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 0);
-    CHECK(block_session_calls == 0);
-    CHECK(drop_reason_calls == 0);
-    CHECK(cot.frag_budget_tripped == true);
+    CHECK(dce2_tcp_stats.co_request - requests_before == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_req_fragments - fragments_before == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled - reassemblies_before == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == 0); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == 0); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == 0); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 0); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -645,23 +656,23 @@ TEST_CASE("passive budget trips do not latch the flow", "[dce_co]")
         POLICY_MODE__PASSIVE, false);
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
-    CHECK(cot.frag_reassembled == config.max_frag_reassemblies);
-    CHECK(reassembled_packet_requests == config.max_frag_reassemblies);
-    CHECK(pseudo_packet_detects == config.max_frag_reassemblies);
-    CHECK(dce_detect_calls == config.max_frag_reassemblies + 1U);
-    CHECK(engine_detect_calls == config.max_frag_reassemblies + 1U);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0);
-    CHECK(top_packet_detects == 1);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
+    CHECK(cot.frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == config.max_frag_reassemblies + 1U); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == config.max_frag_reassemblies + 1U); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
 
     // The first PDU seeds, two reassemble, and the remaining two exceed budget.
-    CHECK(budget_events == 2);
-    CHECK(cot.frag_budget_tripped == false);
-    CHECK(block_session_calls == 0);
-    CHECK(drop_reason_calls == 0);
+    CHECK(budget_events == 2); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == false); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 0); // LCOV_EXCL_BR_LINE
 
     constexpr unsigned followup_pdus = 2;
     std::vector<uint8_t> followup(pdu_size * followup_pdus, 0);
@@ -675,23 +686,23 @@ TEST_CASE("passive budget trips do not latch the flow", "[dce_co]")
         POLICY_MODE__PASSIVE, false);
     DCE2_CoProcess(&sd, &cot, followup.data(), static_cast<uint16_t>(followup.size()));
 
-    CHECK(dce2_tcp_stats.co_request - requests_before == followup_pdus);
-    CHECK(dce2_tcp_stats.co_req_fragments - fragments_before == followup_pdus);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled - reassemblies_before == followup_pdus);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0);
-    CHECK(cot.frag_reassembled == followup_pdus);
-    CHECK(reassembled_packet_requests == followup_pdus);
-    CHECK(pseudo_packet_detects == followup_pdus);
-    CHECK(top_packet_detects == 0);
-    CHECK(dce_detect_calls == followup_pdus);
-    CHECK(engine_detect_calls == followup_pdus);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 0);
-    CHECK(cot.frag_budget_tripped == false);
-    CHECK(block_session_calls == 0);
-    CHECK(drop_reason_calls == 0);
+    CHECK(dce2_tcp_stats.co_request - requests_before == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_req_fragments - fragments_before == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled - reassemblies_before == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == followup_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == false); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 0); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -736,22 +747,22 @@ TEST_CASE("budget is per flush and does not accumulate across flushes", "[dce_co
         // The first flush seeds an empty fragment buffer. Later flushes begin
         // with the fragment retained by the preceding flush.
         const unsigned expected_reassemblies = (f == 0) ? n_pdus - 1 : n_pdus;
-        CHECK(cot.frag_reassembled == expected_reassemblies);
-        CHECK(reassembled_packet_requests == expected_reassemblies);
-        CHECK(pseudo_packet_detects == expected_reassemblies);
-        CHECK(top_packet_detects == ((f == 0) ? 1 : 0));
-        CHECK(dce_detect_calls == n_pdus);
-        CHECK(engine_detect_calls == n_pdus);
-        CHECK(dce2_tcp_stats.co_cli_frag_reassembled - reassemblies_before ==
+        CHECK(cot.frag_reassembled == expected_reassemblies); // LCOV_EXCL_BR_LINE
+        CHECK(reassembled_packet_requests == expected_reassemblies); // LCOV_EXCL_BR_LINE
+        CHECK(pseudo_packet_detects == expected_reassemblies); // LCOV_EXCL_BR_LINE
+        CHECK(top_packet_detects == ((f == 0) ? 1 : 0)); // LCOV_EXCL_BR_LINE
+        CHECK(dce_detect_calls == n_pdus); // LCOV_EXCL_BR_LINE
+        CHECK(engine_detect_calls == n_pdus); // LCOV_EXCL_BR_LINE
+        CHECK(dce2_tcp_stats.co_cli_frag_reassembled - reassemblies_before == // LCOV_EXCL_BR_LINE
             expected_reassemblies);
-        CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0);
-        CHECK(reassembled_packet_contract_valid == true);
-        CHECK(detect_target_contract_valid == true);
-        CHECK(pending_detect_packet == nullptr);
-        CHECK(budget_events == 0);
-        CHECK(block_session_calls == 0);
-        CHECK(drop_reason_calls == 0);
-        CHECK(cot.frag_budget_tripped == false);
+        CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0); // LCOV_EXCL_BR_LINE
+        CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+        CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+        CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+        CHECK(budget_events == 0); // LCOV_EXCL_BR_LINE
+        CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+        CHECK(drop_reason_calls == 0); // LCOV_EXCL_BR_LINE
+        CHECK(cot.frag_budget_tripped == false); // LCOV_EXCL_BR_LINE
     }
 
     destroy_tracker(cot);
@@ -789,21 +800,21 @@ TEST_CASE("budget disabled when max_frag_reassemblies is zero", "[dce_co]")
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
     // limit=0 skips the budget check entirely.
-    CHECK(cot.frag_reassembled == n_pdus - 1);
-    CHECK(reassembled_packet_requests == n_pdus - 1);
-    CHECK(pseudo_packet_detects == n_pdus - 1);
-    CHECK(dce_detect_calls == n_pdus);
-    CHECK(engine_detect_calls == n_pdus);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == n_pdus - 1);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0);
-    CHECK(top_packet_detects == 1);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 0);
-    CHECK(cot.frag_budget_tripped == false);
-    CHECK(block_session_calls == 0);
-    CHECK(drop_reason_calls == 0);
+    CHECK(cot.frag_reassembled == n_pdus - 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == n_pdus - 1); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == n_pdus - 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == n_pdus - 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == false); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 0); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -843,27 +854,27 @@ TEST_CASE("normal LAST reassemblies honor a custom fragment budget", "[dce_co]")
     reset_state(data.data(), static_cast<uint16_t>(data.size()));
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
-    CHECK(dce2_tcp_stats.co_request == n_pdus);
-    CHECK(dce2_tcp_stats.co_req_fragments == n_pdus);
-    CHECK(cot.frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1);
-    CHECK(reassembled_packet_requests == config.max_frag_reassemblies);
-    CHECK(reassembled_stub_len == 2);
-    CHECK(pseudo_packet_detects == config.max_frag_reassemblies);
-    CHECK(top_packet_detects == 1);
-    CHECK(dce_detect_calls == 2);
-    CHECK(engine_detect_calls == 2);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 1);
-    CHECK(cot.frag_budget_tripped == true);
-    CHECK(block_session_calls == 1);
-    CHECK(blocked_packet == &test_packet);
-    CHECK(block_session_forced == true);
-    CHECK(drop_reason_calls == 1);
-    CHECK(recorded_drop_reason == "dce_tcp");
+    CHECK(dce2_tcp_stats.co_request == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_req_fragments == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_stub_len == 2); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 1); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(blocked_packet == &test_packet); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_forced == true); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(recorded_drop_reason == "dce_tcp"); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -901,28 +912,28 @@ TEST_CASE("server fragment restarts honor the fragment budget", "[dce_co]")
     reset_state(data.data(), static_cast<uint16_t>(data.size()), PKT_FROM_SERVER);
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
-    CHECK(dce2_tcp_stats.co_response == n_pdus);
-    CHECK(dce2_tcp_stats.co_resp_fragments == n_pdus);
-    CHECK(cot.frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.co_srv_frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == 0);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1);
-    CHECK(reassembled_packet_requests == config.max_frag_reassemblies);
-    CHECK(pseudo_packet_detects == config.max_frag_reassemblies);
-    CHECK(top_packet_detects == 1);
-    CHECK(dce_detect_calls == 3);
-    CHECK(engine_detect_calls == 3);
-    CHECK(reassembled_data_offset == DCE2_MOCK_HDR_LEN__CO_SRV);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 1);
-    CHECK(cot.frag_budget_tripped == true);
-    CHECK(block_session_calls == 1);
-    CHECK(blocked_packet == &test_packet);
-    CHECK(block_session_forced == true);
-    CHECK(drop_reason_calls == 1);
-    CHECK(recorded_drop_reason == "dce_tcp");
+    CHECK(dce2_tcp_stats.co_response == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_resp_fragments == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_srv_frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == 3); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == 3); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_data_offset == DCE2_MOCK_HDR_LEN__CO_SRV); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 1); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(blocked_packet == &test_packet); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_forced == true); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(recorded_drop_reason == "dce_tcp"); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -965,28 +976,28 @@ TEST_CASE("full fragment-buffer flushes honor the fragment budget", "[dce_co]")
     rpkt_max_data = buffer_limit;
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
-    CHECK(buffer_add_calls == n_pdus);
-    CHECK(dce2_tcp_stats.co_request == n_pdus);
-    CHECK(dce2_tcp_stats.co_req_fragments == n_pdus);
-    CHECK(cot.frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1);
-    CHECK(reassembled_packet_requests == config.max_frag_reassemblies);
-    CHECK(reassembled_stub_len == buffer_limit);
-    CHECK(pseudo_packet_detects == config.max_frag_reassemblies);
-    CHECK(top_packet_detects == 1);
-    CHECK(dce_detect_calls == 2);
-    CHECK(engine_detect_calls == 2);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 1);
-    CHECK(cot.frag_budget_tripped == true);
-    CHECK(block_session_calls == 1);
-    CHECK(blocked_packet == &test_packet);
-    CHECK(block_session_forced == true);
-    CHECK(drop_reason_calls == 1);
-    CHECK(recorded_drop_reason == "dce_tcp");
+    CHECK(buffer_add_calls == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_request == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_req_fragments == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_stub_len == buffer_limit); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 1); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(blocked_packet == &test_packet); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_forced == true); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(recorded_drop_reason == "dce_tcp"); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -1026,28 +1037,28 @@ TEST_CASE("fragment append failures honor the fragment budget", "[dce_co]")
     buffer_add_fail_calls = { 2, 4 };
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
-    CHECK(buffer_add_calls == n_pdus);
-    CHECK(dce2_tcp_stats.co_request == n_pdus);
-    CHECK(dce2_tcp_stats.co_req_fragments == n_pdus);
-    CHECK(cot.frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1);
-    CHECK(reassembled_packet_requests == config.max_frag_reassemblies);
-    CHECK(reassembled_stub_len == stub_len);
-    CHECK(pseudo_packet_detects == config.max_frag_reassemblies);
-    CHECK(top_packet_detects == 1);
-    CHECK(dce_detect_calls == 2);
-    CHECK(engine_detect_calls == 2);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 1);
-    CHECK(cot.frag_budget_tripped == true);
-    CHECK(block_session_calls == 1);
-    CHECK(blocked_packet == &test_packet);
-    CHECK(block_session_forced == true);
-    CHECK(drop_reason_calls == 1);
-    CHECK(recorded_drop_reason == "dce_tcp");
+    CHECK(buffer_add_calls == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_request == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_req_fragments == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_stub_len == stub_len); // LCOV_EXCL_BR_LINE
+    CHECK(pseudo_packet_detects == config.max_frag_reassemblies); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 1); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(blocked_packet == &test_packet); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_forced == true); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(recorded_drop_reason == "dce_tcp"); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();
@@ -1084,26 +1095,26 @@ TEST_CASE("TCP fragment budget state does not suppress SMB reassembly", "[dce_co
     reset_state(data.data(), static_cast<uint16_t>(data.size()));
     DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
 
-    CHECK(dce2_smb_stats.co_request == n_pdus);
-    CHECK(dce2_smb_stats.co_req_fragments == n_pdus);
-    CHECK(dce2_smb_stats.co_cli_frag_reassembled == 1);
-    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == 0);
-    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0);
-    CHECK(cot.frag_reassembled == 0);
-    CHECK(reassembled_packet_requests == 1);
-    CHECK(reassembled_data_offset ==
+    CHECK(dce2_smb_stats.co_request == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.co_req_fragments == n_pdus); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.co_cli_frag_reassembled == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.co_cli_frag_reassembled == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_tcp_stats.tcp_frag_budget_blocks == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_reassembled == 0); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_requests == 1); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_data_offset == // LCOV_EXCL_BR_LINE
         DCE2_MOCK_HDR_LEN__SMB_CLI + DCE2_MOCK_HDR_LEN__CO_CLI);
-    CHECK(pseudo_packet_detects == 1);
-    CHECK(top_packet_detects == 1);
-    CHECK(dce_detect_calls == 2);
-    CHECK(engine_detect_calls == 2);
-    CHECK(reassembled_packet_contract_valid == true);
-    CHECK(detect_target_contract_valid == true);
-    CHECK(pending_detect_packet == nullptr);
-    CHECK(budget_events == 0);
-    CHECK(cot.frag_budget_tripped == true);
-    CHECK(block_session_calls == 0);
-    CHECK(drop_reason_calls == 0);
+    CHECK(pseudo_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(top_packet_detects == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(engine_detect_calls == 2); // LCOV_EXCL_BR_LINE
+    CHECK(reassembled_packet_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(detect_target_contract_valid == true); // LCOV_EXCL_BR_LINE
+    CHECK(pending_detect_packet == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(budget_events == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.frag_budget_tripped == true); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 0); // LCOV_EXCL_BR_LINE
 
     destroy_tracker(cot);
     cleanup();

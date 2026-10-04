@@ -100,9 +100,12 @@ Packet::~Packet()
 {
 }
 
+// Linker-only stubs are intentionally unreachable from this unit case.
+// LCOV_EXCL_START
 void Packet::reset()
 {
 }
+// LCOV_EXCL_STOP
 
 Packet* DetectionEngine::get_current_packet()
 {
@@ -115,6 +118,7 @@ bool DetectionEngine::detect(Packet* p, bool)
     return false;
 }
 
+// LCOV_EXCL_START
 int DetectionEngine::queue_event(unsigned, unsigned)
 {
     return 0;
@@ -124,11 +128,12 @@ SfIpRet SfIp::set(const void*, int)
 {
     return SFIP_SUCCESS;
 }
+// LCOV_EXCL_STOP
 
-void Active::block_session(Packet*, bool) { }
-void Active::set_drop_reason(const char*) { }
-bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
-IpsPolicy* get_ips_policy() { return nullptr; }
+void Active::block_session(Packet*, bool) { } // LCOV_EXCL_LINE
+void Active::set_drop_reason(const char*) { } // LCOV_EXCL_LINE
+bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; } // LCOV_EXCL_LINE
+IpsPolicy* get_ips_policy() { return nullptr; } // LCOV_EXCL_LINE
 }
 
 DceEndianness::DceEndianness()
@@ -143,16 +148,20 @@ void DceEndianness::reset()
     stub_data_offset = DCE2_SENTINEL;
 }
 
+// LCOV_EXCL_START
 bool DceEndianness::get_offset_endianness(int32_t, uint8_t&)
 {
     return false;
 }
+// LCOV_EXCL_STOP
 
 void DCE2_Detect(DCE2_SsnData*)
 {
     DetectionEngine::detect(&test_packet);
 }
 
+// These helpers satisfy dce_co.cc linkage; the packed-PDU test never reaches these paths.
+// LCOV_EXCL_START
 Packet* DCE2_GetRpkt(Packet*, DCE2_RpktType, const uint8_t*, uint32_t)
 {
     return nullptr;
@@ -233,6 +242,7 @@ unsigned get_smb_cli_mock_hdr_len()
 void DceExpSsnManager::create_expected_session(const SfIp*, uint16_t, const char*)
 {
 }
+// LCOV_EXCL_STOP
 
 TEST_CASE("DCE CO detects complete packed PDUs with PDU-sized packet view", "[dce_co]")
 {
@@ -257,9 +267,9 @@ TEST_CASE("DCE CO detects complete packed PDUs with PDU-sized packet view", "[dc
 
     DCE2_CoProcess(&sd, &cot, data.data(), data.size());
 
-    REQUIRE(detect_sizes.size() == pdu_count);
+    REQUIRE(detect_sizes.size() == pdu_count); // LCOV_EXCL_BR_LINE
     for (auto dsize : detect_sizes)
-        CHECK(dsize == co_hdr_len);
+        CHECK(dsize == co_hdr_len); // LCOV_EXCL_BR_LINE
 
     cleanup_packet();
 }

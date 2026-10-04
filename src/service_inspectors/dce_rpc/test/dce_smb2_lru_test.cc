@@ -96,8 +96,8 @@ public:
     {
         while (!dce2_smb_stats.v2_ftracker_evicted)
         {
-            REQUIRE(next_id < 10000);   // a cap that never bites would otherwise spin
-            REQUIRE(DCE2_Smb2CreateFileTracker(next_id++, ttr, str) != nullptr);
+            REQUIRE(next_id < 10000);   // a cap that never bites would otherwise spin // LCOV_EXCL_BR_LINE
+            REQUIRE(DCE2_Smb2CreateFileTracker(next_id++, ttr, str) != nullptr); // LCOV_EXCL_BR_LINE
         }
         return smb2_ftracker_lru->size();
     }
@@ -105,7 +105,7 @@ public:
     void churn(unsigned rounds)
     {
         for ( unsigned i = 0; i < rounds; ++i )
-            REQUIRE(DCE2_Smb2CreateFileTracker(next_id++, ttr, str) != nullptr);
+            REQUIRE(DCE2_Smb2CreateFileTracker(next_id++, ttr, str) != nullptr); // LCOV_EXCL_BR_LINE
     }
 
     // Register a synthetic TCP channel. test_key is mutated so each gets a distinct flow_key.
@@ -138,7 +138,7 @@ THREAD_LOCAL const snort::Trace* dce_smb_trace = nullptr;
 namespace snort
 {
 Flow::Flow() = default;
-Flow::~Flow() = default;
+Flow::~Flow() = default; // LCOV_EXCL_LINE
 FlowDataStore::~FlowDataStore() = default;
 void FlowStash::reset() { }
 
@@ -150,15 +150,19 @@ Packet::~Packet()
 {
 }
 
+// Linker-only stubs are intentionally unreachable from these unit cases.
+// LCOV_EXCL_START
 void Packet::reset()
 {
 }
+// LCOV_EXCL_STOP
 
 Packet* DetectionEngine::get_current_packet()
 {
     return &test_packet;
 }
 
+// LCOV_EXCL_START
 int DetectionEngine::queue_event(unsigned, unsigned)
 {
     return 0;
@@ -167,24 +171,27 @@ int DetectionEngine::queue_event(unsigned, unsigned)
 void DetectionEngine::disable_all(Packet*)
 {
 }
+// LCOV_EXCL_STOP
 
 int64_t FileService::get_max_file_depth(FileConfig*)
 {
     return 0;
 }
 
-void WarningMessage(const char*, ...) { }
+void WarningMessage(const char*, ...) { } // LCOV_EXCL_LINE
 
-uint8_t TraceApi::get_constraints_generation() { return 0; }
-void TraceApi::filter(const Packet&) { }
+uint8_t TraceApi::get_constraints_generation() { return 0; } // LCOV_EXCL_LINE
+void TraceApi::filter(const Packet&) { } // LCOV_EXCL_LINE
 
-void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { }
+void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { } // LCOV_EXCL_LINE
 }
 
 void DCE2_CoCleanTracker(DCE2_CoTracker*)
 {
 }
 
+// These command handlers satisfy dce_smb2.cc linkage; the LRU tests never dispatch SMB commands.
+// LCOV_EXCL_START
 void DCE2_Smb2Setup(DCE2_Smb2SsnData*, const Smb2Hdr*, const uint64_t, const uint8_t*,
     const uint8_t*)
 {
@@ -237,6 +244,7 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData*, const Smb2Hdr*, const uint8_t*, co
     DCE2_Smb2SessionTracker*, DCE2_Smb2TreeTracker*, uint64_t)
 {
 }
+// LCOV_EXCL_STOP
 
 TEST_CASE("file trackers stay within the smb memcap", "[dce_smb2_lru]")
 {
@@ -246,10 +254,10 @@ TEST_CASE("file trackers stay within the smb memcap", "[dce_smb2_lru]")
     f.churn(500);
 
     // One in, one out, so the population stays flat however many distinct fileIds arrive.
-    CHECK(smb2_ftracker_lru->size() == live);
-    CHECK(smb2_session_cache->current_size <= smb2_session_cache->max_size);
-    CHECK(dce2_smb_stats.v2_ftracker_evicted >= 500);
-    CHECK(dce2_smb_stats.v2_max_file_trackers == live);
+    CHECK(smb2_ftracker_lru->size() == live); // LCOV_EXCL_BR_LINE
+    CHECK(smb2_session_cache->current_size <= smb2_session_cache->max_size); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evicted >= 500); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_max_file_trackers == live); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("eviction prefers a pristine tracker over one carrying learned state",
@@ -257,7 +265,7 @@ TEST_CASE("eviction prefers a pristine tracker over one carrying learned state",
 {
     Fixture f(40);
     const unsigned live = f.fill_to_cap();
-    REQUIRE(live > 4);
+    REQUIRE(live > 4); // LCOV_EXCL_BR_LINE
 
     mark_all_with_learned_state();
 
@@ -268,14 +276,14 @@ TEST_CASE("eviction prefers a pristine tracker over one carrying learned state",
     (*it)->file_name_hash = 0;
 
     const uint64_t oldest = smb2_ftracker_lru->back()->file_id;
-    REQUIRE(pristine != oldest);
+    REQUIRE(pristine != oldest); // LCOV_EXCL_BR_LINE
 
     f.churn(1);
 
     // Age loses to inspection value: the older tracker survives because a name was learned.
-    CHECK(f.peek(pristine) == nullptr);
-    CHECK(f.peek(oldest) != nullptr);
-    CHECK(dce2_smb_stats.v2_ftracker_evict_live == 0);
+    CHECK(f.peek(pristine) == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(f.peek(oldest) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evict_live == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("eviction spares reassembly state until nothing else is available",
@@ -294,29 +302,29 @@ TEST_CASE("eviction spares reassembly state until nothing else is available",
     f.churn(1);
 
     // Nothing acceptable in the window, so eviction fell back to plain LRU.
-    CHECK(f.peek(oldest) == nullptr);
-    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before + 1);
+    CHECK(f.peek(oldest) == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before + 1); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("a lookup renews a tracker so it escapes the tail", "[dce_smb2_lru]")
 {
     Fixture f(40);
     const unsigned live = f.fill_to_cap();
-    REQUIRE(live > 1);
+    REQUIRE(live > 1); // LCOV_EXCL_BR_LINE
 
     // Start from the worst case: the tracker about to be evicted next.
     const uint64_t hot = smb2_ftracker_lru->back()->file_id;
-    REQUIRE(f.ttr->findFtracker(hot) != nullptr);
-    CHECK(smb2_ftracker_lru->front()->file_id == hot);
+    REQUIRE(f.ttr->findFtracker(hot) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(smb2_ftracker_lru->front()->file_id == hot); // LCOV_EXCL_BR_LINE
 
     for ( unsigned i = 0; i < 500; ++i )
     {
         f.churn(1);
-        REQUIRE(f.ttr->findFtracker(hot) != nullptr);
+        REQUIRE(f.ttr->findFtracker(hot) != nullptr); // LCOV_EXCL_BR_LINE
     }
 
     // A tracker that keeps being used keeps being spliced forward, so it never reaches the tail.
-    CHECK(f.peek(hot) != nullptr);
+    CHECK(f.peek(hot) != nullptr); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("a lone tracker is kept rather than evicted for its own successor",
@@ -325,24 +333,24 @@ TEST_CASE("a lone tracker is kept rather than evicted for its own successor",
     // Only reachable by misconfiguration, but with one node the scan would have no choice.
     Fixture f(1);
 
-    REQUIRE(DCE2_Smb2CreateFileTracker(1, f.ttr, f.str) != nullptr);
-    REQUIRE(smb2_ftracker_lru->size() == 1);
+    REQUIRE(DCE2_Smb2CreateFileTracker(1, f.ttr, f.str) != nullptr); // LCOV_EXCL_BR_LINE
+    REQUIRE(smb2_ftracker_lru->size() == 1); // LCOV_EXCL_BR_LINE
 
-    REQUIRE(DCE2_Smb2CreateFileTracker(2, f.ttr, f.str) != nullptr);
+    REQUIRE(DCE2_Smb2CreateFileTracker(2, f.ttr, f.str) != nullptr); // LCOV_EXCL_BR_LINE
 
     // Both survive, overshooting the cap by one. Bounded: once the list holds two the
     // guard no longer applies.
-    CHECK(dce2_smb_stats.v2_ftracker_evicted == 0);
-    CHECK(f.peek(1) != nullptr);
-    CHECK(f.peek(2) != nullptr);
-    CHECK(smb2_session_cache->current_size
+    CHECK(dce2_smb_stats.v2_ftracker_evicted == 0); // LCOV_EXCL_BR_LINE
+    CHECK(f.peek(1) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(f.peek(2) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(smb2_session_cache->current_size // LCOV_EXCL_BR_LINE
         <= smb2_session_cache->max_size + SMB2_FTRACKER_CACHE_COST);
 
     // The third creation finds two candidates, so the guard steps aside and the oldest goes.
-    REQUIRE(DCE2_Smb2CreateFileTracker(3, f.ttr, f.str) != nullptr);
-    CHECK(dce2_smb_stats.v2_ftracker_evicted == 1);
-    CHECK(f.peek(1) == nullptr);
-    CHECK(smb2_ftracker_lru->size() == 2);
+    REQUIRE(DCE2_Smb2CreateFileTracker(3, f.ttr, f.str) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evicted == 1); // LCOV_EXCL_BR_LINE
+    CHECK(f.peek(1) == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(smb2_ftracker_lru->size() == 2); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("the victim scan is bounded so eviction cannot be made expensive",
@@ -350,7 +358,7 @@ TEST_CASE("the victim scan is bounded so eviction cannot be made expensive",
 {
     Fixture f(SMB2_FTRACKER_EVICT_SCAN * 2);
     const unsigned live = f.fill_to_cap();
-    REQUIRE(live > SMB2_FTRACKER_EVICT_SCAN + 1);
+    REQUIRE(live > SMB2_FTRACKER_EVICT_SCAN + 1); // LCOV_EXCL_BR_LINE
 
     // co_tracker candidates are skipped without consuming the active-test budget, so arming
     // the tail-most SMB2_FTRACKER_EVICT_SCAN of them isolates the scan bound.
@@ -360,24 +368,24 @@ TEST_CASE("the victim scan is bounded so eviction cannot be made expensive",
     {
         (*it)->co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
     }
-    REQUIRE(armed == SMB2_FTRACKER_EVICT_SCAN);
+    REQUIRE(armed == SMB2_FTRACKER_EVICT_SCAN); // LCOV_EXCL_BR_LINE
 
     // The node just outside the bound is a pristine victim an unbounded scan would find.
     auto target_it = smb2_ftracker_lru->rbegin();
     std::advance(target_it, SMB2_FTRACKER_EVICT_SCAN);
     const uint64_t pristine_id = (*target_it)->file_id;
-    REQUIRE((*target_it)->co_tracker == nullptr);
-    REQUIRE((*target_it)->max_offset == 0);
-    REQUIRE((*target_it)->file_name_hash == 0);
+    REQUIRE((*target_it)->co_tracker == nullptr); // LCOV_EXCL_BR_LINE
+    REQUIRE((*target_it)->max_offset == 0); // LCOV_EXCL_BR_LINE
+    REQUIRE((*target_it)->file_name_hash == 0); // LCOV_EXCL_BR_LINE
 
     const uint64_t oldest = smb2_ftracker_lru->back()->file_id;
     const PegCount live_before = dce2_smb_stats.v2_ftracker_evict_live;
 
     f.churn(1);
 
-    CHECK(f.peek(pristine_id) != nullptr);
-    CHECK(f.peek(oldest) == nullptr);
-    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before + 1);
+    CHECK(f.peek(pristine_id) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(f.peek(oldest) == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before + 1); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("file tracker accounting returns to its baseline", "[dce_smb2_lru]")
@@ -386,25 +394,25 @@ TEST_CASE("file tracker accounting returns to its baseline", "[dce_smb2_lru]")
     const unsigned count = 20;
 
     for ( uint64_t id = 1; id <= count; ++id )
-        REQUIRE(DCE2_Smb2CreateFileTracker(id, f.ttr, f.str) != nullptr);
+        REQUIRE(DCE2_Smb2CreateFileTracker(id, f.ttr, f.str) != nullptr); // LCOV_EXCL_BR_LINE
 
-    REQUIRE(dce2_smb_stats.v2_ftracker_evicted == 0);
-    CHECK(smb2_session_cache->current_size
+    REQUIRE(dce2_smb_stats.v2_ftracker_evicted == 0); // LCOV_EXCL_BR_LINE
+    CHECK(smb2_session_cache->current_size // LCOV_EXCL_BR_LINE
         == f.baseline + (count * SMB2_FTRACKER_CACHE_COST));
 
     for ( uint64_t id = 1; id <= count; ++id )
         f.ttr->removeFtracker(id);
 
     // Asymmetry between the charge and the refund would drift into a cap that can never be met.
-    CHECK(smb2_session_cache->current_size == f.baseline);
-    CHECK(smb2_ftracker_lru->empty());
+    CHECK(smb2_session_cache->current_size == f.baseline); // LCOV_EXCL_BR_LINE
+    CHECK(smb2_ftracker_lru->empty()); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("eviction spares a tracker that is an active transfer", "[dce_smb2_lru]")
 {
     Fixture f(40);
     const unsigned live = f.fill_to_cap();
-    REQUIRE(live > 4);
+    REQUIRE(live > 4); // LCOV_EXCL_BR_LINE
 
     mark_all_with_learned_state();
 
@@ -418,18 +426,18 @@ TEST_CASE("eviction spares a tracker that is an active transfer", "[dce_smb2_lru
     f.churn(1);
 
     // The active tracker survived; something else was taken instead.
-    CHECK(f.peek(active_id) != nullptr);
-    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before);
-    CHECK(dce2_smb_stats.v2_ftracker_evicted > 0);
+    CHECK(f.peek(active_id) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ftracker_evicted > 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("eviction nulls the back-pointer preventing UAF", "[dce_smb2_lru]")
 {
     Fixture f(40);
 
-    REQUIRE(DCE2_Smb2CreateFileTracker(1, f.ttr, f.str) != nullptr);
+    REQUIRE(DCE2_Smb2CreateFileTracker(1, f.ttr, f.str) != nullptr); // LCOV_EXCL_BR_LINE
     DCE2_Smb2FileTracker* ftr = f.peek(1);
-    REQUIRE(ftr != nullptr);
+    REQUIRE(ftr != nullptr); // LCOV_EXCL_BR_LINE
 
     DCE2_Smb2SsnData* ch = f.add_channel();
     ch->ftracker_tcp = ftr;
@@ -437,7 +445,7 @@ TEST_CASE("eviction nulls the back-pointer preventing UAF", "[dce_smb2_lru]")
     // ~DCE2_Smb2FileTracker must null any pointer to itself. This is what makes eviction UAF-safe.
     f.ttr->removeFtracker(1);
 
-    CHECK(ch->ftracker_tcp == nullptr);
+    CHECK(ch->ftracker_tcp == nullptr); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("the active-test budget forces a safe live eviction", "[dce_smb2_lru]")
@@ -445,7 +453,7 @@ TEST_CASE("the active-test budget forces a safe live eviction", "[dce_smb2_lru]"
     // Past SMB2_FTRACKER_ACTIVE_TESTS the scan breaks out and falls through to the tail.
     Fixture f(40);
     const unsigned live = f.fill_to_cap();
-    REQUIRE(live > SMB2_FTRACKER_ACTIVE_TESTS + 2);
+    REQUIRE(live > SMB2_FTRACKER_ACTIVE_TESTS + 2); // LCOV_EXCL_BR_LINE
 
     mark_all_with_learned_state();
 
@@ -467,13 +475,13 @@ TEST_CASE("the active-test budget forces a safe live eviction", "[dce_smb2_lru]"
     const DCE2_Smb2FileTracker* tail = smb2_ftracker_lru->back();
     const uint64_t tail_id = tail->file_id;
     const DCE2_Smb2SsnData* tail_channel = active_channels[0];
-    REQUIRE(tail_channel->ftracker_tcp == tail);
+    REQUIRE(tail_channel->ftracker_tcp == tail); // LCOV_EXCL_BR_LINE
 
     const PegCount live_before = dce2_smb_stats.v2_ftracker_evict_live;
     f.churn(1);
 
     // Budget exhausted, so the fallback takes the tail and must null the channel's pointer.
-    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before + 1);
-    CHECK(f.peek(tail_id) == nullptr);
-    CHECK(tail_channel->ftracker_tcp == nullptr);
+    CHECK(dce2_smb_stats.v2_ftracker_evict_live == live_before + 1); // LCOV_EXCL_BR_LINE
+    CHECK(f.peek(tail_id) == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(tail_channel->ftracker_tcp == nullptr); // LCOV_EXCL_BR_LINE
 }

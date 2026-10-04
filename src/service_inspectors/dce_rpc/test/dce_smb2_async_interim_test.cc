@@ -219,7 +219,7 @@ THREAD_LOCAL const snort::Trace* dce_smb_trace = nullptr;
 namespace snort
 {
 Flow::Flow() = default;
-Flow::~Flow() = default;
+Flow::~Flow() = default; // LCOV_EXCL_LINE
 FlowDataStore::~FlowDataStore() = default;
 // cppcheck-suppress functionStatic ; test double must retain the production member signature
 void FlowStash::reset() { }
@@ -232,16 +232,20 @@ Packet::~Packet()
 {
 }
 
+// Linker-only stubs are intentionally unreachable from these unit cases.
+// LCOV_EXCL_START
 // cppcheck-suppress functionStatic ; test double must retain the production member signature
 void Packet::reset()
 {
 }
+// LCOV_EXCL_STOP
 
 Packet* DetectionEngine::get_current_packet()
 {
     return &test_packet;
 }
 
+// LCOV_EXCL_START
 int DetectionEngine::queue_event(unsigned, unsigned)
 {
     return 0;
@@ -250,12 +254,15 @@ int DetectionEngine::queue_event(unsigned, unsigned)
 void DetectionEngine::disable_all(Packet*)
 {
 }
+// LCOV_EXCL_STOP
 
 int64_t FileService::get_max_file_depth(FileConfig*)
 {
     return 0;
 }
 
+// File API and tracing stubs satisfy linkage; these async-header tests never reach them.
+// LCOV_EXCL_START
 FileFlows* FileFlows::get_file_flows(Flow*, bool)
 {
     return nullptr;
@@ -293,7 +300,10 @@ void TraceApi::filter(const Packet&) { }
 
 void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { }
 }
+// LCOV_EXCL_STOP
 
+// These DCE helpers satisfy linkage; async interim responses return before these paths.
+// LCOV_EXCL_START
 void DCE2_CoCleanTracker(DCE2_CoTracker*)
 {
 }
@@ -324,6 +334,7 @@ char* DCE2_SmbGetFileName(const uint8_t*, uint32_t, bool, uint16_t* file_name_le
 void dce_alert(uint32_t, uint32_t, dce2CommonStats*, const DCE2_SsnData&)
 {
 }
+// LCOV_EXCL_STOP
 
 //--------------------------------------------------------------------------
 // async interim responses: STATUS_PENDING, severity SUCCESS, no parsable body.
@@ -340,8 +351,8 @@ TEST_CASE("ioctl async interim response is discarded", "[dce_smb2_async_interim]
 
     DCE2_Smb2IoctlCommand(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 0);
+    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("create async interim response is discarded", "[dce_smb2_async_interim]")
@@ -352,8 +363,8 @@ TEST_CASE("create async interim response is discarded", "[dce_smb2_async_interim
 
     DCE2_Smb2Create(f.ssd, *hdr, body.begin(), body.end(), test_mid, test_sid, test_tid);
 
-    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_crt_err_resp == 0);
+    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_crt_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 // A regression lock rather than a reproduction: TREE_CONNECT's request branch is empty, so an
@@ -368,10 +379,10 @@ TEST_CASE("tree connect async interim response is discarded", "[dce_smb2_async_i
 
     DCE2_Smb2TreeConnect(f.ssd, *hdr, body.begin(), body.end(), f.str, test_tid);
 
-    CHECK(dce2_smb_stats.v2_tree_cnct_err_resp == 0);
-    CHECK(dce2_smb_stats.v2_tree_cnct_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_tree_cnct_resp_hdr_err == 0);
-    CHECK(dce2_smb_stats.v2_tree_cnct_ignored == 0);
+    CHECK(dce2_smb_stats.v2_tree_cnct_err_resp == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_tree_cnct_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_tree_cnct_resp_hdr_err == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_tree_cnct_ignored == 0); // LCOV_EXCL_BR_LINE
 }
 
 // StructureSize 9 is also the SESSION_SETUP Response size, so an interim response that gets
@@ -384,14 +395,14 @@ TEST_CASE("session setup async interim response creates no session tracker",
     Hdr hdr(SMB2_COM_SESSION_SETUP, SMB2_STATUS_PENDING, flags_async_response);
     Body9 body;
 
-    REQUIRE(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr);
+    REQUIRE(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr); // LCOV_EXCL_BR_LINE
 
     DCE2_Smb2Setup(f.ssd, *hdr, test_sid, body.begin(), body.end());
 
-    CHECK(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr);
-    CHECK(dce2_smb_stats.v2_setup_err_resp == 0);
-    CHECK(dce2_smb_stats.v2_setup_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_setup_resp_hdr_err == 0);
+    CHECK(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_setup_err_resp == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_setup_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_setup_resp_hdr_err == 0); // LCOV_EXCL_BR_LINE
 }
 
 // CLOSE reports 24 for its request and 60 for its response, so StructureSize 9 matches
@@ -408,14 +419,14 @@ TEST_CASE("close async interim response leaves the file trackers in place",
     Body9 body;
 
     const bool open_before = f.file_still_open();
-    REQUIRE(open_before);
+    REQUIRE(open_before); // LCOV_EXCL_BR_LINE
 
     DCE2_Smb2CloseCmd(f.ssd, *hdr, body.begin(), body.end(), f.ttr, f.str, test_mid);
 
     const bool open_after = f.file_still_open();
-    CHECK(open_after);
-    CHECK(dce2_smb_stats.v2_cls_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_cls_err_resp == 0);
+    CHECK(open_after); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_cls_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_cls_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("read async interim response is discarded", "[dce_smb2_async_interim]")
@@ -426,8 +437,8 @@ TEST_CASE("read async interim response is discarded", "[dce_smb2_async_interim]"
 
     DCE2_Smb2Read(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_read_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_read_err_resp == 0);
+    CHECK(dce2_smb_stats.v2_read_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_read_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("write async interim response is discarded", "[dce_smb2_async_interim]")
@@ -438,8 +449,8 @@ TEST_CASE("write async interim response is discarded", "[dce_smb2_async_interim]
 
     DCE2_Smb2Write(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_wrt_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_wrt_err_resp == 0);
+    CHECK(dce2_smb_stats.v2_wrt_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_wrt_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("set info async interim response is discarded", "[dce_smb2_async_interim]")
@@ -450,8 +461,8 @@ TEST_CASE("set info async interim response is discarded", "[dce_smb2_async_inter
 
     DCE2_Smb2SetInfo(f.ssd, *hdr, body.begin(), body.end(), f.ttr);
 
-    CHECK(dce2_smb_stats.v2_stinf_inv_str_sz == 0);
-    CHECK(dce2_smb_stats.v2_stinf_err_resp == 0);
+    CHECK(dce2_smb_stats.v2_stinf_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_stinf_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 //--------------------------------------------------------------------------
@@ -467,8 +478,8 @@ TEST_CASE("tree connect request with a channel sequence is not an error response
 
     DCE2_Smb2TreeConnect(f.ssd, *hdr, body.begin(), body.end(), f.str, test_tid);
 
-    CHECK(dce2_smb_stats.v2_tree_cnct_err_resp == 0);
-    CHECK(dce2_smb_stats.v2_tree_cnct_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_tree_cnct_err_resp == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_tree_cnct_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 //--------------------------------------------------------------------------
@@ -483,8 +494,8 @@ TEST_CASE("ioctl error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2IoctlCommand(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("create error response is counted", "[dce_smb2_async_interim]")
@@ -495,8 +506,8 @@ TEST_CASE("create error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2Create(f.ssd, *hdr, body.begin(), body.end(), test_mid, test_sid, test_tid);
 
-    CHECK(dce2_smb_stats.v2_crt_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_crt_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("tree connect error response is counted", "[dce_smb2_async_interim]")
@@ -507,8 +518,8 @@ TEST_CASE("tree connect error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2TreeConnect(f.ssd, *hdr, body.begin(), body.end(), f.str, test_tid);
 
-    CHECK(dce2_smb_stats.v2_tree_cnct_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_tree_cnct_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_tree_cnct_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_tree_cnct_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("session setup error response is counted", "[dce_smb2_async_interim]")
@@ -519,8 +530,8 @@ TEST_CASE("session setup error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2Setup(f.ssd, *hdr, test_sid, body.begin(), body.end());
 
-    CHECK(dce2_smb_stats.v2_setup_err_resp == 1);
-    CHECK(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr);
+    CHECK(dce2_smb_stats.v2_setup_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("close error response is counted and keeps the file trackers",
@@ -533,10 +544,10 @@ TEST_CASE("close error response is counted and keeps the file trackers",
 
     DCE2_Smb2CloseCmd(f.ssd, *hdr, body.begin(), body.end(), f.ttr, f.str, test_mid);
 
-    CHECK(dce2_smb_stats.v2_cls_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_cls_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_cls_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_cls_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
     const bool still_open = f.file_still_open();
-    CHECK(still_open);
+    CHECK(still_open); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("read error response is counted", "[dce_smb2_async_interim]")
@@ -547,8 +558,8 @@ TEST_CASE("read error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2Read(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_read_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_read_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_read_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_read_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("write error response is counted", "[dce_smb2_async_interim]")
@@ -559,8 +570,8 @@ TEST_CASE("write error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2Write(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_wrt_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_wrt_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_wrt_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_wrt_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("set info error response is counted", "[dce_smb2_async_interim]")
@@ -571,8 +582,8 @@ TEST_CASE("set info error response is counted", "[dce_smb2_async_interim]")
 
     DCE2_Smb2SetInfo(f.ssd, *hdr, body.begin(), body.end(), f.ttr);
 
-    CHECK(dce2_smb_stats.v2_stinf_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_stinf_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_stinf_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_stinf_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 //--------------------------------------------------------------------------
@@ -589,8 +600,8 @@ TEST_CASE("final async error response is still counted", "[dce_smb2_async_interi
 
     DCE2_Smb2IoctlCommand(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 TEST_CASE("final async create error response is still counted", "[dce_smb2_async_interim]")
@@ -601,8 +612,8 @@ TEST_CASE("final async create error response is still counted", "[dce_smb2_async
 
     DCE2_Smb2Create(f.ssd, *hdr, body.begin(), body.end(), test_mid, test_sid, test_tid);
 
-    CHECK(dce2_smb_stats.v2_crt_err_resp == 1);
-    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0);
+    CHECK(dce2_smb_stats.v2_crt_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
 }
 
 //--------------------------------------------------------------------------
@@ -626,10 +637,10 @@ TEST_CASE("create request body with an interim-looking header is still parsed",
     DCE2_Smb2Create(f.ssd, *hdr, body.begin(), body.end(), test_mid, test_sid, test_tid);
 
     auto created = DCE2_Smb2FindSidInSsd(f.ssd, test_sid);
-    REQUIRE(created != nullptr);
-    CHECK(created->findTtracker(test_tid) != nullptr);
-    CHECK(dce2_smb_stats.v2_crt_err_resp == 0);
-    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0);
+    REQUIRE(created != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(created->findTtracker(test_tid) != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_crt_err_resp == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_crt_inv_str_sz == 0); // LCOV_EXCL_BR_LINE
     // v2_crt_req_hdr_err is deliberately not asserted: the body's NameOffset is 0, which the
     // request parser counts on its own account.  What matters here is that the request was
     // parsed at all, which the tree tracker above proves.
@@ -649,8 +660,8 @@ TEST_CASE("client originated pending status is not an interim response",
 
     DCE2_Smb2IoctlCommand(f.ssd, *hdr, body.begin(), body.end(), f.str, f.ttr, test_mid);
 
-    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 1);
-    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 0);
+    CHECK(dce2_smb_stats.v2_ioctl_inv_str_sz == 1); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.v2_ioctl_err_resp == 0); // LCOV_EXCL_BR_LINE
 }
 
 // Not a bug this test set is trying to fix, pinned so a fix does not change it by accident.
@@ -667,6 +678,6 @@ TEST_CASE("session setup more processing required is treated as an error respons
 
     DCE2_Smb2Setup(f.ssd, *hdr, test_sid, body.begin(), body.end());
 
-    CHECK(dce2_smb_stats.v2_setup_err_resp == 1);
-    CHECK(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr);
+    CHECK(dce2_smb_stats.v2_setup_err_resp == 1); // LCOV_EXCL_BR_LINE
+    CHECK(DCE2_Smb2FindSidInSsd(f.ssd, test_sid) == nullptr); // LCOV_EXCL_BR_LINE
 }
