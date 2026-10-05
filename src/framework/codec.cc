@@ -87,6 +87,13 @@ void Codec::codec_event(const CodecData&, CodecSid sid)
     DetectionEngine::queue_event(GID_DECODE, sid);
 }
 
+// RFC 8200 section 4.2
+static inline bool ip6_opt_receiver_skips(ip::HopByHopOptions type)
+{
+    constexpr uint8_t IP6_OPT_ACTION_MASK = 0xc0;
+    return (static_cast<uint8_t>(type) & IP6_OPT_ACTION_MASK) == 0;
+}
+
 bool Codec::CheckIPV6HopOptions(const RawData& raw, CodecData& codec)
 {
     const ip::IP6Extension* const exthdr =
@@ -131,12 +138,13 @@ bool Codec::CheckIPV6HopOptions(const RawData& raw, CodecData& codec)
         case ip::HopByHopOptions::CALIPSO:
         case ip::HopByHopOptions::HOME_ADDRESS:
         case ip::HopByHopOptions::ENDPOINT_IDENT:
-            oplen = *(++pkt);
-            if ((pkt + oplen + 1) > hdr_end)
+            // Ensure the length byte is within the header and the whole TLV option fits inside it
+            if ( (pkt + 1) >= hdr_end or (hdr_end - pkt) < (*(pkt + 1) + 2) )
             {
                 codec_event(codec, DECODE_IPV6_BAD_OPT_LEN);
-                return false;
+                return ip6_opt_receiver_skips(type);
             }
+            oplen = *(++pkt);
             pkt += oplen + 1;
             break;
         }
