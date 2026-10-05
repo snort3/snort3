@@ -85,6 +85,10 @@ public:
     virtual unsigned do_hash(const unsigned char* key, int len);
     virtual bool key_compare(const void* key1, const void* key2, size_t len);
 
+    // takes the high bits of hashkey, so an override's do_hash() must avalanche
+    static unsigned get_row(unsigned hashkey, unsigned nrows)
+    { return (unsigned)(((uint64_t)hashkey * nrows) >> 32); }
+
 protected:
     unsigned seed;
     unsigned scale;

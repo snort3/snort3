@@ -26,8 +26,10 @@
 #include "hash/xhash.h"
 
 #include <set>
+#include <vector>
 
 #include "hash/hash_defs.h"
+#include "hash/hash_key_operations.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
 #include "utils/util.h"
@@ -245,6 +247,147 @@ TEST(xhash, release_lru_node_walk_is_bounded)
     CHECK(test_table->get_num_nodes() == cap);
 
     delete test_table;
+}
+
+static const unsigned collapsing_scales[] =
+{ 131071, 524287, 1310719, 1966079, 4194301 };
+
+struct forced_scale : public HashKeyOperations
+{
+    forced_scale(unsigned s, unsigned h) : HashKeyOperations(1024)
+    {
+        seed = 3191;
+        scale = s;
+        hardener = h;
+    }
+
+    unsigned unfinalized(const unsigned char* key, int len) const
+    {
+        unsigned hash = seed;
+
+        while ( len-- )
+        {
+            hash *= scale;
+            hash += *key++;
+        }
+
+        return hash ^ hardener;
+    }
+};
+
+static unsigned rows_reached(const std::vector<unsigned>& indices, unsigned nrows)
+{
+    std::vector<bool> seen(nrows, false);
+    unsigned reached = 0;
+
+    for ( unsigned index : indices )
+        if ( !seen[index] )
+        {
+            seen[index] = true;
+            ++reached;
+        }
+
+    return reached;
+}
+
+static const unsigned hardeners[] = { 133824503, 0x9e3779b9, 3, 0x00010001, 0 };
+
+TEST_GROUP(hash_row_distribution)
+{ };
+
+TEST(hash_row_distribution, row_stays_in_range)
+{
+    const unsigned sizes[] = { 1, 2, 64, 1021, 1u << 21 };
+    forced_scale hash_ops(719, 133824503);
+
+    for ( unsigned nrows : sizes )
+        for ( unsigned i = 0; i < 10000; ++i )
+            CHECK(hash_ops.get_row(i * 2654435761u + 17, nrows) < nrows);
+}
+
+TEST(hash_row_distribution, row_takes_the_top_bits_on_powers_of_two)
+{
+    forced_scale hash_ops(719, 133824503);
+
+    for ( unsigned k = 1; k <= 22; ++k )
+        for ( unsigned i = 0; i < 1000; ++i )
+        {
+            const unsigned hashkey = i * 2246822519u + 5;
+            CHECK(hash_ops.get_row(hashkey, 1u << k) == (hashkey >> (32 - k)));
+        }
+}
+
+TEST(hash_row_distribution, row_reaches_every_row_when_nrows_is_not_a_power_of_two)
+{
+    const unsigned nrows = 1021;
+    forced_scale hash_ops(719, 133824503);
+    std::vector<unsigned> masked, reduced;
+
+    for ( unsigned i = 0; i < 200000; ++i )
+    {
+        const unsigned hashkey = i * 2654435761u;
+        masked.push_back(hashkey & (nrows - 1));
+        reduced.push_back(hash_ops.get_row(hashkey, nrows));
+    }
+
+    CHECK(rows_reached(masked, nrows) < nrows / 2);
+    CHECK(rows_reached(reduced, nrows) == nrows);
+}
+
+TEST(hash_row_distribution, do_hash_spreads_a_collapsed_scale)
+{
+    const unsigned nrows = 1u << 21;
+    const unsigned keys = 20000;
+
+    for ( unsigned scale : collapsing_scales )
+        for ( unsigned hardener : hardeners )
+        {
+            forced_scale hash_ops(scale, hardener);
+            std::vector<unsigned> masked, reduced;
+
+            for ( unsigned i = 0; i < keys; ++i )
+            {
+                const unsigned key = i * 7919;
+                const auto bytes = reinterpret_cast<const unsigned char*>(&key);
+
+                masked.push_back(hash_ops.unfinalized(bytes, sizeof(key)) & (nrows - 1));
+                reduced.push_back(
+                    hash_ops.get_row(hash_ops.do_hash(bytes, sizeof(key)), nrows));
+            }
+
+            CHECK(rows_reached(masked, nrows) < keys / 2);
+            CHECK(rows_reached(reduced, nrows) > keys - keys / 4);
+        }
+}
+
+TEST(hash_row_distribution, the_hardener_moves_the_rows)
+{
+    const unsigned nrows = 1u << 16;
+    const unsigned keys = 4096;
+    std::set<unsigned> first_rows;
+
+    for ( unsigned hardener : hardeners )
+    {
+        forced_scale hash_ops(719, hardener);
+        unsigned same = 0;
+
+        for ( unsigned i = 0; i < keys; ++i )
+        {
+            const unsigned key = i * 7919;
+            const auto bytes = reinterpret_cast<const unsigned char*>(&key);
+            const unsigned row =
+                hash_ops.get_row(hash_ops.do_hash(bytes, sizeof(key)), nrows);
+
+            if ( i == 0 )
+                first_rows.insert(row);
+            if ( row == i % nrows )
+                ++same;
+        }
+
+        CHECK(same < keys / 8);
+    }
+
+    CHECK(first_rows.size() == sizeof(hardeners) / sizeof(hardeners[0]));
 }
 
 int main(int argc, char** argv)

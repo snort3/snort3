@@ -45,3 +45,22 @@ the pathway for enhanced scalability and future advancements is
 significantly broadened, making the caching mechanism more robust 
 and adaptable to evolving computational demands.
 check host_attributes.cc for example usage.
+Hashing and row selection
+
+HashKeyOperations::do_hash() accumulates the key with a multiply-add over seed
+and scale, then finalizes with an xor-shift / multiply / xor-shift so every
+output bit depends on the whole key regardless of how scale was drawn. The
+finalizer is a bijection and adds no collisions; it only spreads the
+accumulator's own entropy across the word. Collision resistance is a property
+of scale and seed, not of the finalizer.
+
+HashKeyOperations::get_row() maps a hash to a row with a widening multiply and
+shift, taking the top log2(nrows) bits rather than masking the low ones. This
+is also exact when nrows is not a power of two, unlike a mask. FlowHashKeyOps
+overrides do_hash() and ends in finalize() too, so it shares get_row() without
+a second mix.
+
+Row order can vary across runs when hashing uses randomized seed, scale, and
+hardener values. Code that walks rows in order (find_first_node()/
+find_next_node()) must not assume a fixed order unless static hashing is
+configured.

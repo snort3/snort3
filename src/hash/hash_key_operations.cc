@@ -70,7 +70,13 @@ unsigned HashKeyOperations::do_hash(const unsigned char* key, int len)
         hash += *key++;
         len--;
     }
-    return hash ^ hardener;
+
+    hash ^= hardener;
+    hash ^= hash >> 16;
+    hash *= 2654435761u;
+    hash ^= hash >> 15;
+
+    return hash;
 }
 
 bool HashKeyOperations::key_compare(const void* key1, const void* key2, size_t len)

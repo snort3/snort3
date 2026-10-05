@@ -353,7 +353,7 @@ int XHash::release_node(const void* key, uint8_t type)
 
     unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
 
-    unsigned index = hashkey & (nrows - 1);
+    unsigned index = hashkey_ops->get_row(hashkey, nrows);
     for (HashNode* hnode = table[index]; hnode; hnode = hnode->next)
     {
         if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
@@ -419,8 +419,7 @@ HashNode* XHash::find_node_row(const void* key, int& rindex, uint8_t type, bool 
     assert(type < num_lru_caches);
     unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
 
-    /* Modulus is slow. Switched to a table size that is a power of 2. */
-    rindex  = hashkey & (nrows - 1);
+    rindex = hashkey_ops->get_row(hashkey, nrows);
     for (HashNode* hnode = table[rindex]; hnode; hnode = hnode->next )
     {
         if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
