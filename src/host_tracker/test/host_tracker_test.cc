@@ -339,6 +339,31 @@ TEST(host_tracker, copy_data_test)
     delete p_macs;
 }
 
+//  Test that re-adding a known visible mac refreshes its last_seen
+TEST(host_tracker, add_mac_updates_last_seen_test)
+{
+    test_time = 1562198400;
+    HostTracker ht;
+    const uint8_t mac[6] = {254, 237, 222, 173, 190, 239};
+    CHECK(true == ht.add_mac(mac, 50, 0));
+
+    test_time = 1562198500;
+    ht.update_last_seen();
+    CHECK(false == ht.add_mac(mac, 50, 0));
+
+    uint8_t p_hops = 0;
+    uint32_t p_last_seen = 0;
+    list<HostMac>* p_macs = nullptr;
+    ht.copy_data(p_hops, p_last_seen, p_macs);
+
+    CHECK(1562198500 == p_last_seen);
+    CHECK(nullptr != p_macs);
+    CHECK(1 == p_macs->size());
+    CHECK(1562198500 == p_macs->front().last_seen);
+
+    delete p_macs;
+}
+
 TEST(host_tracker, stringify)
 {
     test_time = 1562198400; // this time will be updated and should not be seen in stringify

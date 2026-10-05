@@ -124,6 +124,7 @@ bool HostTracker::add_mac(const uint8_t* mac, uint8_t ttl, uint8_t primary)
         {
             if ( hm_t.visibility )
             {
+                hm_t.last_seen = last_seen;
                 return false;
             }
 
