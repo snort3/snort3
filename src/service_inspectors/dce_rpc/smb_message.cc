@@ -1587,7 +1587,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 nb_hdr = reinterpret_cast<const NbssHdr*>(DCE2_BufferData(*seg_buf));
             }
 
-            uint32_t nb_len = NbssLen(nb_hdr);
+            uint32_t nb_len = NbssIsEmptyCtrl(nb_hdr) ? 0 : NbssLen(nb_hdr);
             DCE2_Ret status = DCE2_NbssHdrChecks(ssd, nb_hdr);
             if (status != DCE2_RET__SUCCESS)
             {

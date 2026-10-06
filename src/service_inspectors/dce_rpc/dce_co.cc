@@ -908,6 +908,12 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
 
     dce2_move(frag_ptr, frag_len, sizeof(DceRpcCoContElem));
 
+    if (num_tsyns > frag_len / sizeof(DceRpcCoSynId))
+    {
+        dce_alert(GID_DCE2, DCE2_CO_REM_FRAG_LEN_LT_SIZE, dce_common_stats, *sd);
+        return nullptr;
+    }
+
     /* Don't really care about the transfer syntaxes */
     // Down casting from uint8_t const * to "DceRpcCoContElem" is checked with frag_len
     // coverity[tainted_scalar]

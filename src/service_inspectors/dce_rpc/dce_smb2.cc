@@ -527,10 +527,9 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
     // Process the header
     if (p->is_pdu_start())
     {
-        // Skip any leading NBSS frames that carry no SMB message.  Uses
-        // NbssIsEmptyCtrl, which checks flags+length directly rather than via
-        // NbssLen/NbssLen2 (those mask nb->flags differently and disagree on
-        // inputs such as 85 02 00 00, which NbssLen treats as zero-length).
+        // Skip leading NBSS keep-alive frames.  NbssIsEmptyCtrl treats type
+        // 0x85 as header-only so its advertised length cannot consume the
+        // following SMB message.
         while (data_len >= sizeof(NbssHdr) and
             NbssIsEmptyCtrl(reinterpret_cast<const NbssHdr*>(data_ptr)))
         {

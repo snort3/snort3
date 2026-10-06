@@ -76,11 +76,12 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, uint
     memcpy(&nb_struct, &nbs_hdr, sizeof(nb_struct));
     const NbssHdr* nb = &nb_struct;
 
-    // Reject degenerate session-establishment frames before a flush point
-    // exists.  This has to happen here rather than in DCE2_NbssHdrChecks():
-    // the inspector only runs once the pseudo-packet has been built and the
-    // detection pass bound to it, so rejecting there saves nothing.
-    if ( !junk and !NbssIsValidCtrlLen(nb) )
+    // Keep-alives are header-only even when their advertised length is nonzero.
+    // Validate the fixed trailer size of every other control frame before a
+    // flush point exists.  This has to happen here rather than in
+    // DCE2_NbssHdrChecks(): the inspector only runs once the pseudo-packet has
+    // been built and the detection pass bound to it, so rejecting there saves nothing.
+    if ( !junk and !NbssIsEmptyCtrl(nb) and !NbssIsValidCtrlLen(nb) )
     {
         dce2_smb_stats.smb_nbss_hdr_rejected++;
         return false;
@@ -89,7 +90,9 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, uint
     if ( nbs_hdr_out )
         *nbs_hdr_out = nbs_hdr;
 
-    if (smb_id == DCE2_SMB2_ID)
+    if ( NbssIsEmptyCtrl(nb) )
+        *nb_len = 0;
+    else if (smb_id == DCE2_SMB2_ID)
         *nb_len = NbssLen2(nb);
     else
         *nb_len = NbssLen(nb);
@@ -160,10 +163,8 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
             if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, smb_id,
                 &nb_len, &nbs_hdr_val))
             {
-                // Frames with a zero length field carry no SMB message, so one
-                // rebuilt PDU per four wire bytes buys a pseudo-packet build and
-                // an inspection pass for nothing. Accumulate them and let the
-                // next real message -- or the cap -- carry them out.
+                // Keep-alive frames carry no SMB message. Accumulate them and
+                // let the next real message -- or the cap -- carry them out.
                 if (NbssIsEmptyCtrl(reinterpret_cast<const NbssHdr*>(&nbs_hdr_val)) and
                     ss->empty_nbss_bytes + sizeof(NbssHdr) < batch_max)
                 {

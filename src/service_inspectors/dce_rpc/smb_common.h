@@ -430,15 +430,11 @@ inline bool NbssIsKnownCtrlType(uint8_t type)
     }
 }
 
-// True for NBSS keep-alive frames (type 0x85 with zero flags and length).
-// Tests the bytes directly rather than via NbssLen()/NbssLen2(), which mask
-// nb->flags differently (0x01 vs 0xFF) and so disagree on inputs such as
-// 85 02 00 00.  The splitter's batching decision and the SMB2 skip must
-// cover exactly the same set of frames, so both call this and nothing else.
+// True for NBSS keep-alive frames.  Keep-alives are header-only, so their
+// advertised flags and length do not make trailing bytes part of the frame.
+// The splitter and both SMB versions must use this same interpretation.
 inline bool NbssIsEmptyCtrl(const NbssHdr* nb)
 {
-    if ( nb->flags != 0 or nb->length != 0 )
-        return false;
     return nb->type == NBSS_SESSION_TYPE__KEEP_ALIVE;
 }
 
