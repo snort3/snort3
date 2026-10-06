@@ -90,8 +90,8 @@ public:
     virtual int handle_repeated_syn(State&, TcpSegmentDescriptor&) = 0;
     virtual uint16_t set_urg_offset(State&, const snort::tcp::TCPHdr* tcph, uint16_t dsize);
     virtual void set_zwp_seq(State&, uint32_t seq);
-    virtual void log_drop_reason(State&, const TcpSegmentDescriptor&, bool inline_mode,
-        const char *issuer, const std::string& log);
+    virtual void log_trim_reason(State&, const TcpSegmentDescriptor&, bool force,
+        const std::string& reason);
     virtual bool is_keep_alive_probe(State&, const TcpSegmentDescriptor&);
     virtual bool validate_established_ack(State&, TcpSegmentDescriptor&);
     virtual bool validate_rcvd_seq(State&, TcpSegmentDescriptor&);

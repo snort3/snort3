@@ -692,14 +692,38 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
                 listener->seglist.print_stream_state(tsd.get_talker());
-                listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
-                    "stream_tcp: Flow exceeded the configured reassembly footprint ("
+                listener->normalizer.log_trim_reason(tsd, inline_mode,
+                    "Flow exceeded the configured reassembly footprint ("
                     + std::to_string(tcp_config->max_queued_bytes)
                     + "). You may want to adjust the 'max_bytes' parameter in the NAP policy"
                     " to a higher value, or '0' for unlimited.\n");
             }
 
             listener->normalizer.trim_win_payload(tsd, max_payload, inline_mode);
+
+            if ( tsd.get_len() > max_payload )
+            {
+                uint32_t retainable_payload = tsd.get_len();
+                if ( SEQ_GT(listener->r_win_base, tsd.get_seq()) )
+                {
+                    uint32_t clipped_prefix = listener->r_win_base - tsd.get_seq();
+                    retainable_payload = clipped_prefix < retainable_payload
+                        ? retainable_payload - clipped_prefix : 0;
+                }
+
+                // Queue insertion clips bytes before r_win_base.  If the remaining suffix fits by
+                // itself, re-anchor the stalled footprint and continue on Atom.
+                if ( inline_mode && retainable_payload
+                    && retainable_payload <= tcp_config->max_queued_bytes )
+                {
+                    listener->purge_queue_and_fallback(tsd, "byte");
+                    max_payload = listener->seglist.get_segment_length_in_footprint(
+                        tsd, tcp_config->max_queued_bytes);
+                }
+            }
+
+            if ( tsd.get_len() > max_payload )
+                return true;
 
             if ( !max_payload || !inline_mode )
                 return true;
@@ -744,13 +768,21 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
         // FIXIT-M - only alert once per threshold exceeded event
         tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
         listener->seglist.print_stream_state(tsd.get_talker());
-        listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
-            "stream_tcp: Flow exceeded the configured max segment threshold (" + std::to_string(max_segs) +
+        listener->normalizer.log_trim_reason(tsd, inline_mode,
+            "Flow exceeded the configured max segment threshold (" + std::to_string(max_segs) +
             "). You may want to adjust the 'max_segments' parameter in the NAP policy"
             " to a higher value, or '0' for unlimited.\n");
     }
 
     listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
+
+    if ( inline_mode && tsd.get_len() > 0
+        && SEQ_GT(tsd.get_end_seq(), listener->r_win_base) )
+    {
+        listener->purge_queue_and_fallback(tsd, "segment");
+        return false;
+    }
+
     return true;
 }
 

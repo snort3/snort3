@@ -508,6 +508,39 @@ void TcpStreamTracker::fallback()
     }
 }
 
+void TcpStreamTracker::purge_queue_and_fallback(
+    TcpSegmentDescriptor& tsd, const char* limit)
+{
+    uint32_t purged_segments = seglist.get_seg_count();
+    uint32_t purged_bytes = seglist.get_seg_bytes_total();
+    Packet* packet = tsd.get_pkt();
+
+    tcp_alerts.purge_alerts(session->flow);
+    bool held_packet_purged = is_holding_packet();
+    finalize_held_packet(packet);
+    if ( held_packet_purged )
+        tcpStats.held_packet_purges++;
+    seglist.purge_segment_list();
+
+    // Start the new inspection epoch at the first byte of this segment the window can retain.
+    uint32_t base = SEQ_GT(r_win_base, tsd.get_seq()) ? r_win_base : tsd.get_seq();
+    rcv_nxt = base;
+    seglist.set_seglist_base_seq(base);
+    tsd.set_packet_inorder(SEQ_GT(tsd.get_end_seq(), base));
+    set_order(OUT_OF_SEQUENCE);
+
+    // Asymmetric recovery may already have counted the fallback; it still needs a fresh Atom.
+    if ( session->flow->is_direction_aborted(!client_tracker) )
+        set_splitter(new AtomSplitter(!client_tracker));
+    else
+        fallback();
+
+    stream_log(packet, "stream_tcp: Reassembly queue remained over the %s limit after recovery; "
+        "purged queue contents (segments=%u, bytes=%u) and reset the %s tracker to the Atom "
+        "splitter\n",
+        limit, purged_segments, purged_bytes, client_tracker ? "client" : "server");
+}
+
 void TcpStreamTracker::disable_reassembly(Flow* f)
 {
     set_splitter((StreamSplitter*)nullptr);

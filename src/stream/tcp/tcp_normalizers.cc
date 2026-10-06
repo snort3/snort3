@@ -526,7 +526,7 @@ TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
             tcpStats.invalid_seq_left++;
 
         bool inline_mode = tsd.is_nap_policy_inline();
-        log_drop_reason(tns, tsd, inline_mode, "stream",
+        log_trim_reason(tns, tsd, inline_mode,
             std::string("Normalizer: Missed3whs: Sequence ") + std::to_string(seq) +
             " is too far from " + anchor_name + " " + std::to_string(anchor) +
             " (diff=" + std::to_string(diff) +
@@ -554,11 +554,11 @@ TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
         if ( tsd.get_len() > max_payload )
         {
             const bool inline_mode = tsd.is_nap_policy_inline();
-            log_drop_reason(tns, tsd, inline_mode, "stream",
-                "Normalizer: Missed3whs: Trimming payload to observed receive window\n");
+            log_trim_reason(tns, tsd, inline_mode,
+                "Normalizer: Missed3whs: Payload exceeds observed receive window\n");
             trim_win_payload(tns, tsd, max_payload, inline_mode);
 
-            if ( max_payload == 0 )
+            if ( max_payload == 0 || (inline_mode && tsd.get_len() > max_payload) )
                 return NORM_TRIMMED;
         }
     }

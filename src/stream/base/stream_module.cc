@@ -787,6 +787,9 @@ void StreamUnloadReloadResourceManager::report_progress()
 
 void StreamModuleConfig::show() const
 {
+#ifdef REG_TEST
+    ConfigLogger::log_value("footprint", footprint);
+#endif
     ConfigLogger::log_value("max_flows", flow_cache_cfg.max_flows);
     ConfigLogger::log_value("max_aux_ip", SnortConfig::get_conf()->max_aux_ip);
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
@@ -809,6 +812,12 @@ void StreamModuleConfig::show() const
 #ifdef ALLOWLIST_MOVE_ON_EXCESS
         tmp += ", move_on_excess = " + (flow_cache_cfg.move_to_allowlist_on_excess ? std::string("true") : std::string("false"));
         tmp += ", max_excess_flows = " + std::to_string(flow_cache_cfg.allowlist_max_excess_flows);
+#else
+        tmp += ", move_on_excess = false, max_excess_flows = 0";
+#endif
+#ifdef REG_TEST
+        tmp += ", test_force_enable = " + (flow_cache_cfg.allowlist_test_force_enable
+            ? std::string("true") : std::string("false"));
 #endif
         tmp += " }";
         ConfigLogger::log_value("allowlist_cache", tmp.c_str());

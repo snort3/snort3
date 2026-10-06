@@ -50,12 +50,14 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
                 return NORM_BAD_SEQ;
 
             tcpStats.invalid_seq_left++;
-            log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Received a Spurious Retransmission\n");
+            log_trim_reason(tns, tsd, inline_mode,
+                "Normalizer: Received a Spurious Retransmission\n");
             break;
 
         case ValidSeqStatus::RIGHT_INVALID:
             tcpStats.invalid_seq_right++;
-            log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Received a packet to the right of the allowed TCP window \n");
+            log_trim_reason(tns, tsd, inline_mode,
+                "Normalizer: Received a packet to the right of the allowed TCP window \n");
             break;
         
         default:
@@ -69,9 +71,12 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
     }
 
     // trim to fit in listener's window and mss
-    log_drop_reason(tns, tsd, false, "stream", "Normalizer: Trimming payload to fit window size\n");
-    trim_win_payload(tns, tsd,
-        (tns.tracker->r_win_base + get_stream_window(tns, tsd) - seq));
+    uint32_t max_payload =
+        tns.tracker->r_win_base + get_stream_window(tns, tsd) - seq;
+    if ( tsd.get_len() > max_payload )
+        log_trim_reason(tns, tsd, false,
+            "Normalizer: Trimming payload to fit window size\n");
+    trim_win_payload(tns, tsd, max_payload);
 
     if ( tns.tracker->get_mss() )
         trim_mss_payload(tns, tsd, tns.tracker->get_mss());
@@ -86,7 +91,8 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         {
             if ( SEQ_LEQ(tsd.get_end_seq(), tns.tracker->r_win_base) )
             {
-                log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Data is outside the TCP Window\n");
+                log_trim_reason(tns, tsd, inline_mode,
+                    "Normalizer: Data is outside the TCP Window\n");
                 stream_log(tsd.get_pkt(), "Current TCP window : [ %u - %u ]\n",
                     tns.tracker->r_win_base, tns.tracker->r_win_base + get_stream_window(tns, tsd));
                 tns.tracker->seglist.print_stream_state(tsd.get_talker());
@@ -98,9 +104,12 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
             {
                 tcpStats.zero_win_probes++;
                 set_zwp_seq(tns, seq);
-                log_drop_reason(tns, tsd, inline_mode, "stream", 
+                log_trim_reason(tns, tsd, inline_mode,
                     "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
                 trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, inline_mode);
+
+                if ( inline_mode && tsd.get_len() > MAX_ZERO_WIN_PROBE_LEN )
+                    return NORM_TRIMMED;
             }
         }
     }
@@ -111,13 +120,14 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         if ( SEQ_EQ(seq, get_zwp_seq(tns)) )
         {
             tcpStats.zero_win_probes++;
+            if ( tsd.get_len() > MAX_ZERO_WIN_PROBE_LEN )
+                log_trim_reason(tns, tsd, inline_mode,
+                    "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
             trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, inline_mode);
-            log_drop_reason(tns, tsd, inline_mode, "stream",
-                "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
             return NORM_TRIMMED;
         }
 
-        log_drop_reason(tns, tsd, inline_mode, "stream",
+        log_trim_reason(tns, tsd, inline_mode,
             "Normalizer: Received seq during a Zero Window that is not a Zero Window Probe ("
                 + std::to_string(tns.tracker->get_rcv_nxt()) + ")\n");
         tns.tracker->seglist.print_stream_state(tsd.get_talker());
@@ -225,11 +235,22 @@ void TcpNormalizer::trim_win_payload(
 
     if (len > max)
     {
-        if ( force || (NormMode)tns.trim_win == NORM_MODE_ON )
+        NormMode mode = (NormMode)tns.trim_win;
+
+        if ( force && !tns.session->tcp_config->enforce_auto_window_trims )
+        {
+            force = false;
+
+            if ( mode != NORM_MODE_ON )
+                tcpStats.forced_trims_skipped++;
+        }
+
+        if ( force || mode == NORM_MODE_ON )
             stream_log(tsd.get_pkt(), "stream_tcp: TCP normalizer - Trimming payload with length (%u) "
                 "to a maximum value of %u\n", len, max);
 
-        trim_payload(tns, tsd, max, (NormMode)tns.trim_win, PC_TCP_TRIM_WIN, force);
+        if ( trim_payload(tns, tsd, max, mode, PC_TCP_TRIM_WIN, force) )
+            tsd.get_pkt()->active->set_drop_reason("stream");
     }
 }
 
@@ -605,13 +626,11 @@ void TcpNormalizer::set_zwp_seq(
     tns.zwp_seq = seq;
 }
 
-void TcpNormalizer::log_drop_reason(TcpNormalizerState& tns, const TcpSegmentDescriptor& tsd, bool force, const char *issuer, const std::string& log)
+void TcpNormalizer::log_trim_reason(TcpNormalizerState& tns,
+    const TcpSegmentDescriptor& tsd, bool force, const std::string& reason)
 {
     if ( force || (NormMode)tns.trim_win == NORM_MODE_ON )
-    {
-        tsd.get_pkt()->active->set_drop_reason(issuer);
-        stream_log(tsd.get_pkt(), "stream_tcp: %s", log.c_str());
-    }
+        stream_log(tsd.get_pkt(), "stream_tcp: %s", reason.c_str());
 }
 
 bool TcpNormalizer::is_keep_alive_probe(TcpNormalizerState& tns, const TcpSegmentDescriptor& tsd)

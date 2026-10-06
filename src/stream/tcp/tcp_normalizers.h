@@ -93,9 +93,9 @@ public:
     void set_zwp_seq(uint32_t seq)
     { return norm->set_zwp_seq(tns, seq); }
 
-    void log_drop_reason(const TcpSegmentDescriptor& tsd, bool inline_mode,
-        const char *issuer, const std::string& log)
-    { return norm->log_drop_reason(tns, tsd, inline_mode, issuer, log); }
+    void log_trim_reason(const TcpSegmentDescriptor& tsd, bool force,
+        const std::string& reason)
+    { return norm->log_trim_reason(tns, tsd, force, reason); }
 
     bool is_keep_alive_probe(const TcpSegmentDescriptor& tsd)
     { return norm->is_keep_alive_probe(tns, tsd); }

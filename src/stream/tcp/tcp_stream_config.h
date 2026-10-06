@@ -57,6 +57,7 @@ public:
     uint32_t paf_max = 16384;
 
     bool no_ack = false;
+    bool enforce_auto_window_trims = true;
     bool proxy_mode_ooo_drop = false;
     bool trace_seq_relative = false;
 

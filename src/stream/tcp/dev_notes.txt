@@ -95,3 +95,43 @@ service-aware inspection stops for that direction.
 
 Fallback is limited to PAF states that directly expose the scan boundary.
 LIMITED and STOP states, other overlap policies, and IPS mode are unchanged.
+
+Automatic sequence/window trim control
+
+stream_tcp.enforce_auto_window_trims defaults to true.  When false, Stream TCP
+suppresses automatic force requests centrally in trim_win_payload.  This stops
+automatic payload resizing at queue-limit, invalid-sequence, zero-window, and
+missed-three-way-handshake sequence/window sites.  Sequence validation and
+rejection, counters, and diagnostic reporting remain active.  An explicitly
+configured normalizer.tcp.trim_win action also remains active.
+
+The max_bytes and max_segments admission checks, their threshold reporting,
+and asymmetric queue-pressure recovery remain active.  If a packet still
+exceeds a queue limit after applicable recovery or exceptions and no explicit
+trim action applies, Stream TCP purges that direction's stalled queue,
+re-anchors it at the first retainable byte, falls back to AtomSplitter, and
+admits the packet without the suppressed sequence/window trim when it fits in
+an empty queue.  The purge is logged with the discarded segment and byte
+counts.  Generic stream inspection continues, but the purged bytes and
+protocol-aware splitter state are lost.
+
+This fallback intentionally reduces inspection for the affected direction.
+Stream marks that direction aborted for the service inspector, so protocol-aware
+framing and service-inspector evaluation stop unless a later service-inspector
+rebind clears the aborted state.  If both directions abort, Stream detaches the
+assigned service inspector.  Raw-packet detection and generic rule inspection of
+Atom-rebuilt buffers continue, but purged bytes cannot participate in later
+rebuilt-stream inspection.
+
+A segment whose retainable suffix still exceeds max_bytes remains unchanged and
+is not retained; purging an empty queue cannot make it admissible.  A segment
+that begins before the reassembly base may be larger on the wire and still fit
+when its acknowledged prefix is clipped.  Terminal purge-and-Atom recovery is
+limited to inline mode.  In passive IDS mode, after applicable trimming and
+recovery attempts, a packet that still exceeds a queue limit is not admitted to
+reassembly.  Explicitly configured normalizer.tcp.trim_win actions are
+unchanged.
+
+The max_segments decision precedes overlap resolution.  Terminal recovery is
+therefore conservative for over-limit retransmissions and does not use a
+sequence-range-only exemption, which would be unsafe for differing overlaps.

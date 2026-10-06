@@ -139,6 +139,8 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "max_bytes_exceeded_hole", "number of times max bytes were exceeded due to a hole" },
     { CountType::SUM, "max_segs_exceeded_hole", "number of times max segs were exceeded due to a hole" },
     { CountType::SUM, "ooo_3whs_late_synack", "server-side stream state repaired from late SYN-ACK; wscale/snd_wnd repaired if negotiated" },
+    { CountType::SUM, "forced_trims_skipped",
+        "automatic sequence/window payload trims skipped because enforcement was disabled" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -214,6 +216,10 @@ static const Parameter stream_queue_limit_params[] =
 
 static const Parameter s_params[] =
 {
+    { "enforce_auto_window_trims", Parameter::PT_BOOL, nullptr, "true",
+      "enable automatic sequence/window payload trimming; disabling it does not disable queue "
+      "limits or explicit trim actions" },
+
     { "flush_factor", Parameter::PT_INT, "0:65535", "0",
       "flush upon seeing a drop in segment size after given number of non-decreasing segments" },
 
@@ -345,7 +351,10 @@ TcpStreamConfig* StreamTcpModule::get_data()
 
 bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 {
-    if ( v.is("count") )
+    if ( v.is("enforce_auto_window_trims") )
+        config->enforce_auto_window_trims = v.get_bool();
+
+    else if ( v.is("count") )
         config->max_consec_small_segs = v.get_uint16();
 
     else if ( v.is("maximum_size") )

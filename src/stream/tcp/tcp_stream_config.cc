@@ -37,6 +37,7 @@ TcpStreamConfig::TcpStreamConfig() = default;
 
 void TcpStreamConfig::show() const
 {
+    ConfigLogger::log_flag("enforce_auto_window_trims", enforce_auto_window_trims);
     ConfigLogger::log_value("flush_factor", flush_factor);
     ConfigLogger::log_value("max_pdu", paf_max);
     ConfigLogger::log_value("max_window", max_window);
@@ -66,5 +67,10 @@ void TcpStreamConfig::show() const
     ConfigLogger::log_value("small_segments", str.c_str());
 
     ConfigLogger::log_flag("track_only", (flags & STREAM_CONFIG_NO_REASSEMBLY));
+    ConfigLogger::log_flag("show_rebuilt_packets", (flags & STREAM_CONFIG_SHOW_PACKETS));
+    ConfigLogger::log_flag("proxy_mode_ooo_drop", proxy_mode_ooo_drop);
+    ConfigLogger::log_flag("trace_seq_relative", trace_seq_relative);
+    ConfigLogger::log_value("embryonic_timeout", embryonic_timeout);
+    ConfigLogger::log_value("idle_timeout", idle_timeout);
 }
 

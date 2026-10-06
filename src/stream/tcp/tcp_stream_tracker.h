@@ -99,6 +99,7 @@ public:
     void update_stream_order(const TcpSegmentDescriptor&, bool aligned);
 
     void fallback();
+    void purge_queue_and_fallback(TcpSegmentDescriptor&, const char* limit);
 
     bool is_client_tracker() const
     { return client_tracker; }
