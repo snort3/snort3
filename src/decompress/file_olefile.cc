@@ -25,6 +25,7 @@
 #include "file_olefile.h"
 
 #include <cinttypes>
+#include <limits>
 
 DirectoryList :: ~DirectoryList()
 {
@@ -78,7 +79,11 @@ void OleFile :: walk_directory_list()
         }
         visited_dir_sectors.insert(current_sector);
         const uint8_t* buf = file_buf;
-        uint32_t start_offset = get_fat_offset(current_sector);
+        int32_t check_offset = get_fat_offset(current_sector);
+        if (check_offset < 0)
+            return;
+
+        uint32_t start_offset = static_cast<uint32_t>(check_offset);
 
         // Integer overflow check
         if (start_offset + sector_size < start_offset || (start_offset + sector_size) > buf_len)
@@ -199,9 +204,15 @@ int32_t OleFile :: get_next_mini_fat_sector(int32_t sec_id)
 // The offset of a sector is header_size + (sector_number * size_of_each_sector).
 int32_t OleFile :: get_fat_offset(int32_t sec_id)
 {
-    int32_t byte_offset;
-    byte_offset = OLE_HEADER_LEN + (sec_id * header->get_sector_size());
-    return(byte_offset);
+    if (sec_id <= INVALID_SECTOR)
+        return -1;
+
+    uint64_t byte_offset = OLE_HEADER_LEN +
+        (static_cast<uint64_t>(sec_id) * header->get_sector_size());
+    if (byte_offset > static_cast<uint64_t>(std::numeric_limits<int32_t>::max()))
+        return -1;
+
+    return static_cast<int32_t>(byte_offset);
 }
 
 // Example to get the mini fat sector offset.
@@ -230,7 +241,7 @@ int32_t OleFile :: get_fat_offset(int32_t sec_id)
 int32_t OleFile :: get_mini_fat_offset(int32_t sec_id)
 {
     int32_t sec_position, mini_sec_position, count, current_sector;
-    int32_t byte_offset, mini_fat_persector;
+    int32_t mini_fat_persector;
 
     if (header->get_mini_sector_size() == 0)
         return -1;
@@ -275,10 +286,16 @@ int32_t OleFile :: get_mini_fat_offset(int32_t sec_id)
         count++;
         current_sector = next_sector;
     }
-    byte_offset = OLE_HEADER_LEN + (current_sector * header->get_sector_size()) +
-        (mini_sec_position *
-        header->get_mini_sector_size());
-    return byte_offset;
+    if (current_sector <= INVALID_SECTOR || mini_sec_position < 0)
+        return -1;
+
+    uint64_t check_offset = OLE_HEADER_LEN +
+        (static_cast<uint64_t>(current_sector) * header->get_sector_size()) +
+        (static_cast<uint64_t>(mini_sec_position) * header->get_mini_sector_size());
+    if (check_offset > static_cast<uint64_t>(std::numeric_limits<int32_t>::max()))
+        return -1;
+
+    return static_cast<int32_t>(check_offset);
 }
 
 uint32_t OleFile :: find_bytes_to_copy(uint32_t byte_offset, uint32_t data_len,
@@ -347,9 +364,10 @@ void OleFile :: get_file_data(FileProperty* node, uint8_t*& file_data, uint32_t&
                     return;
                 }
                 visited_sectors.insert(current_sector);
-                byte_offset = get_fat_offset(current_sector);
-                if (byte_offset > buf_len)
+                int32_t check_offset = get_fat_offset(current_sector);
+                if (check_offset < 0 || static_cast<uint32_t>(check_offset) > buf_len)
                     return;
+                byte_offset = static_cast<uint32_t>(check_offset);
 
                 bytes_to_copy = find_bytes_to_copy(byte_offset, data_len,
                                     stream_size, sector_size);
@@ -431,7 +449,11 @@ void OleFile :: populate_fat_list()
     while (current_sector > INVALID_SECTOR)
     {
         uint32_t sector_size = header->get_sector_size();
-        uint32_t byte_offset = OLE_HEADER_LEN + (current_sector * sector_size);
+        int32_t check_offset = get_fat_offset(current_sector);
+        if (check_offset < 0)
+            return;
+
+        uint32_t byte_offset = static_cast<uint32_t>(check_offset);
 
         // Integer overflow check
         if (byte_offset + sector_size < byte_offset || (byte_offset + sector_size) > buf_len)
@@ -509,7 +531,11 @@ void OleFile :: populate_mini_fat_list()
             return;
         }
         visited_mini_fat_sectors.insert(current_sector);
-        uint32_t byte_offset = OLE_HEADER_LEN + (current_sector * sector_size);
+        int32_t check_offset = get_fat_offset(current_sector);
+        if (check_offset < 0)
+            return;
+
+        uint32_t byte_offset = static_cast<uint32_t>(check_offset);
 
         // Integer overflow check
         if (byte_offset + sector_size < byte_offset || (byte_offset + sector_size) > buf_len)
