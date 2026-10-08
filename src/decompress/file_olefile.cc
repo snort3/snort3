@@ -663,7 +663,12 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
     unsigned char buffer[VBA_COMPRESSION_WINDOW]={ };
     if (flagCompressed == 0)
     {
-        memcpy(&buffer, data, data_len);
+        // Uncompressed container: data_len comes from the stream size and
+        // is fully attacker-controlled. Cap the copy at the window size;
+        // anything larger would overflow this stack buffer.
+        const uint32_t copy_len =
+            data_len < VBA_COMPRESSION_WINDOW ? data_len : VBA_COMPRESSION_WINDOW;
+        memcpy(buffer, data, copy_len);
         return;
     }
 
@@ -725,7 +730,11 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
         }
     }
 
-    int32_t decomp_len = strlen((char*)buffer);
+    // The window holds raw decompressed bytes and is not NUL-terminated.
+    // Bound the scan to the window: when the output contains no zero byte,
+    // strlen() would read past this stack buffer.
+    int32_t decomp_len =
+        strnlen((char*)buffer, VBA_COMPRESSION_WINDOW);
 
     if ((vba_buffer_offset + decomp_len) > MAX_VBA_BUFFER_LEN)
     {
