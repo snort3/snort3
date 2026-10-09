@@ -145,12 +145,11 @@ bool CiscoMetaDataCodec::decode(const RawData& raw, CodecData& codec, DecodeData
         return false;
     }
 
-    /* Tag value 0xFFFF is invalid */
+    // 0xFFFF is a reserved tag, not a framing error, so the inner frame is still decoded
     if (cmdh->sgt == 0xFFFF)
     {
         ciscometadata_stats.invalid_sgt++;
         codec_event(codec, DECODE_CISCO_META_HDR_SGT);
-        return false;
     }
 
     codec.lyr_len = sizeof(cisco_meta_data::CiscoMetaDataHdr);
