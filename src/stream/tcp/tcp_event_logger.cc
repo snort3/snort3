@@ -90,7 +90,7 @@ void TcpEventLogger::log_internal_event(uint32_t eventSid, Flow& flow)
         eventSid, flow, *sc, ours ? context->packet : nullptr);
 
     // a teardown with no packet of its own must not log against another flow's packet
-    if ( action >= 0 and ours )
+    if ( ours )
         DetectionEngine::log_builtin_event(GID_SESSION, eventSid, action);
 }
 

@@ -118,22 +118,38 @@ A filter is looked up under the inspection policy of the flow being
 checked and, failing that, under the main policy, so one declared in the
 main policy still applies to a flow bound to a targeted network policy
 that declares none of its own.  The tracking node keeps the flow's own
-policy, so each policy counts separately against the same filter.
+policy, so each policy counts separately against the same filter.  The
+flow's policy is the one it was bound to before any service rebind,
+because a rebind on service moves the policy in effect without moving
+the flow's, so a filter declared only in a service-selected policy is
+not the one a session event is checked against.
 
 Giving a count back only decrements, it does not read the filter again,
 so a gauge that falls under its limit stays on until the next session
 event to that address is checked, and with timeout = 0 it stays on
 either way.
 
+A restart can keep flow data while clearing the flag that gates setup,
+so setup can be raised twice for one flow.  The second setup gives back
+its held count before counting again, which also re-counts any filter a
+reload added since the first.  Give-back and re-count are separate reads
+of the filter, so a concurrent check of the same address can briefly
+miss an escalation and take it on the next event instead.
+
 A session event is counted against the configuration its packet was
 pinned to, so a reload cannot enable the event for the check and disable
 it for the count; a teardown of some other flow uses the published
 configuration, because that is what the policy for that flow was
 selected against.  A teardown with no packet of its own, from a prune or
-the session destructor, is counted but cannot be logged, because the
-only packet available belongs to another flow.  The count is right; what
-is missing is the event that would otherwise record the filter tripping
-on it.
+the session destructor, is counted but is neither logged nor published,
+because the only packet available belongs to another flow.  The count is
+right; what is missing is the event that would otherwise record the
+filter tripping on it.
+
+An event the filter did not escalate is published even though it is not
+logged, because a subscriber records session events on its own terms and
+a count below the limit is still a session event.  Only the logging is
+conditional on the filter.
 
 Session events are counted and logged where they are raised rather than
 when the packet's events are drained.  A blocking rate action therefore

@@ -52,13 +52,13 @@ static RateFilterConfig* rfc = nullptr;
 static SnortConfig* saved_conf = nullptr;
 static time_t gauge_time = 0;
 
-static void GaugeAdd(SnortConfig& sc, unsigned seconds)
+static void GaugeAdd(SnortConfig& sc, unsigned seconds, unsigned count = GAUGE_COUNT)
 {
     tSFRFConfigNode cfg;
     cfg.gid = GID_SESSION;
     cfg.sid = SESSION_EVENT_SETUP;
     cfg.tracking = SFRF_TRACK_BY_DST;
-    cfg.count = GAUGE_COUNT;
+    cfg.count = count;
     cfg.seconds = seconds;
     cfg.newAction = (IpsAction::Type)RULE_NEW;
     cfg.timeout = GAUGE_TIMEOUT;
@@ -112,13 +112,13 @@ static int Setup(Flow& flow, const SnortConfig& sc)
     return status;
 }
 
-static int GaugeReads(const SfIp& client, const SfIp& server, bool tunnel_carried = false)
+static int GaugeReadsUnder(PolicyId policy_id, const SfIp& client, const SfIp& server,
+    bool tunnel_carried = false)
 {
     // each read is past the revert timeout of the one before, so the gauge is
     // re-evaluated rather than left latched; GaugeConfig() rewinds it per case
     gauge_time += GAUGE_TIMEOUT * 2;
 
-    const PolicyId policy_id = get_inspection_policy()->policy_id;
     SFRFGaugeKeys gauges;
 
     int status = SFRF_TestThreshold(rfc, GID_SESSION, SESSION_EVENT_SETUP, policy_id,
@@ -130,6 +130,12 @@ static int GaugeReads(const SfIp& client, const SfIp& server, bool tunnel_carrie
     SFRF_ReleaseGauges(gauges);
 
     return status;
+}
+
+static int GaugeReads(const SfIp& client, const SfIp& server, bool tunnel_carried = false)
+{
+    return GaugeReadsUnder(get_inspection_policy()->policy_id, client, server,
+        tunnel_carried);
 }
 
 TEST_CASE("rate filter gauge count comes back when the flow is reclaimed", "[rate_filter]")
@@ -214,6 +220,87 @@ TEST_CASE("rate filter takes one count per flow, not one per setup", "[rate_filt
     }
 
     CHECK(GaugeReads(client, server) == RULE_ORIG);
+
+    GaugeTerm(sc);
+}
+
+// a restart can keep flow data but clear the flag that gates setup, raising it again
+TEST_CASE("rate filter does not re-escalate a repeat setup that still holds its gauge",
+    "[rate_filter]")
+{
+    SnortConfig sc;
+    GaugeInit(sc);
+
+    SfIp client, server;
+    client.set(IP4_CLIENT);
+    server.set(IP4_SERVER);
+
+    Flow flow;
+    SetFlowIps(flow);
+
+    CHECK(Setup(flow, sc) == RULE_ORIG);
+    CHECK(Setup(flow, sc) == RULE_ORIG);
+    CHECK(Setup(flow, sc) == RULE_ORIG);
+
+    RateFilter_SessionRelease(flow);
+    CHECK(GaugeReads(client, server) == RULE_ORIG);
+
+    GaugeTerm(sc);
+}
+
+// a repeat setup re-counts every configured filter, including one added since the first
+TEST_CASE("rate filter re-counts every filter on a repeat setup, not just one",
+    "[rate_filter]")
+{
+    SnortConfig sc;
+    GaugeInit(sc);
+
+    SfIp client, server;
+    client.set(IP4_CLIENT);
+    server.set(IP4_SERVER);
+
+    Flow flow;
+    SetFlowIps(flow);
+
+    CHECK(Setup(flow, sc) == RULE_ORIG);
+
+    // high enough that it can't escalate on its own and mask the first filter
+    GaugeAdd(sc, 0, MANY_GAUGES * GAUGE_COUNT + 1);
+
+    CHECK(Setup(flow, sc) == RULE_ORIG);
+    CHECK(GaugeReads(client, server) == RULE_NEW);
+
+    GaugeTerm(sc);
+}
+
+// dev_notes.txt: a session event may run under a different policy than the flow's own
+TEST_CASE("rate filter charges the flow's own inspection policy", "[rate_filter]")
+{
+    SnortConfig sc;
+    GaugeInit(sc);
+
+    SfIp client, server;
+    client.set(IP4_CLIENT);
+    server.set(IP4_SERVER);
+
+    const PolicyId context_policy = get_inspection_policy()->policy_id;
+    const PolicyId flow_policy = context_policy + 1;
+
+    Flow flow;
+    SetFlowIps(flow);
+    flow.inspection_policy_id = flow_policy;
+
+    CHECK(Setup(flow, sc) == RULE_ORIG);
+
+    // the count landed under the flow's policy ...
+    CHECK(GaugeReadsUnder(flow_policy, client, server) == RULE_NEW);
+
+    // ... and not under the one that happened to be in context
+    CHECK(GaugeReadsUnder(context_policy, client, server) == RULE_ORIG);
+
+    RateFilter_SessionRelease(flow);
+
+    CHECK(GaugeReadsUnder(flow_policy, client, server) == RULE_ORIG);
 
     GaugeTerm(sc);
 }

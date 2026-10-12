@@ -207,10 +207,17 @@ int RateFilter_SessionEvent(
     const unsigned fd_id = rf_flow_data_id.load(std::memory_order_relaxed);
 
     if ( fd_id )
-        gauges.reserve(2);
+    {
+        // a restart can raise setup again while the flow still holds its count
+        if ( sid == SESSION_EVENT_SETUP )
+            flow.free_flow_data(fd_id);
 
+        gauges.reserve(2);
+    }
+
+    // flow's own policy, not the thread-local one -- see dev_notes.txt
     const int action = SFRF_TestThreshold(rfc, GID_SESSION, sid,
-        get_inspection_policy()->policy_id, &flow.client_ip, &flow.server_ip,
+        flow.inspection_policy_id, &flow.client_ip, &flow.server_ip,
         packet_time(), SFRF_COUNT_INCREMENT, &gauges, tunnel_carried);
 
     if ( !gauges.empty() && fd_id )

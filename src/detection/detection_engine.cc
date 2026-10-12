@@ -757,6 +757,10 @@ int DetectionEngine::log_builtin_event(unsigned gid, unsigned sid, int rate_acti
     IpsQueuingEvent data_event(otn->sigInfo);
     DataBus::publish(get_pub_id(), DetectionEventIds::BUILTIN, data_event, p->flow);
 
+    // below threshold: already published above, must not be logged or re-filtered
+    if ( rate_action < 0 )
+        return 0;
+
     const uint32_t packet_flags = p->packet_flags & (PKT_PASS_RULE | PKT_STATELESS);
 
     fpLogEvent(otn, p, rate_action);
