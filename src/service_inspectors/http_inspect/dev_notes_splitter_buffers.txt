@@ -1,0 +1,293 @@
+The unified2 logger (loggers/unified2.cc) decorates each logged event by
+reading HTTP buffers by name through p->flow->gadget: http_method_str,
+http_request_size, http_response_size, http_version_str, http_user_agent_str,
+http_referer_str, and the per-SID detail_<gid>_<sid>. Those names are
+registered in HTTP_CLASSIC_BUFFER_NAMES (http_api.h) and resolved by
+Inspector::get_buf(const char* key, Packet*, InspectionBuffer&). All of them go
+into one event record, so they must not describe different requests, and a
+request-limit alert has to be able to answer them even when it was raised
+before any HttpMsgSection existed.
+
+SIDs 298 and 299 are raised in the splitter before HttpMsgRequest exists. SID
+300 can also be raised from the request cutter. These wire-context events may
+be logged after rebuilt HTTP sections have been inspected and cleared, so their
+reporting data cannot rely on session_data->transaction[SRC_CLIENT] or on any
+thread-scoped scratch.
+
+===== Per-SID slots
+
+HttpContextData owns three independent optional HttpSplitterSnapshot slots for
+the active IpsContext (SplitterSlot::SLOT_300/299/298), not one shared
+snapshot. A violation on one SID must never read or overwrite another SID's
+data (see test detail_messages_never_cross_slots). capture_splitter() is a
+template so the splitter path does not pay type-erasure cost on the populate
+callback.
+
+===== Cutter-result basis (ReportPath)
+
+Whether a snapshot capture is safe depends on the cutter's ScanResult.
+classify_report_path() maps ScanResult to one of two outcomes:
+
+* ReportPath::WireSnapshot (everything outside the FOUND family: the
+  NOT_FOUND family including its partial-flush variants, DISCARD and
+  DISCARD_PIECE, and ABORT): no HttpMsgSection will ever run its own
+  enforcement for this exact request -- either none exists yet and this wire
+  IpsContext's scan() has nothing left to do until the connection resets or
+  more data arrives, or (NOT_FOUND-turned-partial-flush) a section does get
+  created but HttpMsgRequest::parse_start_line() skips enforcement for it via
+  the partial_flush[source_id] flag. Either way it is safe, and necessary, to
+  report off the context-level snapshot now.
+* ReportPath::DeferredEval (FOUND family: SCAN_FOUND/FOUND_PIECE/
+  FOUND_PENDING): a section that *will* run its own enforcement is imminent.
+  More scan() calls in this same wire context may belong to a *different*
+  pipelined request before this context logs, so its data must not land on a
+  context-level slot. Report through eval() instead, reading this request's
+  own, safely-scoped transaction (HttpMsgRequest::parse_start_line(),
+  HttpMsgHeadShared::analyze()).
+
+capture_splitter_snapshot() computes this once via classify_report_path() and
+branches on it independently for each of 300, 299, and 298.
+
+capture_splitter() takes a SplitterSlot and a CaptureMode:
+
+* CaptureMode::FirstWriteWins: populate() only runs the first time this SID's
+  slot is captured for this wire context. Cutter-originated 300 uses this
+  mode -- once HttpRequestCutter::queued_request_line_not_valid()
+  (detected_300) is set, it stays set for the rest of the wire packet, so
+  without first-write-wins a later call (now scanning headers, not the
+  request line) would overwrite raw_request_line with header bytes.
+* CaptureMode::Refresh: populate() runs every call, latching the latest
+  value into this SID's own slot. 299 and 298 use this mode for their
+  WireSnapshot write.
+
+The 300 snapshot write itself happens whenever EVENT_REQUEST_LINE_NOT_VALID
+has not already fired for this flow direction (HttpEventGen::
+is_event_suppressed()), independent of whether *this* occurrence's own
+create_event_if_new() call succeeds. Other alerts in the same wire context
+that are not create_event_if_new()-gated and have no capture of their own
+(e.g. EVENT_LF_WITHOUT_CR) fall back to this snapshot for their own generic
+HTTP_BUFFER_REQUEST_SIZE display, and need it populated even when
+ReportPath::DeferredEval defers EVENT_REQUEST_LINE_NOT_VALID itself to
+eval(). Once the SID has fired, a later occurrence (e.g. the bogus
+request-line re-scan of leftover bytes after a SIMPLE_REQUEST/HTTP-0.9
+reclassification) can never itself become the alert, so it must not overwrite
+good data with garbage.
+
+299 and 298 use CaptureMode::Refresh gated by their own
+create_event_if_new(): each refreshes request_size/request_line_length for
+its own report even if 300 already captured first, so its numbers always
+match what actually violated it.
+
+===== pending_size_report (ReportPath::DeferredEval, deferred to eval)
+
+For the FOUND family, the scan-time-authoritative number is latched on the
+request's own HttpTransaction, not a context-level snapshot: a later
+pipelined request may reuse this wire context before it logs.
+HttpContextData and HttpTransaction both hold it as one
+HttpPendingSizeReport (has_298/size_298/has_299/length_299).
+HttpTransaction's copy is inline (already heap-allocated per request);
+HttpContextData's is a lazily-allocated scratch.
+
+latch_pending_size_298()/latch_pending_length_299() write that scratch on
+an HttpContextData chosen by defer_to_next_context
+(!session_data->is_for_httpx()):
+
+* Wire HTTP/1: DetectionEngine::get_next_context() -- scan() runs before
+  reassemble() creates that context.
+* HTTP/2: the current context -- their pseudo request line runs
+  scan()/reassemble()/eval() synchronously in it
+  (Http2HeadersFrame::process_decoded_headers()).
+
+attach_my_transaction() takes that scratch from the current context via
+claim_pending_size_report() and merges it into the transaction one field at a
+time, not by struct assignment: a struct assignment would clobber a field the
+SEC_HEADER/SEC_TRAILER branch below already wrote directly on the
+transaction. The merge runs on every attach_my_transaction() call, not only
+when the transaction is created, since a partial flush of the request line
+can create the transaction before the line crosses the threshold on a later
+fragment.
+
+* SEC_REQUEST: the transaction does not exist yet, so the value is claimed
+  from the scratch above.
+* SEC_HEADER/SEC_TRAILER: the transaction already exists, so
+  set_pending_size_298() is called directly.
+
+Both are first-write-wins (matching create_event_if_new()'s once-per-SID
+guarantee): report the size at the moment the threshold was first crossed,
+not whatever it grows to later.
+
+eval() (HttpMsgRequest::parse_start_line(), HttpMsgHeadShared::analyze())
+re-derives and raises the events from this request's own transaction --
+scan_infractions for cutter-detected 300 reasons, has_pending_length_299()/
+has_pending_size_298() for 299/298 -- which is safe even when a later
+pipelined request shares this wire IpsContext, because the transaction is
+never shared between requests.
+
+Capture order in capture_splitter_snapshot() is intentional:
+
+1. cutter-originated 300
+2. 299
+3. 298
+
+Only newly queued events should capture. This is why
+capture_splitter_snapshot() relies on HttpEventGen::create_event_if_new() and
+HttpStartCutter::queued_request_line_not_valid().
+
+===== Buffer lookup
+
+When a live stream_intf section exists, HttpContextData::get_view() returns
+that section and hides the splitter snapshot.
+
+HTTP/1 and stream_intf (HTTP/2/3) differ here: HTTP/1 splitter (scan()) and
+inspector (eval()) always run in different IpsContexts, because constructing a
+DetectionEngine for eval() always calls interrupt() -- so a snapshot and a
+current_section can never land on the same HttpContextData for HTTP/1. HTTP/2/3
+share the same IpsContext between splitter and inspector, so that is the only
+case where both can be populated at once; get_view()'s early return exists
+specifically to mask the snapshot in that case.
+
+With no such section, HttpInspect::http_get_buf() checks the wire snapshot
+before rebuilt fallback data. If a snapshot exists and the requested buffer is
+snapshot-supported, the snapshot is authoritative: return the snapshot result,
+including STAT_NOT_PRESENT, and do not fall through to current_section or
+session_data->transaction[SRC_CLIENT].
+
+Snapshot-supported (wire_reportable, in TmpBufferDescriptor) buffers are:
+
+* HTTP_BUFFER_REQUEST_SIZE
+* HTTP_BUFFER_REQUEST_LINE_LENGTH
+* HTTP_BUFFER_METHOD_STR
+* HTTP_BUFFER_VERSION_STR
+* HTTP_BUFFER_USER_AGENT_STR
+* HTTP_BUFFER_REFERER_STR
+* HTTP_BUFFER_RESPONSE_SIZE
+* DETAIL_119_298
+* DETAIL_119_299
+* DETAIL_119_300
+
+wire_reportable is true for a buffer type when it has a well-defined answer
+with no live section: real data from the wire snapshot for request_size/
+request_line_length/version/298/299/300, or a deliberate STAT_NOT_PRESENT for
+method/user_agent/referer/response_size. It is false when the buffer type does
+not apply at all without a section (e.g. decoded_uri), so materialize()
+returns FIELD_NULL outright instead of computing anything.
+
+The snapshot does not store method, user_agent, or referer, and
+HTTP_BUFFER_RESPONSE_SIZE is in the list above only so that a wire request
+snapshot answers STAT_NOT_PRESENT rather than leaking a later transaction's
+value. For ABORT that costs nothing: HttpHeaderCutter never returns
+SCAN_ABORT, so ABORT is always SEC_REQUEST, before any of those values exist.
+The FLUSH-bound 298 case reports all three via eval() reading its own live
+section. That argument does not cover every WireSnapshot result, though:
+check_298 is true for SEC_HEADER and SEC_TRAILER too, and a plain
+SCAN_NOT_FOUND there returns SEARCH, so the 298 is logged from the wire
+context with no section and the three still read STAT_NOT_PRESENT.
+
+HTTP_BUFFER_METHOD_STR/VERSION_STR/USER_AGENT_STR/REFERER_STR stay
+wire_reportable so the wire-vs-rebuilt dispatch does not fall through
+incorrectly, but read as unavailable when only a snapshot exists.
+
+WireSnapshotView (in http_field_buffer.cc) bundles the snap_300/299/298
+pointers, so HttpBufferSource itself only has to know "section, or wire
+view" rather than SID-slot layout:
+
+* best(): the generic (SID-agnostic) buffers -- HTTP_BUFFER_REQUEST_SIZE,
+  HTTP_BUFFER_REQUEST_LINE_LENGTH, HTTP_BUFFER_VERSION_STR, and 298's own
+  detail message -- all read whichever SID actually captured, highest-
+  numbered first: 298 latched a fresher request_size than a 300/299 that may
+  have captured earlier in the same cut() call.
+* for_299() / for_300(): 299's and 300's own detail messages read their own
+  slot rather than best(), so a 298 that also fired in the same cut() call
+  cannot overwrite the request-line text in 119:299's or 119:300's detail.
+  There is no for_298() counterpart because 298's detail carries only
+  request_size, which is exactly what best() already resolves.
+
+Buffers without an exposed snapshot keep the existing
+current_section/transaction fallback.
+
+Any future splitter-time SID that needs these reporting buffers must enroll in
+snapshot capture and is_wire_reportable_buffer(), otherwise it can reintroduce
+the pipelined fallback leak.
+
+===== Temporary buffer materialization
+
+get_http_tmp_buffer() formats both rebuilt and wire sources:
+
+* rebuilt source: HttpMsgSection / HttpTransaction
+* wire source: HttpSplitterSnapshot
+
+The materialized temporary buffers and the decoded-path sidecar live on
+HttpContextData rather than in thread-local storage. materialize() lazily
+creates/attaches HttpContextData only after it knows a temporary buffer will be
+reported. That gives scan-time logging paths that never run HttpInspect::clear()
+an IpsContext lifetime cleanup hook: IpsContext::clear() calls
+HttpContextData::clear(), which clears these temporary buffers after logging.
+Normal HttpMsgSection::clear() also clears the same context-owned buffers.
+
+Tmp-buffer memoization is bounded by the HTTP section and IPS context cleanup
+points above. materialize() does not try to identify source changes at read
+time; callers that finish a section or an IPS logging context must clear the
+context-owned cache before another event can reuse the same temporary-buffer
+slots.
+
+===== Capture timing (cutter-originated snapshot writes)
+
+Compute request_size and request_line_length from the current cutter/request
+state at each capture site.
+
+section_size already includes the current fragment for FOUND (via the
+get_num_flush() bump) and for NOT_FOUND (the cutter's own octets_seen +=).
+For ABORT, section_size does not include it yet -- the cutter returns before
+that bookkeeping runs -- so the current request-line fragment length must be
+added there. Adding it unconditionally double-counts the same bytes for
+FOUND/NOT_FOUND. This accounting is capped by MAX_OCTETS, not by
+MAX_REQUEST_LINE_LOG_LEN.
+
+SID 300's reason code is request-scoped. Cutter-originated reasons live in
+HttpRequestCutter and rebuilt reasons live in HttpMsgStart/HttpMsgRequest.
+
+HttpRequestCutter::create_event_request_line_not_valid() only records that a
+violation was detected and why; it does not queue the event. Whether this
+ends in SCAN_ABORT or a FOUND section is not yet known there (it can run
+mid-cut(), e.g. for METHOD_NOT_PRESENT, before the rest of the line has been
+scanned). capture_splitter_snapshot() queues the event once cut_result is
+known: directly, for the WireSnapshot paths; deferred to
+HttpMsgRequest::parse_start_line(), for FOUND, once the section (and its
+safely request-scoped infractions) exist.
+
+===== HTTP/2 specifics
+
+HTTP/2 evaluates one logical client request in two http_inspect passes: a
+synthetic request line first, then real headers. Both passes use the normal
+HttpInspect::clear()/HttpMsgSection::clear() cleanup. Request-line length is
+derived on demand, and 301 detail state lives in the DETAIL_119_301
+temporary-buffer slot.
+
+compute_request_line_length() derives that length on demand: scan to the
+CR/LF, then strip the trailing " HTTP/1.1" if present. If the MAX_OCTETS
+clamp cuts an unusually long line before the suffix is visible, it falls
+back to the unstripped length -- always an overestimate, so
+max_request_line_length still fires correctly.
+
+For a rebuilt section, request_line_length_detail() reads the same length
+straight from HTTP_BUFFER_RAW_REQUEST -- that buffer always holds the whole
+synthetic line, so no clamp handling is needed there.
+
+===== Raw request-line prefix
+
+HttpRequestCutter does not accumulate request-line bytes on the scan hot path.
+Cutter-originated no-section snapshots can still report request size, request
+line length, and SID 300 reason. When such a snapshot needs raw request-line
+text, it copies only the current scan fragment, capped at
+MAX_REQUEST_LINE_LOG_LEN and stopped at CR/LF. It does not stitch bytes across
+multiple cut() calls.
+
+===== Known limitations
+
+When a SCAN_ABORT leaves both directions aborted, none of these buffers can be
+reached. StreamSplitter::ABORT routes to TcpStreamTracker::fallback(), which
+sets SSNFLAG_ABORT_CLIENT/SERVER and then calls flow->clear_gadget() once both
+are set -- still during the wire packet, so before that packet's queued events
+are logged. The snapshot survives, but unified2.cc reads these buffers through
+p->flow->gadget, so the HTTP fields are absent from the event. Covering it
+would require deferring gadget removal until after queued-event logging.

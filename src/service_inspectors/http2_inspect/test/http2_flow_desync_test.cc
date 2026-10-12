@@ -112,6 +112,8 @@ HttpCommon::SectionType HttpInspect::get_type_expected(snort::Flow*,
     HttpCommon::SourceId) const { return HttpCommon::SEC_DISCARD; }
 void HttpInspect::set_hx_body_state(snort::Flow*, HttpCommon::SourceId,
     HttpCommon::HXBodyState) const { }
+void HttpInspect::signal_request_line_invalid(snort::Flow*, HttpCommon::SourceId,
+    HttpEnums::RequestLineInvalidReasonCode) const { }
 HttpInspect::~HttpInspect() { }
 
 HttpParaList::JsNormParam::~JsNormParam() { }

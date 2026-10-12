@@ -48,6 +48,9 @@ public:
     virtual bool get_is_broken_chunk() const { return false; }
     virtual uint32_t get_num_good_chunks() const { return 0; }
     virtual void soft_reset() {}
+    virtual bool queued_request_line_not_valid() const { return false; }
+    virtual HttpEnums::RequestLineInvalidReasonCode get_request_line_invalid_reason() const
+    { return HttpEnums::RequestLineInvalidReasonCode::NONE; }
 
 protected:
     // number of octets processed by previous cut() calls that returned NOT_FOUND
@@ -61,13 +64,16 @@ class HttpStartCutter : public HttpCutter
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpCommon::HXBodyState) override;
-    virtual bool is_request_cutter() const { return false; }
 
 protected:
     enum ValidationResult { V_GOOD, V_BAD, V_TBD };
     bool validated = false;
 
     bool find_eol(uint8_t octet, uint32_t ind, HttpInfractions* infractions, HttpEventGen* events);
+
+    virtual void create_event_request_line_not_valid(HttpEventGen*,
+        HttpEnums::RequestLineInvalidReasonCode) {}
+    virtual void mark_method_not_present(HttpInfractions*, HttpEventGen*) {}
 
 private:
     static const int MAX_LEADING_WHITESPACE = 20;
@@ -77,11 +83,22 @@ private:
 class HttpRequestCutter : public HttpStartCutter
 {
 public:
-    bool is_request_cutter() const override { return true; }
+    bool queued_request_line_not_valid() const override { return detected_300; }
+    HttpEnums::RequestLineInvalidReasonCode get_request_line_invalid_reason() const override
+    { return request_line_invalid_reason; }
+
 private:
     uint32_t octets_checked = 0;
     bool check_h2 = true;
     ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) override;
+
+    void create_event_request_line_not_valid(HttpEventGen* events,
+        HttpEnums::RequestLineInvalidReasonCode reason) override;
+    void mark_method_not_present(HttpInfractions* infractions, HttpEventGen* events) override;
+
+    bool detected_300 = false;
+    HttpEnums::RequestLineInvalidReasonCode request_line_invalid_reason =
+        HttpEnums::RequestLineInvalidReasonCode::NONE;
 };
 
 class HttpStatusCutter : public HttpStartCutter

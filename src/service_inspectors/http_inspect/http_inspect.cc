@@ -28,13 +28,12 @@
 #include <sstream>
 
 #include "detection/detection_engine.h"
-#include "service_inspectors/http2_inspect/http2_flow_data.h"
+#include "flow/stream_flow.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
 #include "pub_sub/http_event_ids.h"
 #include "stream/stream.h"
 
-#include "http_cache_data.h"
 #include "http_common.h"
 #include "http_context_data.h"
 #include "http_cutter.h"
@@ -51,6 +50,7 @@
 #include "http_msg_status.h"
 #include "http_msg_trailer.h"
 #include "http_param.h"
+#include "http_stream_splitter.h"
 #include "http_test_manager.h"
 
 using namespace snort;
@@ -285,33 +285,41 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 
 const Field& HttpInspect::http_get_buf(const Packet* p, const HttpBufferInfo& buffer_info) const
 {
-    HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
-
-    // No section is attached (pre-assembly or post-clear); serve cache-backed buffers directly.
-    if (current_section == nullptr)
+    // Cheap path first: a current_section always means no splitter snapshot exists for this context
+    HttpMsgSection* const current_section = HttpContextData::get_snapshot(p->flow, p->context);
+    if (current_section != nullptr)
     {
-        HttpFlowData* const session_data = http_get_flow_data(p->flow);
-        if ((session_data != nullptr) && (session_data->transaction[SRC_CLIENT] != nullptr))
+        assert(([&]()
         {
-            HttpMsgRequest* const request = session_data->transaction[SRC_CLIENT]->get_request();
-            if (request != nullptr)
-                return request->get_classic_buffer(buffer_info);
-        }
-
-        const bool request_size_or_detail =
-            (buffer_info.type == HTTP_BUFFER_REQUEST_SIZE) ||
-            (buffer_info.type == HTTP_BUFFER_REQUEST_LINE_LENGTH) ||
-            (buffer_info.type == DETAIL_119_298) ||
-            (buffer_info.type == DETAIL_119_299) ||
-            (buffer_info.type == DETAIL_119_300);
-
-        if (!request_size_or_detail)
-            return Field::FIELD_NULL;
-
-        return HttpTmpFieldBuffer::get_buffer_data(buffer_info.type);
+            const HttpContextDataView view = HttpContextData::get_view(p);
+            return !view.splitter_snapshots[0] and !view.splitter_snapshots[1] and
+                !view.splitter_snapshots[2];
+        })());
+        return current_section->get_classic_buffer(buffer_info);
     }
 
-    return current_section->get_classic_buffer(buffer_info);
+    if (is_wire_reportable_buffer(buffer_info.type))
+    {
+        const HttpContextDataView context_data = HttpContextData::get_view(p);
+        if (context_data.splitter_snapshots[0] or context_data.splitter_snapshots[1] or
+            context_data.splitter_snapshots[2])
+        {
+            return get_http_tmp_buffer(buffer_info,
+                context_data.splitter_snapshots[static_cast<unsigned>(SplitterSlot::SLOT_300)],
+                context_data.splitter_snapshots[static_cast<unsigned>(SplitterSlot::SLOT_299)],
+                context_data.splitter_snapshots[static_cast<unsigned>(SplitterSlot::SLOT_298)]);
+        }
+    }
+
+    HttpFlowData* const session_data = http_get_flow_data(p->flow);
+    if ((session_data != nullptr) && (session_data->transaction[SRC_CLIENT] != nullptr))
+    {
+        HttpMsgRequest* const request = session_data->transaction[SRC_CLIENT]->get_request();
+        if (request != nullptr)
+            return request->get_classic_buffer(buffer_info);
+    }
+
+    return Field::FIELD_NULL;
 }
 
 const Field& HttpInspect::http_get_param_buf(Cursor& c, const Packet* p,
@@ -389,6 +397,28 @@ void HttpInspect::set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId sour
 {
     HttpFlowData* session_data = http_get_flow_data(flow);
     session_data->set_hx_body_state(source_id, state);
+}
+
+void HttpInspect::signal_request_line_invalid(snort::Flow* flow, HttpCommon::SourceId source_id,
+    HttpEnums::RequestLineInvalidReasonCode reason) const
+{
+    const HttpFlowData* const session_data = http_get_flow_data(flow);
+
+    if (session_data)
+    {
+        if (!session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_LINE_NOT_VALID))
+            return;
+    }
+    else
+        DetectionEngine::queue_event(HTTP_GID, EVENT_REQUEST_LINE_NOT_VALID);
+
+    HttpContextData::capture_splitter(SplitterSlot::SLOT_300, HttpContextData::CaptureMode::FirstWriteWins,
+        [&](HttpSplitterSnapshot& snap)
+    {
+        snap.reason_code_detail_300 = reason;
+        snap.version_id = HttpStreamSplitter::get_httpx_version_id(
+            session_data ? session_data->for_httpx : true, flow);
+    });
 }
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
@@ -731,12 +761,10 @@ void HttpInspect::clear(Packet* p)
 
     if ( current_section == nullptr )
     {
-        clear_tmp_fields();
+        HttpContextData::clear_tmp_buffers(p->context);
         //assert(false); //FIXIT-M This happens with stream_user
         return;
     }
-
-    clear_section_cache();
 
     current_section->clear();
     HttpTransaction* current_transaction = current_section->get_transaction();

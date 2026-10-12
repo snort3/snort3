@@ -52,7 +52,8 @@ void Http2StatusLine::process_pseudo_header(const Field& name, const Field& valu
     }
 }
 
-bool Http2StatusLine::generate_start_line(Field& start_line, bool pseudo_headers_complete)
+bool Http2StatusLine::generate_start_line(Field& start_line, bool pseudo_headers_complete,
+    HttpInspect*, snort::Flow*)
 {
     uint32_t bytes_written = 0;
 

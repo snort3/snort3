@@ -23,7 +23,6 @@
 
 #include "http2_push_promise_frame.h"
 
-#include "service_inspectors/http_inspect/http_cache_data.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 
 #include "http2_flow_data.h"
@@ -60,7 +59,6 @@ Http2PushPromiseFrame::Http2PushPromiseFrame(const uint8_t* header_buffer,
         *session_data->infractions[source_id] += INF_PUSH_WHEN_PROHIBITED;
     }
 
-    reset_cache_data();
     start_line_generator = new Http2RequestLine(session_data->events[source_id],
         session_data->infractions[source_id]);
 
@@ -104,16 +102,15 @@ bool Http2PushPromiseFrame::valid_sequence(Http2Enums::StreamState)
 
 void Http2PushPromiseFrame::analyze_http1(Packet* p)
 {
-    if (!start_line_generator->generate_start_line(start_line, are_pseudo_headers_complete()))
+    const bool pseudo_headers_complete = are_pseudo_headers_complete();
+    if (!start_line_generator->generate_start_line(start_line, pseudo_headers_complete,
+        session_data->hi, session_data->flow))
     {
         // can't send request or push-promise headers to http_inspect, but response will still
         // be processed
         stream->set_state(SRC_CLIENT, STREAM_ERROR);
         return;
     }
-
-    get_cache_data().request.hx_request_line_length =
-        static_cast<Http2RequestLine*>(start_line_generator)->get_pseudo_request_line_length();
 
     HttpFlowData* http_flow;
     if (!process_start_line(http_flow, SRC_CLIENT, p))

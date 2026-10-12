@@ -20,6 +20,8 @@
 #ifndef HTTP_EVENT_H
 #define HTTP_EVENT_H
 
+#include <cassert>
+
 #include "helpers/event_gen.h"
 #include "helpers/infractions.h"
 #include "utils/util_cstring.h"
@@ -30,7 +32,33 @@
 // HTTP Event generator
 //-------------------------------------------------------------------------
 
-using HttpEventGen = EventGen<HttpEnums::EVENT__MAX_VALUE, HttpEnums::EVENT__NONE, HttpEnums::HTTP_GID>;
+class HttpEventGen : public EventGen<HttpEnums::EVENT__MAX_VALUE, HttpEnums::EVENT__NONE,
+    HttpEnums::HTTP_GID>
+{
+public:
+    using Base = EventGen<HttpEnums::EVENT__MAX_VALUE, HttpEnums::EVENT__NONE,
+        HttpEnums::HTTP_GID>;
+    using Base::Base;
+
+    bool create_event_if_new(int sid)
+    {
+        if (sid == HttpEnums::EVENT__NONE)
+            return false;
+        assert((sid > 0) && (sid <= HttpEnums::EVENT__MAX_VALUE));
+        if (events_suppressed[sid-1])
+            return false;
+
+        create_event(sid);
+
+        return true;
+    }
+
+    bool is_event_suppressed(int sid) const
+    {
+        assert((sid > 0) && (sid <= HttpEnums::EVENT__MAX_VALUE));
+        return events_suppressed[sid-1];
+    }
+};
 
 static const unsigned BASE_1XX_EVENTS = 100;
 static const unsigned BASE_2XX_EVENTS = 200;

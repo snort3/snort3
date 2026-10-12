@@ -26,6 +26,7 @@
 #include <string>
 #include <vector>
 
+#include "detection/ips_context.h"
 #include "pub_sub/http_transaction_end_event.h"
 #include "pub_sub/http_form_data_event.h"
 #include "service_inspectors/http_inspect/http_common.h"
@@ -49,6 +50,11 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
 
+namespace
+{
+    IpsContextData* test_context_data = nullptr;
+}
+
 namespace snort
 {
 // Stubs whose sole purpose is to make the test code link
@@ -58,6 +64,14 @@ FlowData::FlowData(unsigned) : id(0)
 FlowData::~FlowData() = default;
 FlowDataStore::~FlowDataStore() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
+IpsContext* DetectionEngine::get_next_context() { return nullptr; }
+void DetectionEngine::wait_for_context() { }
+IpsContextData* DetectionEngine::get_data(unsigned) { return test_context_data; }
+IpsContextData* DetectionEngine::get_data(unsigned, IpsContext*) { return test_context_data; }
+void DetectionEngine::set_data(unsigned, IpsContextData* context_data)
+{ test_context_data = context_data; }
+void IpsContext::set_context_data(unsigned, IpsContextData* context_data)
+{ test_context_data = context_data; }
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }
 uint32_t str_to_hash(const uint8_t *, size_t) { return 0; }
 FlowData* FlowDataStore::get(unsigned) const { return nullptr; }
@@ -143,6 +157,8 @@ HttpCommon::SectionType HttpInspect::get_type_expected(snort::Flow*, HttpCommon:
 void HttpInspect::finish_hx_body(snort::Flow*, HttpCommon::SourceId, HttpCommon::HXBodyState,
     bool) const { }
 void HttpInspect::set_hx_body_state(snort::Flow*, HttpCommon::SourceId, HttpCommon::HXBodyState) const { }
+void HttpInspect::signal_request_line_invalid(snort::Flow*, HttpCommon::SourceId,
+    HttpEnums::RequestLineInvalidReasonCode) const { }
 bool HttpInspect::get_fp_buf(snort::InspectionBuffer::Type, snort::Packet*,
     snort::InspectionBuffer&) { return false; }
 void HttpInspect::eval(snort::Packet*) { }

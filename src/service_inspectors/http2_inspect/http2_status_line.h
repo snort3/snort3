@@ -32,7 +32,8 @@ public:
         Http2StartLine(evs, infrs) { }
 
     void process_pseudo_header(const Field& name, const Field& value) override;
-    bool generate_start_line(Field& start_line, bool pseudo_headers_complete) override;
+    bool generate_start_line(Field& start_line, bool pseudo_headers_complete,
+        HttpInspect* hi, snort::Flow* flow) override;
 
 private:
     Field status;

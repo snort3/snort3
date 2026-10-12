@@ -20,18 +20,23 @@
 #ifndef HTTP_FIELD_BUFFER_H
 #define HTTP_FIELD_BUFFER_H
 
+#include <cstdint>
+#include <string>
+
 #include "http_buffer_info.h"
-#include "http_cache_data.h"
 #include "http_field.h"
 
 class HttpMsgSection;
+struct HttpSplitterSnapshot;
 
-const Field& get_http_tmp_buffer(HttpCacheData& cache, const HttpBufferInfo& buf, HttpMsgSection* section);
+const Field& get_http_tmp_buffer(const HttpBufferInfo& buf, HttpMsgSection* section);
 
-class HttpTmpFieldBuffer
-{
-public:
-    static const Field& get_buffer_data(unsigned int type);
-};
+const Field& get_http_tmp_buffer(const HttpBufferInfo& buf,
+    const HttpSplitterSnapshot* snap_300, const HttpSplitterSnapshot* snap_299,
+    const HttpSplitterSnapshot* snap_298);
+
+bool is_wire_reportable_buffer(unsigned buf_type);
+
+void append_escaped(std::string& out, const uint8_t* data, int32_t len, int32_t max_append);
 
 #endif

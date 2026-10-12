@@ -105,6 +105,8 @@ void HttpInspect::finish_hx_body(snort::Flow*, HttpCommon::SourceId, HttpCommon:
     bool) const {}
 void HttpInspect::set_hx_body_state(snort::Flow*, HttpCommon::SourceId,
     HttpCommon::HXBodyState) const {}
+void HttpInspect::signal_request_line_invalid(snort::Flow*, HttpCommon::SourceId,
+    HttpEnums::RequestLineInvalidReasonCode) const {}
 bool HttpInspect::get_fp_buf(snort::InspectionBuffer::Type, snort::Packet*,
     snort::InspectionBuffer&) { return false; }
 bool HttpInspect::configure(snort::SnortConfig*) { return true; }

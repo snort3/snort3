@@ -70,9 +70,9 @@ static const Field& get_origin(const DataEvent* event, const Flow*)
 static const char* get_version(const DataEvent* event, const Flow*)
 {
     HttpEnums::VersionId version = static_cast<const HttpTransactionEndEvent*>(event)->get_version();
-    const auto& iter = HttpEnums::VersionEnumToStr.find(version);
+    const char* const version_str = HttpEnums::version_id_to_str(version);
 
-    return iter != HttpEnums::VersionEnumToStr.end() ? iter->second : "";
+    return version_str ? version_str : "";
 }
 
 static const Field& get_stat_code(const DataEvent* event, const Flow*)

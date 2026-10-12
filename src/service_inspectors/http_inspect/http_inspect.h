@@ -62,6 +62,8 @@ public:
     void finish_hx_body(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state,
         bool clear_partial_buffer) const override;
     void set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state) const override;
+    void signal_request_line_invalid(snort::Flow* flow, HttpCommon::SourceId source_id,
+        HttpEnums::RequestLineInvalidReasonCode reason) const override;
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
     bool configure(snort::SnortConfig*) override;

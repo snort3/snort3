@@ -23,7 +23,8 @@
 
 #include "http_cutter.h"
 
-#include "http_cache_data.h"
+#include <algorithm>
+
 #include "http_common.h"
 #include "http_compress_stream.h"
 #include "http_enum.h"
@@ -33,6 +34,21 @@
 
 using namespace HttpEnums;
 using namespace HttpCommon;
+
+void HttpRequestCutter::create_event_request_line_not_valid(HttpEventGen*,
+    RequestLineInvalidReasonCode reason)
+{
+    if (request_line_invalid_reason == RequestLineInvalidReasonCode::NONE)
+        request_line_invalid_reason = reason;
+
+    detected_300 = true;
+}
+
+void HttpRequestCutter::mark_method_not_present(HttpInfractions* infractions, HttpEventGen* events)
+{
+    *infractions += INF_METHOD_NOT_PRESENT;
+    create_event_request_line_not_valid(events, METHOD_NOT_PRESENT);
+}
 
 bool HttpStartCutter::find_eol(uint8_t octet, uint32_t idx, HttpInfractions* infractions, HttpEventGen* events)
 {
@@ -44,8 +60,7 @@ bool HttpStartCutter::find_eol(uint8_t octet, uint32_t idx, HttpInfractions* inf
             // There was no CR before this
             *infractions += INF_LF_WITHOUT_CR;
 
-            if (is_request_cutter())
-                create_event_request_line_not_valid(events, BAD_REQUEST_TERMINATION);
+            create_event_request_line_not_valid(events, BAD_REQUEST_TERMINATION);
 
             events->create_event(EVENT_LF_WITHOUT_CR);
         }
@@ -57,8 +72,7 @@ bool HttpStartCutter::find_eol(uint8_t octet, uint32_t idx, HttpInfractions* inf
         // CR not followed by LF
         *infractions += INF_CR_WITHOUT_LF;
 
-        if (is_request_cutter())
-            create_event_request_line_not_valid(events, BAD_REQUEST_TERMINATION);
+        create_event_request_line_not_valid(events, BAD_REQUEST_TERMINATION);
         events->create_event(EVENT_CR_WITHOUT_LF);
         num_flush = idx;   // current octet not flushed
         return true;
@@ -108,14 +122,11 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 num_flush = k;     // current octet not flushed with white space
                 return SCAN_DISCARD;
             }
-            if (is_request_cutter() and octets_seen == 0 and !found_first_char)
+            if (octets_seen == 0 and !found_first_char)
             {
                 found_first_char = true;
                 if (buffer[k] == '/')
-                {
-                    get_cache_data().request.save_request_line(buffer, length);
-                    create_event_request_line_not_valid(events, METHOD_NOT_PRESENT);
-                }
+                    mark_method_not_present(infractions, events);
             }
         }
 
@@ -132,9 +143,6 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 validated = true;
                 break;
             case V_BAD:
-                if (is_request_cutter() and
-                    get_cache_data().request.request_line_invalid_reason != HttpEnums::RequestLineInvalidReasonCode::NONE)
-                    get_cache_data().request.save_request_line(buffer, length);
                 *infractions += INF_NOT_HTTP;
                 return SCAN_ABORT;
             case V_TBD:
@@ -190,8 +198,7 @@ HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet,
         return V_GOOD;
     if (!token_char[octet] || ++octets_checked > max_method_length)
     {
-        if (is_request_cutter())
-            create_event_request_line_not_valid(events, NON_RFC_CHAR);
+        create_event_request_line_not_valid(events, NON_RFC_CHAR);
         events->create_event(HttpEnums::EVENT_BAD_REQ_LINE);
         return V_BAD;
     }

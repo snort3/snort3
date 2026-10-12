@@ -25,6 +25,7 @@
 #include "main/snort_types.h"
 
 #include "http_common.h"
+#include "http_enum.h"
 
 class SO_PUBLIC HttpInspectBase : public snort::Inspector
 {
@@ -36,6 +37,9 @@ public:
         bool clear_partial_buffer) const = 0;
     virtual void set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId source_id, HttpCommon::HXBodyState state) const = 0;
     virtual void eval(snort::Packet* p, HttpCommon::SourceId source_id, const uint8_t* data, uint16_t dsize) = 0;
+
+    virtual void signal_request_line_invalid(snort::Flow* flow, HttpCommon::SourceId source_id,
+        HttpEnums::RequestLineInvalidReasonCode reason) const = 0;
 private:
      using snort::Inspector::eval;
 };

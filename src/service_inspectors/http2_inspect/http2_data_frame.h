@@ -31,7 +31,6 @@ public:
     ~Http2DataFrame() override = default;
     bool valid_sequence(Http2Enums::StreamState state) override;
     void analyze_http1(snort::Packet*) override;
-    void clear(snort::Packet*) override;
 
     bool is_detection_required() const override { return false; }
     void update_stream_state() override;

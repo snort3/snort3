@@ -29,6 +29,10 @@
 #include "http_test_manager.h"
 
 class HttpInspect;
+class HttpCutter;
+struct HttpSplitterSnapshot;
+
+namespace snort { class Flow; }
 
 class HttpStreamSplitter : public HttpStreamSplitterBase
 {
@@ -50,6 +54,7 @@ public:
         uint32_t num_head_lines, HttpEnums::PartialFlushType partial_flush_type);
     bool is_paf() override { return true; }
     static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
+    static HttpEnums::VersionId get_httpx_version_id(bool for_httpx, const snort::Flow* flow);
 
     // FIXIT-M should return actual packet buffer size
     unsigned max(snort::Flow*) override { return HttpEnums::MAX_OCTETS; }
@@ -57,13 +62,19 @@ public:
 
 private:
     static uint32_t compute_request_line_length(const HttpCutter* const& cutter,
-        const HttpFlowData* session_data, uint32_t section_size);
+        const HttpFlowData* session_data, uint32_t section_size, const uint8_t* data,
+        uint32_t cut_length);
+    static uint32_t scan_to_terminator(const uint8_t* data, uint32_t limit);
     static uint32_t compute_request_size(const HttpFlowData* session_data,
         HttpCommon::SectionType type, uint32_t current_size);
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpCommon::SectionType
         section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
         bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen)
         const;
+    void capture_splitter_snapshot(HttpFlowData* session_data, const HttpCutter* cutter,
+        HttpEnums::ScanResult cut_result, HttpCommon::SectionType type,
+        const snort::Flow* flow, const uint8_t* data, uint32_t cut_length,
+        bool capture_300, bool check_299, bool check_298) const;
     HttpCutter* get_cutter(HttpCommon::SectionType type, HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;

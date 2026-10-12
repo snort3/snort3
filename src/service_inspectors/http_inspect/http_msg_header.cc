@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <memory>
 
 #include "decompress/file_decomp.h"
 #include "file_api/file_flows.h"
@@ -41,6 +42,7 @@
 #include "http_api.h"
 #include "http_common.h"
 #include "http_compress_stream.h"
+#include "http_context_data.h"
 #include "http_enum.h"
 #include "http_inspect.h"
 #include "http_js_norm.h"
@@ -266,12 +268,22 @@ void HttpMsgHeader::gen_events()
 {
     auto raise_cl_or_te = [this] (Detail301ReasonCode code)
     {
-        auto& reason = get_cache_data().reason_code_detail_301;
+        static constexpr unsigned slot_index = DETAIL_119_301 - HTTP_FIRST_TMP_BUFFER;
+        static_assert(slot_index < HTTP_TMP_BUFFER_CNT);
 
-        if ( reason != DETAIL_301_NONE )
+        HttpTmpBufferCache& tmp_cache = HttpContextData::get_tmp_buffers();
+        auto& slot_ptr = tmp_cache.tmp_bufs[slot_index];
+        if (!slot_ptr)
+            slot_ptr = std::make_unique<HttpTmpBuffer>();
+
+        HttpTmpBuffer& slot = *slot_ptr;
+
+        if ( slot.num != DETAIL_301_NONE )
             return;
 
-        reason = code;
+        slot.num = code;
+        slot.text.clear();
+        slot.field.reset();
 
         create_event(EVENT_HEADER_INVALID_CL_OR_TE);
     };

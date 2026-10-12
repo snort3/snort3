@@ -731,12 +731,3 @@ const std::map <std::string, VersionId> HttpEnums::VersionStrToEnum =
     { "3.0", VERS_3_0 },
     { "0.9", VERS_0_9 }
 };
-
-const std::map <VersionId, const char*> HttpEnums::VersionEnumToStr =
-{
-    { VERS_1_0, "1.0" },
-    { VERS_1_1, "1.1" },
-    { VERS_2_0, "2.0" },
-    { VERS_3_0, "3.0" },
-    { VERS_0_9, "0.9" }
-};

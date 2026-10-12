@@ -23,7 +23,6 @@
 
 #include "http2_headers_frame_header.h"
 
-#include "service_inspectors/http_inspect/http_cache_data.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 
 #include "http2_enum.h"
@@ -45,7 +44,6 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer,
 {
     if (source_id == SRC_CLIENT)
     {
-        reset_cache_data();
         start_line_generator = new Http2RequestLine(session_data->events[source_id],
             session_data->infractions[source_id]);
     }
@@ -56,15 +54,10 @@ Http2HeadersFrameHeader::Http2HeadersFrameHeader(const uint8_t* header_buffer,
     if (decode_headers(start_line_generator, false))
     {
         // process start line
-        if (!start_line_generator->generate_start_line(start_line, are_pseudo_headers_complete()))
-        {
+        const bool pseudo_headers_complete = are_pseudo_headers_complete();
+        if (!start_line_generator->generate_start_line(start_line, pseudo_headers_complete,
+            session_data->hi, session_data->flow))
             stream->set_state(source_id, STREAM_ERROR);
-        }
-        else if (source_id == SRC_CLIENT)
-        {
-            get_cache_data().request.hx_request_line_length =
-                static_cast<Http2RequestLine*>(start_line_generator)->get_pseudo_request_line_length();
-        }
     }
 }
 

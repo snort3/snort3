@@ -25,6 +25,7 @@
 #include "http2_stream.h"
 
 #include "service_inspectors/http_inspect/http_flow_data.h"
+#include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_stream_splitter.h"
 
 #include "http2_data_cutter.h"
@@ -85,6 +86,8 @@ void Http2Stream::clear_frame(Packet* p)
 {
     assert(current_frame != nullptr);
     current_frame->clear(p);
+    if (session_data->get_hi_msg_section())
+        session_data->hi->clear(p);
     delete current_frame;
     current_frame = nullptr;
 

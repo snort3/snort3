@@ -23,6 +23,9 @@
 
 #include "http_stream_splitter.h"
 
+#include <algorithm>
+#include <cstring>
+
 #include "detection/detection_engine.h"
 #include "main/thread_config.h"
 #include "packet_io/active.h"
@@ -40,6 +43,8 @@
 #include "http_msg_request.h"
 #include "http_msg_section.h"
 #include "http_test_input.h"
+#include "http_transaction.h"
+#include "service_inspectors/http2_inspect/http2_flow_data.h"
 
 using namespace snort;
 using namespace HttpCommon;
@@ -192,54 +197,172 @@ StreamSplitter::Status HttpStreamSplitter::handle_zero_nine(Flow* flow, HttpFlow
     return status;
 }
 
+VersionId HttpStreamSplitter::get_httpx_version_id(bool for_httpx, const Flow* flow)
+{
+    if (!for_httpx)
+        return VERS__NOT_PRESENT;
+
+    return flow->get_flow_data(Http2FlowData::inspector_id) ? VERS_2_0 : VERS_3_0;
+}
+
+// see dev_notes_splitter_buffers.txt
+enum class ReportPath : unsigned char { WireSnapshot, DeferredEval };
+
+static ReportPath classify_report_path(ScanResult cut_result)
+{
+    switch (cut_result)
+    {
+    case SCAN_FOUND:
+    case SCAN_FOUND_PIECE:
+    case SCAN_FOUND_PENDING:
+        return ReportPath::DeferredEval;
+    default:
+        return ReportPath::WireSnapshot;
+    }
+}
+
+void HttpStreamSplitter::capture_splitter_snapshot(HttpFlowData* session_data,
+    const HttpCutter* cutter, ScanResult cut_result, SectionType type, const Flow* flow,
+    const uint8_t* data, uint32_t cut_length, bool capture_300, bool check_299,
+    bool check_298) const
+{
+    uint32_t section_size = cutter->get_octets_seen();
+    assert(section_size <= MAX_OCTETS);
+
+    auto current_fragment_len = [&](uint32_t limit)
+    { return scan_to_terminator(data, limit); };
+
+    if (cut_result == SCAN_FOUND or cut_result == SCAN_FOUND_PIECE)
+        section_size += cutter->get_num_flush();
+
+    const uint32_t report_section_size = (cut_result == SCAN_ABORT) ?
+        std::min(static_cast<uint32_t>(MAX_OCTETS), section_size + current_fragment_len(cut_length)) :
+        section_size;
+
+    const ReportPath report_path = classify_report_path(cut_result);
+
+    if (capture_300 and !session_data->events[SRC_CLIENT]->is_event_suppressed(EVENT_REQUEST_LINE_NOT_VALID))
+    {
+        HttpContextData::capture_splitter(SplitterSlot::SLOT_300, HttpContextData::CaptureMode::FirstWriteWins,
+            [&](HttpSplitterSnapshot& snap)
+        {
+            const uint32_t fragment_len = current_fragment_len(cut_length);
+
+            snap.reason_code_detail_300 = cutter->get_request_line_invalid_reason();
+            snap.request_size = compute_request_size(session_data, type, report_section_size);
+            snap.request_line_length = compute_request_line_length(cutter, session_data,
+                report_section_size, data, cut_length);
+            snap.version_id = get_httpx_version_id(session_data->for_httpx, flow);
+
+            const uint32_t raw_len = std::min(fragment_len,
+                static_cast<uint32_t>(MAX_REQUEST_LINE_LOG_LEN));
+            if (raw_len > 0)
+                snap.set_raw_request_line(data, static_cast<uint16_t>(raw_len));
+        });
+
+        if (report_path == ReportPath::WireSnapshot)
+            session_data->events[SRC_CLIENT]->create_event_if_new(EVENT_REQUEST_LINE_NOT_VALID);
+    }
+
+    const uint32_t length_upper_bound = session_data->for_httpx ? cut_length : report_section_size;
+
+    if (check_299 and length_upper_bound > static_cast<uint32_t>(my_inspector->params->max_request_line_length))
+    {
+        const uint32_t current = compute_request_line_length(cutter, session_data, report_section_size,
+            data, cut_length);
+        if (current > static_cast<uint32_t>(my_inspector->params->max_request_line_length))
+        {
+            if (report_path == ReportPath::WireSnapshot)
+            {
+                if (session_data->events[SRC_CLIENT]->create_event_if_new(
+                    HttpEnums::EVENT_REQUEST_LINE_LENGTH_TOO_LONG))
+                {
+                    HttpContextData::capture_splitter(SplitterSlot::SLOT_299, HttpContextData::CaptureMode::Refresh,
+                        [&](HttpSplitterSnapshot& snap)
+                    {
+                        snap.request_size = compute_request_size(session_data, type, report_section_size);
+                        snap.request_line_length = current;
+                        snap.version_id = get_httpx_version_id(session_data->for_httpx, flow);
+
+                        const uint32_t raw_len = current_fragment_len(std::min(cut_length,
+                            static_cast<uint32_t>(MAX_REQUEST_LINE_LOG_LEN)));
+                        if (raw_len > 0)
+                            snap.set_raw_request_line(data, static_cast<uint16_t>(raw_len));
+                        else
+                            snap.raw_request_line_len = 0;
+                    });
+                }
+            }
+            else
+                HttpContextData::latch_pending_length_299(current, !session_data->is_for_httpx());
+        }
+    }
+
+    if (check_298)
+    {
+        const uint32_t current = compute_request_size(session_data, type, report_section_size);
+        if (current > static_cast<uint32_t>(my_inspector->params->max_request_size))
+        {
+            if (report_path == ReportPath::WireSnapshot)
+            {
+                if (session_data->events[SRC_CLIENT]->create_event_if_new(
+                    HttpEnums::EVENT_REQUEST_SIZE_TOO_LONG))
+                {
+                    HttpContextData::capture_splitter(SplitterSlot::SLOT_298, HttpContextData::CaptureMode::Refresh,
+                        [&](HttpSplitterSnapshot& snap)
+                    {
+                        snap.request_size = current;
+                        snap.version_id = get_httpx_version_id(session_data->for_httpx, flow);
+                        if (type == SEC_REQUEST)
+                            snap.request_line_length =
+                                compute_request_line_length(cutter, session_data, report_section_size,
+                                    data, cut_length);
+                        else
+                        {
+                            const HttpTransaction* const txn = session_data->transaction[SRC_CLIENT];
+                            const HttpMsgRequest* const req = txn ? txn->get_request() : nullptr;
+                            snap.request_line_length = req ? req->get_start_line_length() : 0;
+                        }
+                    });
+                }
+            }
+            else if (type == SEC_REQUEST)
+                HttpContextData::latch_pending_size_298(current, !session_data->is_for_httpx());
+            else
+            {
+                HttpTransaction* const txn = session_data->transaction[SRC_CLIENT];
+                if (txn and !txn->has_pending_size_298())
+                    txn->set_pending_size_298(current);
+            }
+        }
+    }
+}
+
 StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData* session_data, const uint8_t* data, uint32_t length,
     uint32_t* flush_offset, SectionType& type)
 {
     HttpCutter*& cutter = session_data->cutter[source_id];
     if (cutter == nullptr)
-    {
-        if (source_id == SRC_CLIENT and type == SEC_REQUEST and !session_data->for_httpx)
-            reset_cache_data();
-
         cutter = get_cutter(type, session_data);
-    }
 
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
-    ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
-        max_length, session_data->get_infractions(source_id), session_data->events[source_id],
+    const uint32_t cut_length = (length <= max_length) ? length : max_length;
+    ScanResult cut_result = cutter->cut(data, cut_length,
+        session_data->get_infractions(source_id), session_data->events[source_id],
         session_data->section_size_target[source_id],
         session_data->stretch_section_to_packet[source_id],
         session_data->hx_body_state[source_id]);
 
     if (source_id == SRC_CLIENT)
     {
-        uint32_t section_size = cutter->get_octets_seen();
-        assert(section_size <= MAX_OCTETS);
-        if (cut_result == SCAN_FOUND or cut_result == SCAN_FOUND_PIECE)
-            section_size += cutter->get_num_flush();
+        const bool capture_300 = cutter->queued_request_line_not_valid();
+        const bool check_299 = type == SEC_REQUEST and
+            my_inspector->params->max_request_line_length > 0;
+        const bool check_298 = !is_body(type) and my_inspector->params->max_request_size > 0;
 
-        if (type == SEC_REQUEST)
-        {
-            const uint32_t current = compute_request_line_length(cutter, session_data, section_size);
-            if (my_inspector->params->max_request_line_length > 0 and
-                current > static_cast<uint32_t>(my_inspector->params->max_request_line_length))
-            {
-                get_cache_data().request.request_line_length = current;
-                get_cache_data().request.save_request_line(data, length);
-                session_data->events[SRC_CLIENT]->create_event(EVENT_REQUEST_LINE_LENGTH_TOO_LONG);
-            }
-        }
-
-        if (!is_body(type))
-        {
-            const uint32_t current = compute_request_size(session_data, type, section_size);
-            if (my_inspector->params->max_request_size > 0 and
-                current > static_cast<uint32_t>(my_inspector->params->max_request_size))
-            {
-                get_cache_data().request.request_size = current;
-                session_data->events[SRC_CLIENT]->create_event(EVENT_REQUEST_SIZE_TOO_LONG);
-            }
-        }
+        if (capture_300 or check_299 or check_298)
+            capture_splitter_snapshot(session_data, cutter, cut_result, type, flow, data,
+                cut_length, capture_300, check_299, check_298);
     }
 
     switch (cut_result)
@@ -355,14 +478,36 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
 }
 
 uint32_t HttpStreamSplitter::compute_request_line_length(const HttpCutter* const& cutter,
-    const HttpFlowData* session_data, uint32_t section_size)
+    const HttpFlowData* session_data, uint32_t section_size, const uint8_t* data,
+    uint32_t cut_length)
 {
     if (session_data->for_httpx)
-        return get_cache_data().request.hx_request_line_length;
+    {
+        const uint32_t suffix_len = static_cast<uint32_t>(HX_REQUEST_LINE_SUFFIX_LEN);
+        const uint32_t line_len = scan_to_terminator(data, cut_length);
+
+        if (data != nullptr and line_len >= suffix_len + 1 and
+            memcmp(data + line_len - suffix_len, " HTTP/1.1", suffix_len) == 0)
+            return line_len - suffix_len - 1;
+
+        return line_len;
+    }
 
     if (cutter->get_num_excess() > section_size)
         return 0;
     return section_size - cutter->get_num_excess();
+}
+
+uint32_t HttpStreamSplitter::scan_to_terminator(const uint8_t* data, uint32_t limit)
+{
+    if (data == nullptr)
+        return 0;
+
+    uint32_t len = 0;
+    while (len < limit and data[len] != '\r' and data[len] != '\n')
+        len++;
+
+    return len;
 }
 
 uint32_t HttpStreamSplitter::compute_request_size(const HttpFlowData* session_data,

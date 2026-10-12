@@ -31,7 +31,12 @@ using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF
 using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
     Http2Enums::HTTP2_GID>;
 
-class Http2FlowData;
+class HttpInspect;
+
+namespace snort
+{
+class Flow;
+}
 
 class Http2StartLine
 {
@@ -40,7 +45,8 @@ public:
 
     friend class Http2Hpack;
 
-    virtual bool generate_start_line(Field& start_line, bool pseudo_headers_complete) = 0;
+    virtual bool generate_start_line(Field& start_line, bool pseudo_headers_complete,
+        HttpInspect* hi, snort::Flow* flow) = 0;
     virtual void process_pseudo_header(const Field& name, const Field& value) = 0;
 
 protected:

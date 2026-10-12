@@ -20,8 +20,8 @@
 #ifndef HTTP_MSG_START_H
 #define HTTP_MSG_START_H
 
-#include "http_cache_data.h"
 #include "http_common.h"
+#include "http_enum.h"
 #include "http_field.h"
 #include "http_msg_section.h"
 
@@ -42,6 +42,8 @@ public:
 
     uint32_t get_start_line_length() const
     { return HttpMsgSection::get_length(); }
+    HttpEnums::RequestLineInvalidReasonCode get_request_line_invalid_reason() const
+    { return request_line_invalid_reason; }
 
 protected:
     HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
@@ -55,6 +57,8 @@ protected:
     Field start_line;
     Field version;
     bool own_msg_buffer;
+    HttpEnums::RequestLineInvalidReasonCode request_line_invalid_reason =
+        HttpEnums::RequestLineInvalidReasonCode::NONE;
 };
 
 #endif

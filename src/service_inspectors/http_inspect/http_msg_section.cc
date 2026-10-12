@@ -25,7 +25,6 @@
 
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 
-#include "http_cache_data.h"
 #include "http_context_data.h"
 #include "http_field_buffer.h"
 #include "http_common.h"
@@ -50,7 +49,7 @@ using namespace snort;
 
 const Field& HttpMsgSection::get_tmp_buffer(const HttpBufferInfo& buf)
 {
-    return get_http_tmp_buffer(get_cache_data(), buf, this);
+    return get_http_tmp_buffer(buf, this);
 }
 
 HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
@@ -69,6 +68,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(session_data->tcp_close[source_id])
 {
     assert((source_id == SRC_CLIENT) || (source_id == SRC_SERVER));
+    assert(transaction != nullptr);
 
     if (flow->stream_intf)
     {
@@ -252,7 +252,11 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
             if (buf.sub_id == 0)
                 return decoded_uri;
 
-            const Field& dp = get_cache_data().decoded_path;
+            const HttpTmpBufferCache* const tmp_cache = HttpContextData::find_tmp_buffers();
+            if (!tmp_cache)
+                return Field::FIELD_NULL;
+
+            const Field& dp = tmp_cache->decoded_path;
             return (dp.length() >= 0) ? dp : Field::FIELD_NULL;
         }
         const bool raw = (buf.type == HTTP_BUFFER_RAW_URI);
@@ -491,7 +495,7 @@ void HttpMsgSection::get_related_sections()
 
 void HttpMsgSection::clear()
 {
-    clear_tmp_fields();
+    HttpContextData::clear_tmp_buffers();
     transaction->clear_section();
     cleared = true;
 }

@@ -56,13 +56,6 @@ bool Http2HeadersFrame::in_error_state() const
     return stream->get_state(source_id) == STREAM_ERROR;
 }
 
-void Http2HeadersFrame::clear(Packet* p)
-{
-    if (session_data->abort_flow[source_id] || in_error_state())
-        return;
-    session_data->hi->clear(p);
-}
-
 bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, bool trailers)
 {
     const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?

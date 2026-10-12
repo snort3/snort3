@@ -28,6 +28,7 @@
 #include "pub_sub/http_transaction_end_event.h"
 
 #include "http_common.h"
+#include "http_context_data.h"
 #include "http_enum.h"
 #include "http_event.h"
 #include "http_inspect.h"
@@ -273,9 +274,22 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
             transaction_infractions = new HttpInfractions;
     }
 
-    assert(session_data->transaction[source_id] != nullptr);
-    session_data->transaction[source_id]->active_sections++;
-    return session_data->transaction[source_id];
+    HttpTransaction* const transaction = session_data->transaction[source_id];
+    if (transaction == nullptr)
+        return nullptr;
+
+    // see dev_notes_splitter_buffers.txt
+    if (source_id == SRC_CLIENT)
+    {
+        const HttpPendingSizeReport pending = HttpContextData::claim_pending_size_report();
+        if (pending.has_298)
+            transaction->set_pending_size_298(pending.size_298);
+        if (pending.has_299)
+            transaction->set_pending_length_299(pending.length_299);
+    }
+
+    transaction->active_sections++;
+    return transaction;
 }
 
 void HttpTransaction::archive_status(HttpMsgStatus* status_section)

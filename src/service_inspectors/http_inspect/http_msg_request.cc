@@ -59,10 +59,26 @@ bool HttpMsgRequest::detection_required() const
     return version_id == HttpEnums::VERS_0_9;
 }
 
+void HttpMsgRequest::raise_deferred_scan_events()
+{
+    const HttpInfractions& scan_infractions = *transaction->get_infractions(source_id);
+    if ((scan_infractions & INF_LF_WITHOUT_CR) or (scan_infractions & INF_CR_WITHOUT_LF))
+        create_event_request_line_not_valid(BAD_REQUEST_TERMINATION);
+    else if (scan_infractions & INF_METHOD_NOT_PRESENT)
+        create_event_request_line_not_valid(METHOD_NOT_PRESENT);
+
+    if (transaction->has_pending_length_299())
+        session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_LINE_LENGTH_TOO_LONG);
+    if (transaction->has_pending_size_298())
+        session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_SIZE_TOO_LONG);
+}
+
 void HttpMsgRequest::parse_start_line()
 {
     if (session_data->partial_flush[source_id])
         return;
+
+    raise_deferred_scan_events();
 
     if (has_raw_control_character(start_line))
         create_event_request_line_not_valid(NON_RFC_CHAR);

@@ -105,3 +105,7 @@ include::dev_notes_block_page_injection.txt[]
 ==== Body decompression
 
 include::dev_notes_decompression.txt[]
+
+==== Splitter-time request-limit buffers
+
+include::dev_notes_splitter_buffers.txt[]

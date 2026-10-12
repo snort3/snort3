@@ -28,6 +28,7 @@
 
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
+#include "service_inspectors/http_inspect/http_inspect.h"
 
 #include "http2_enum.h"
 #include "http2_flow_data.h"
@@ -91,7 +92,8 @@ void Http2RequestLine::process_pseudo_header(const Field& name, const Field& val
 //      d) If there is a path, it is appended. If the path exists and does not start with '/',
 //         prepend a slash to the path.
 // 3. One space followed by the string 'HTTP/1.1'
-bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_headers_complete)
+bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_headers_complete,
+    HttpInspect* hi, snort::Flow* flow)
 {
     uint32_t bytes_written = 0;
 
@@ -101,6 +103,7 @@ bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_header
         {
             *infractions += INF_REQUEST_WITHOUT_METHOD;
             events->create_event(EVENT_REQUEST_WITHOUT_METHOD);
+            hi->signal_request_line_invalid(flow, SRC_CLIENT, HttpEnums::METHOD_NOT_PRESENT);
         }
         return false;
     }

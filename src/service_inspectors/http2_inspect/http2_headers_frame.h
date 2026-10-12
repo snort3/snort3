@@ -32,8 +32,6 @@ class HttpFlowData;
 class Http2HeadersFrame : public Http2Frame
 {
 public:
-    void clear(snort::Packet*) override;
-
     const Field& get_buf(unsigned id) override;
     bool is_detection_required() const override { return false; }
 

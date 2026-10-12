@@ -39,7 +39,7 @@ add_cpputest( pub_sub_ssh_events_test
 add_cpputest( pub_sub_http_transaction_end_event_test
     SOURCES
         ../http_transaction_end_event.cc
-        ../../service_inspectors/http_inspect/http_cache_data.cc
+        ../../service_inspectors/http_inspect/http_context_data.cc
         ../../service_inspectors/http_inspect/http_transaction.cc
         ../../service_inspectors/http_inspect/http_flow_data.cc
         ../../service_inspectors/http_inspect/http_test_manager.cc

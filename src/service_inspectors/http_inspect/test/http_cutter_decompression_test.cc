@@ -22,6 +22,7 @@
 #endif
 
 #include <cstring>
+#include <vector>
 
 #include "pub_sub/http_form_data_event.h"
 #include "pub_sub/http_transaction_end_event.h"
@@ -120,6 +121,8 @@ void HttpInspect::finish_hx_body(snort::Flow*, HttpCommon::SourceId, HttpCommon:
     bool) const { }
 void HttpInspect::set_hx_body_state(snort::Flow*, HttpCommon::SourceId,
     HttpCommon::HXBodyState) const { }
+void HttpInspect::signal_request_line_invalid(snort::Flow*, HttpCommon::SourceId,
+    HttpEnums::RequestLineInvalidReasonCode) const { }
 bool HttpInspect::get_fp_buf(snort::InspectionBuffer::Type, snort::Packet*,
     snort::InspectionBuffer&) { return false; }
 void HttpInspect::eval(snort::Packet*) { }
@@ -732,6 +735,38 @@ TEST(hx_cutter_brotli_decompression_test, scan_found_pending_last_seg)
 }
 
 #endif
+
+TEST_GROUP(request_cutter_event_test)
+{
+    HttpInfractions infractions;
+    HttpEventGen events;
+};
+
+TEST(request_cutter_event_test, marks_new_300_and_keeps_first_reason)
+{
+    HttpRequestCutter cutter;
+    const uint8_t request[] = "/missing-method HTTP/1.1\r\n";
+
+    CHECK_EQUAL(SCAN_ABORT, cutter.cut(request, sizeof(request) - 1, &infractions, &events,
+        0, false, HX_BODY_NOT_COMPLETE));
+
+    CHECK(infractions & INF_METHOD_NOT_PRESENT);
+    CHECK(cutter.queued_request_line_not_valid());
+    CHECK_EQUAL(METHOD_NOT_PRESENT, cutter.get_request_line_invalid_reason());
+}
+
+TEST(request_cutter_event_test, non_request_cutters_are_no_ops_for_300)
+{
+    HttpStatusCutter cutter;
+    const uint8_t response[] = "/bad-status-line\r\n";
+
+    CHECK_EQUAL(SCAN_ABORT, cutter.cut(response, sizeof(response) - 1, &infractions, &events,
+        0, false, HX_BODY_NOT_COMPLETE));
+
+    CHECK_FALSE(infractions & INF_METHOD_NOT_PRESENT);
+    CHECK_FALSE(cutter.queued_request_line_not_valid());
+    CHECK_EQUAL(NONE, cutter.get_request_line_invalid_reason());
+}
 
 int main(int argc, char** argv)
 {

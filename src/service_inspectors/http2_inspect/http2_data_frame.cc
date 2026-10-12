@@ -53,11 +53,6 @@ void Http2DataFrame::analyze_http1(Packet* p)
     session_data->hi->eval(p, source_id, data_buffer, data_length);
 }
 
-void Http2DataFrame::clear(Packet* p)
-{
-    session_data->hi->clear(p);
-}
-
 void Http2DataFrame::update_stream_state()
 {
     switch (stream->get_state(source_id))

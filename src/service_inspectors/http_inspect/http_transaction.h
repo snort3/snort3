@@ -20,7 +20,10 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
 
+#include <memory>
+
 #include "http_common.h"
+#include "http_context_data.h"
 #include "http_enum.h"
 #include "http_event.h"
 #include "http_flow_data.h"
@@ -57,6 +60,28 @@ public:
     void set_body(HttpMsgBody* latest_body);
 
     HttpInfractions* get_infractions(HttpCommon::SourceId);
+
+    void set_pending_size_298(uint32_t size)
+    {
+        if (!pending_size_report)
+            pending_size_report = std::make_unique<HttpPendingSizeReport>();
+        pending_size_report->has_298 = true;
+        pending_size_report->size_298 = size;
+    }
+    bool has_pending_size_298() const
+    { return pending_size_report and pending_size_report->has_298; }
+    uint32_t get_pending_size_298() const { return pending_size_report->size_298; }
+
+    void set_pending_length_299(uint32_t length)
+    {
+        if (!pending_size_report)
+            pending_size_report = std::make_unique<HttpPendingSizeReport>();
+        pending_size_report->has_299 = true;
+        pending_size_report->length_299 = length;
+    }
+    bool has_pending_length_299() const
+    { return pending_size_report and pending_size_report->has_299; }
+    uint32_t get_pending_length_299() const { return pending_size_report->length_299; }
 
     void set_one_hundred_response();
     bool final_response() const
@@ -123,6 +148,8 @@ private:
     HttpMsgBody* body_list = nullptr;
     HttpMsgSection* archive_status_list = nullptr;
     HttpInfractions* infractions[2];
+
+    std::unique_ptr<HttpPendingSizeReport> pending_size_report;
 
     enum class TransactionFlag : uint16_t
     {

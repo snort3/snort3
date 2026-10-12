@@ -26,65 +26,44 @@
 #include <string>
 
 #include "http_enum.h"
-#include "http_event.h"
 #include "http_field.h"
 
 static constexpr int32_t MAX_REQUEST_LINE_LOG_LEN = 256;
-static constexpr int32_t HX_REQUEST_LINE_SUFFIX_LEN =
-    static_cast<int32_t>(sizeof(" HTTP/1.1")) - 1;
+static constexpr int32_t HX_REQUEST_LINE_SUFFIX_LEN = static_cast<int32_t>(sizeof(" HTTP/1.1")) - 1;
 static constexpr unsigned HTTP_FIRST_TMP_BUFFER = HttpEnums::HTTP__BUFFER_MAX + 1;
 static constexpr unsigned HTTP_TMP_BUFFER_CNT =
     HttpEnums::HTTP__TMP_BUFFER_MAX - HttpEnums::HTTP__BUFFER_MAX;
 
-struct HttpRequestScratch
-{
-    HttpEnums::RequestLineInvalidReasonCode request_line_invalid_reason =
-        HttpEnums::RequestLineInvalidReasonCode::NONE;
-    uint32_t request_size = 0;
-    uint32_t request_line_length = 0;
-    uint32_t hx_request_line_length = 0;
-
-    // Raw (unescaped) request line bytes, copied only for the rare splitter-generated
-    // EVENT_REQUEST_LINE_NOT_VALID paths where no HttpMsgRequest exists yet.
-    std::array<uint8_t, MAX_REQUEST_LINE_LOG_LEN> request_line_raw = {};
-    uint16_t request_line_raw_len = 0;
-
-    void save_request_line(const uint8_t* data, uint32_t len);
-};
-
 struct HttpTmpBuffer
 {
+    void clear()
+    {
+        field.reset();
+        text.clear();
+        num = 0;
+    }
+
     Field field;
     std::string text;
     uint32_t num = 0;
 };
 
-class HttpCacheData
+struct HttpTmpBufferCache
 {
-public:
-    HttpCacheData() = default;
-    HttpCacheData(const HttpCacheData&) = delete;
-    HttpCacheData& operator=(const HttpCacheData&) = delete;
-
-    HttpRequestScratch request;
-    HttpEnums::Detail301ReasonCode reason_code_detail_301 = HttpEnums::DETAIL_301_NONE;
+    void clear()
+    {
+        for (auto& slot : tmp_bufs)
+        {
+            if (slot)
+                slot->clear();
+        }
+        decoded_path.reset();
+    }
 
     std::array<std::unique_ptr<HttpTmpBuffer>, HTTP_TMP_BUFFER_CNT> tmp_bufs;
 
     // Sidecar for decoded URI path (paired with HTTP_BUFFER_DECODED_URI slot).
     Field decoded_path;
-
-    static void append_escaped(std::string& out, const uint8_t* data,
-        int32_t len, int32_t max_append);
 };
-
-HttpCacheData& get_cache_data();
-bool cache_data_exists();
-void reset_cache_data();
-void clear_tmp_fields();
-void clear_section_cache();
-
-void create_event_request_line_not_valid(HttpEventGen* events,
-    HttpEnums::RequestLineInvalidReasonCode reason);
 
 #endif

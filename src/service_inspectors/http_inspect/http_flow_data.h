@@ -24,6 +24,7 @@
 
 #include <cstdio>
 #include <list>
+#include <memory>
 
 #include "flow/flow.h"
 #include "helpers/utf.h"

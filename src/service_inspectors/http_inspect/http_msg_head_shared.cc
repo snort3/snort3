@@ -82,6 +82,10 @@ void HttpMsgHeadShared::analyze()
     parse_header_block();
     parse_header_lines();
     create_norm_head_list();
+
+    // Header/trailer 298 is already transaction-scoped, so raise it from eval and log this section.
+    if (source_id == SRC_CLIENT and transaction->has_pending_size_298())
+        session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_SIZE_TOO_LONG);
 }
 
 void HttpMsgHeadShared::create_norm_head_list()

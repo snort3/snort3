@@ -1,5 +1,4 @@
 set(HTTP_DECOMPRESSION_TEST_SOURCES
-    ../http_cache_data.cc
     ../http_compress_stream.cc
     ../http_cutter.cc
     ../http_field.cc
@@ -27,14 +26,8 @@ add_cpputest( http_cutter_decompression_test
     LIBS ${HTTP_COMPRESSION_LIBS}
 )
 
-add_cpputest( http_context_data_test
-    SOURCES
-        ../http_context_data.cc
-)
-
 add_cpputest( http_module_test
     SOURCES
-        ../http_cache_data.cc
         ../http_field.cc
         ../http_module.cc
         ../http_normalizers.cc
@@ -45,7 +38,6 @@ add_cpputest( http_module_test
 
 add_cpputest( http_msg_head_shared_util_test
     SOURCES
-        ../http_cache_data.cc
         ../http_field.cc
         ../http_msg_head_shared_util.cc
         ../http_str_to_code.cc
@@ -54,30 +46,38 @@ add_cpputest( http_msg_head_shared_util_test
 
 add_cpputest( http_msg_head_shared_find_next_header_test
     SOURCES
-        ../http_cache_data.cc
         ../http_field.cc
         ../http_msg_head_shared.cc
         ../http_str_to_code.cc
         ../http_tables.cc
 )
 
-add_cpputest( http_cache_data_test
+add_cpputest( http_event_test )
+
+add_cpputest( http_context_data_test
     SOURCES
-        ../http_cache_data.cc
+        ../http_context_data.cc
         ../http_field.cc
+)
+
+add_cpputest( http_field_buffer_test
+    SOURCES
+        ../http_context_data.cc
+        ../http_field.cc
+        ../http_field_buffer.cc
+        ../http_tables.cc
 )
 
 add_cpputest( http_normalizers_test
     SOURCES
-        ../http_cache_data.cc
         ../http_field.cc
         ../http_normalizers.cc
 )
 
 add_cpputest( http_transaction_test
     SOURCES
-        ../http_cache_data.cc
         ../http_compress_stream.cc
+        ../http_context_data.cc
         ../http_field.cc
         ../http_flow_data.cc
         ../http_test_input.cc
@@ -88,7 +88,6 @@ add_cpputest( http_transaction_test
 
 add_cpputest( http_uri_norm_test
     SOURCES
-        ../http_cache_data.cc
         ../http_field.cc
         ../http_module.cc
         ../http_normalizers.cc
