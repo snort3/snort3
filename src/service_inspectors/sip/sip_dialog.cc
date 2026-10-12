@@ -43,10 +43,11 @@ static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList&);
 static int SIP_compareMedias(const SIP_MediaDataList, const SIP_MediaDataList);
 static bool SIP_checkMediaChange(const SIPMsg&, const SIP_DialogData*);
 static int SIP_processInvite(const SIPMsg&, SIP_DialogData*, SIP_DialogList*, const SIP_PROTO_CONF*);
-static int SIP_processACK(SIPMsg&, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
+static int SIP_processACK(SIPMsg&, SIP_DialogData*, SIP_DialogList*, Packet*, const SIP_PROTO_CONF*);
 static int SIP_ignoreChannels(const SIP_DialogData&, Packet* p, const SIP_PROTO_CONF*);
-static SIP_DialogData* SIP_addDialog(const SIPMsg&, SIP_DialogData*, SIP_DialogList*);
+static SIP_DialogData* SIP_addDialog(const SIPMsg&, SIP_DialogData*, SIP_DialogList*, uint32_t);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
+static void SIP_deleteSupersededDialogs(const SIP_DialogData*, SIP_DialogList*);
 
 /********************************************************************
  * Function: SIP_processRequest()
@@ -63,7 +64,7 @@ static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
  *  false: request message has not been processed correctly
  ********************************************************************/
 static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
-    Packet* p, SIP_PROTO_CONF* config)
+    Packet* p, const SIP_PROTO_CONF* config)
 {
     SIPMethodsFlag methodFlag;
     int ret = true;
@@ -73,7 +74,10 @@ static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialog
     {
         // Clang analyzer is false positive, dlist->head is updated after free
         // (Use of memory after it is freed)
-        dialog = SIP_addDialog(sipMsg, dList->head, dList); // ... FIXIT-W
+        dialog = SIP_addDialog(sipMsg, dList->head, dList,
+            config->maxNumDialogsInSession); // FIXIT-W
+        if (!dialog)
+            return false;
     }
 
     methodFlag = sipMsg.methodFlag;
@@ -164,16 +168,13 @@ static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_D
     if (SIP_DLG_ESTABLISHED == dialog->state)
     {
         /* this is the case of re-INVITE*/
-        // The max_dialogs check in SIP_updateDialog only fires when no
-        // existing dialog matched. Duplicate it here so re-INVITEs cannot
-        // grow num_dialogs past the configured cap by bypassing that path.
         if (dList->num_dialogs >= config->maxNumDialogsInSession)
         {
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MAX_DIALOGS_IN_A_SESSION);
             return false;
         }
         // create a temporary new dialog before the current dialog
-        dialog = SIP_addDialog(sipMsg, dialog, dList);
+        dialog = SIP_addDialog(sipMsg, dialog, dList, config->maxNumDialogsInSession);
         dialog->state =  SIP_DLG_REINVITING;
         return true;
     }
@@ -201,7 +202,7 @@ static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_D
  *  Note: dialog is created through dialog
  ********************************************************************/
 static int SIP_processACK(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList*, Packet* p,
-    SIP_PROTO_CONF* config)
+    const SIP_PROTO_CONF* config)
 {
     if (nullptr == dialog)
         return false;
@@ -233,7 +234,7 @@ static int SIP_processACK(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList
  *  false:
  ********************************************************************/
 static int SIP_processResponse(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
-    Packet* p, SIP_PROTO_CONF* config)
+    Packet* p, const SIP_PROTO_CONF* config)
 {
     int statusType;
     SIP_DialogData* currDialog = dialog;
@@ -273,7 +274,7 @@ static int SIP_processResponse(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialo
 
         if (SIP_DLG_REINVITING == currDialog->state)
         {
-            SIP_deleteDialog(currDialog->nextD, dList);
+            SIP_deleteSupersededDialogs(currDialog, dList);
             if (SIP_checkMediaChange(sipMsg, dialog) == false)
             {
                 SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
@@ -297,6 +298,8 @@ static int SIP_processResponse(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialo
                 sipMsg.mediaUpdated = true;
             }
             currDialog->state = SIP_DLG_ESTABLISHED;
+            if (SIP_METHOD_INVITE == sipMsg.methodFlag)
+                SIP_deleteSupersededDialogs(currDialog, dList);
         }
         break;
     case RESPONSE3XX:
@@ -555,8 +558,11 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList& dList)
  *
  ********************************************************************/
 static SIP_DialogData* SIP_addDialog(const SIPMsg& sipMsg, SIP_DialogData* currDialog,
-    SIP_DialogList* dList)
+    SIP_DialogList* dList, uint32_t maxDialogs)
 {
+    if (dList->num_dialogs >= maxDialogs)
+        return nullptr;
+
     sip_stats.dialogs++;
     SIP_DialogData* dialog = (SIP_DialogData*)snort_calloc(sizeof(SIP_DialogData));
 
@@ -584,6 +590,29 @@ static SIP_DialogData* SIP_addDialog(const SIPMsg& sipMsg, SIP_DialogData* currD
     SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
     dList->num_dialogs++;
     return dialog;
+}
+
+/********************************************************************
+ * Function: SIP_deleteSupersededDialogs
+ *
+ * Delete every dialog after currDialog that carries the same Call-ID:
+ * once currDialog is ESTABLISHED, older same-Call-ID dialogs can never
+ * be matched again (lookup stops at the first match) and would leak.
+ *
+ ********************************************************************/
+static void SIP_deleteSupersededDialogs(const SIP_DialogData* currDialog, SIP_DialogList* dList)
+{
+    if ((nullptr == currDialog) || (nullptr == dList))
+        return;
+
+    SIP_DialogData* dialog = currDialog->nextD;
+    while (nullptr != dialog)
+    {
+        SIP_DialogData* next = dialog->nextD;
+        if (dialog->dlgID.callIdHash == currDialog->dlgID.callIdHash)
+            SIP_deleteDialog(dialog, dList);
+        dialog = next;
+    }
 }
 
 /********************************************************************
@@ -646,7 +675,7 @@ static void sip_publish_data_bus(
  *  true: dialog has been updated
  *  false: dialog has not been updated
  ********************************************************************/
-int SIP_updateDialog(SIPMsg& sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO_CONF* config)
+int SIP_updateDialog(SIPMsg& sipMsg, SIP_DialogList* dList, Packet* p, const SIP_PROTO_CONF* config)
 {
     SIP_DialogData* oldDialog = nullptr;
     int ret;
