@@ -62,6 +62,15 @@ static const Parameter extractor_proto_params[] =
     { "fields", Parameter::PT_STRING, nullptr, nullptr,
       "specify fields to log" },
 
+    { "sampling_threshold", Parameter::PT_INT, "0:max32", "25",
+      "occurrences to log before sampling" },
+
+    { "sampling_rate", Parameter::PT_INT, "1:max32", "1000",
+      "log every N occurrence after the threshold" },
+
+    { "sampling_duration", Parameter::PT_INT, "0:max32", "600",
+      "seconds before rate-filter counters reset; 0 disables expiration" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -91,6 +100,7 @@ void ServiceConfig::clear()
     on_events.clear();
     tenant_id = 0;
     fields.clear();
+    sampling = SamplingConfig{ };
 }
 
 ExtractorModule::ExtractorModule() : Module(S_NAME, s_help, s_params) { }
@@ -148,6 +158,15 @@ bool ExtractorModule::set(const char*, Value& v, SnortConfig*)
     if (v.is("default_filter"))
         extractor_config.pick_by_default = v.get_uint8() == 0;
 
+    else if (v.is("sampling_threshold"))
+        service_config.sampling.threshold = v.get_uint32();
+
+    else if (v.is("sampling_rate"))
+        service_config.sampling.rate = v.get_uint32();
+
+    else if (v.is("sampling_duration"))
+        service_config.sampling.duration = v.get_uint32();
+
     else if (v.is("service"))
         service_config.service = (ServiceType)(v.get_uint8());
 
@@ -172,6 +191,17 @@ bool ExtractorModule::end(const char* fqn, int idx, SnortConfig*)
     {
         ParseError("can't initialize extractor without protocols.fields");
         return false;
+    }
+
+    const SamplingConfig defaults;
+    const auto& sampling = service_config.sampling;
+
+    if (service_config.service != ServiceType::IPS_BUILTIN and
+        (sampling.threshold != defaults.threshold or sampling.rate != defaults.rate or
+        sampling.duration != defaults.duration))
+    {
+        ParseWarning(WARN_CONF,
+            "extractor.protocols sampling options are ignored for services other than weird");
     }
 
     commit_config();

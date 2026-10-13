@@ -35,7 +35,7 @@
 
 #include "util_cstring.h"
 
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) && !defined(CATCH_TEST_BUILD)
 #include "catch/snort_catch.h"
 #endif
 
@@ -463,7 +463,7 @@ bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
 
 }
 
-#ifdef UNIT_TEST
+#if defined(UNIT_TEST) && !defined(CATCH_TEST_BUILD)
 TEST_CASE("uint8_to_printable_str go over all options", "[util]")
 {
     std::string print_str;

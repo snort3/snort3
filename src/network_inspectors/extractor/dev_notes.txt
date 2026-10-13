@@ -129,6 +129,41 @@ re-computes filtering for the flow).
 
 *(IP and port filtering by extractor yet to be implemented)*
 
+==== Rate Filtering
+
+Currently implemented for WEIRD logs.
+
+Rate filtering runs after the flow/service/tenant filter accepts an event,
+but before opening a log record. Each accepted built-in event
+still increments `extractor_stats.total_events`, including events whose records
+are suppressed. Other extractor services, including NOTICE, are unaffected.
+
+Counters belong to a flow and an exact `(binding_id, gid, sid)` key. Each
+binding's `sampling_threshold` (default 25) controls how many initial occurrences
+are logged; `sampling_rate` (default 1000, minimum 1) controls how often later
+occurrences are logged. The defaults log occurrences 1-25, 1025, 2025, and so
+on. A threshold of 0 starts sampling with the first occurrence. Sampling is
+deterministic, not random. When the binding's `sampling_duration` (default 600
+seconds) is nonzero, each key's counters reset
+on the first event at or after that many packet-time seconds from its first occurrence.
+This is a fixed window, not an idle timeout; `0` preserves flow-lifetime
+counters. Earlier packet timestamps do not trigger a reset.
+Each `BuiltinExtractor` instance gets a new binding ID, so separate protocol
+bindings and bindings created after a configuration reload do not share
+counters, even when an existing flow survives the reload.
+
+All rate-filtered bindings use one `RateFilterFlowData` slot per flow. Its flow-data ID
+is separate from `ExtractorFlowData::data_id`, whose service-specific state may
+be replaced when the service type changes. The rate-filter entries remain on
+the flow until that flow data is freed; entries from old bindings are not
+removed on reload. Vector capacity growth is charged to the owning flow, and
+flow-data removal releases the accounted memory.
+Each flow tracks at most 512 distinct keys. Once full, events for untracked
+keys are logged without rate filtering and without allocating or evicting existing entries.
+Reaching the limit emits a log message once per process.
+Existing keys retain their sampling and duration-reset behavior. The limit also applies
+to new bindings after reload; slots are not reclaimed until the flow data is freed.
+
 ==== Extracting Data
 
 Data path from an inspector up to a writing function should conform the

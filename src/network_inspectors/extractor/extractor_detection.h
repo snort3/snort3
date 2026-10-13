@@ -21,11 +21,13 @@
 #define EXTRACTOR_RULES_H
 
 #include "extractors.h"
+#include "extractor_rate_filter.h"
 
 class BuiltinExtractor : public ExtractorEvent
 {
 public:
-    BuiltinExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
+    BuiltinExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields,
+        const SamplingConfig&);
 
     // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
     void handle(DataEvent&, Flow*);
@@ -35,6 +37,8 @@ private:
 
     void internal_tinit(const snort::Connector::ID*) override;
 
+    const uint64_t binding_id;
+    const SamplingConfig sampling;
     static THREAD_LOCAL const snort::Connector::ID* log_id;
 };
 

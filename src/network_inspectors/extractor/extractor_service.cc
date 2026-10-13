@@ -156,7 +156,8 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
         break;
 
     case ServiceType::IPS_BUILTIN:
-        srv = new BuiltinExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
+        srv = new BuiltinExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events,
+            cfg.sampling, cfg.service, ins);
         break;
 
     case ServiceType::IPS_USER:
@@ -199,6 +200,7 @@ void ExtractorService::show(std::string& str) const
         str += field;
         str += " ";
     }
+    show_options(str);
     str += " }";
 }
 
@@ -757,13 +759,13 @@ const ServiceBlueprint BuiltinExtractorService::blueprint =
 THREAD_LOCAL Connector::ID BuiltinExtractorService::log_id;
 
 BuiltinExtractorService::BuiltinExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
-    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
-    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+    const std::vector<std::string>& srv_events, const SamplingConfig& config, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins), sampling(config)
 {
     for (const auto& event : get_events())
     {
         if (!strcmp("builtin", event.c_str()))
-            handlers.push_back(new BuiltinExtractor(ins, tenant_id, get_fields()));
+            handlers.push_back(new BuiltinExtractor(ins, tenant_id, get_fields(), sampling));
     }
 }
 
@@ -772,6 +774,16 @@ const snort::Connector::ID& BuiltinExtractorService::internal_tinit()
 
 const snort::Connector::ID& BuiltinExtractorService::get_log_id()
 { return log_id; }
+
+void BuiltinExtractorService::show_options(std::string& str) const
+{
+    str += ", sampling_threshold = ";
+    str += std::to_string(sampling.threshold);
+    str += ", sampling_rate = ";
+    str += std::to_string(sampling.rate);
+    str += ", sampling_duration = ";
+    str += std::to_string(sampling.duration);
+}
 
 //-------------------------------------------------------------------------
 //  Unit Tests

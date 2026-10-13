@@ -29,6 +29,8 @@ set( FILE_LIST
     extractor_null_conn.h
     extractor_quic.cc
     extractor_quic.h
+    extractor_rate_filter.cc
+    extractor_rate_filter.h
     extractor_service.cc
     extractor_service.h
     extractor_ssh.cc

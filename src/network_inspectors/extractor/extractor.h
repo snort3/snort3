@@ -30,6 +30,7 @@
 #include "profiler/profiler.h"
 
 #include "extractor_enums.h"
+#include "extractor_rate_filter.h"
 #include "extractor_service.h"
 
 #define S_NAME "extractor"
@@ -45,6 +46,7 @@ public:
     uint32_t tenant_id;
     std::vector<std::string> on_events;
     std::vector<std::string> fields;
+    SamplingConfig sampling;
 };
 
 struct ExtractorConfig
