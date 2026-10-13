@@ -94,7 +94,7 @@ static OsiPresPpduModeSelectorType resolve_mode_selector(BerReader* ber, Cursor*
                                 {
                                     if (e.type == OSI_PRES_MODE_VALUE)
                                     {
-                                        if (!tpkt_cur->add_pos(e.header_length + e.length))
+                                        if (e.length < 1 or !tpkt_cur->add_pos(e.header_length + e.length))
                                         {
                                             break;
                                         }
@@ -171,6 +171,12 @@ static TpktAppliSearchStateType decode_osi_pres_context_list_item(BerReader* ber
             {
                 uint8_t id;
             };
+
+            if (e.length < 1 or tpkt_cur->get_pos() + e.header_length + e.length > tpkt_cur->size())
+            {
+                tpkt_cur->set_pos(tpkt_cur->size());
+                return TPKT_APPLI_SEARCH_STATE__EXIT;
+            }
 
             const OsiPresContextListPresContextId* param =
                 reinterpret_cast<const OsiPresContextListPresContextId*>(e.data);

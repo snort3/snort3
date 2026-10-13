@@ -127,6 +127,108 @@ TEST(osi_pres_decode_test, decode_osi_pres_normal_mode_params_inner_charge_defin
     CHECK_EQUAL(2, mock_charge_calls);
 }
 
+TEST(osi_pres_decode_test, resolve_mode_selector_zero_length_mode_value)
+{
+    uint8_t data[7] = { 0 };
+    data[6] = OSI_PRES_MODE__NORMAL;
+
+    ber_mock_push(0x31, 4);                       // OSI_PRES_TYPE_SEQ
+    ber_mock_push(0xA0, 2);                       // OSI_PRES_MODE_SELECTOR_SEQ
+    ber_mock_push(0x80, 0, 2, true, data + 6);    // OSI_PRES_MODE_VALUE, no value octet
+
+    Cursor cur;
+    cur.set("test", data, 6);
+
+    BerReader ber(cur);
+
+    OsiPresPpduModeSelectorType res = resolve_mode_selector(&ber, &cur, OSI_SESSION_SPDU__CN);
+
+    CHECK(res == OSI_PRES_MODE__INVALID);
+    CHECK_EQUAL(6u, cur.get_pos());
+}
+
+TEST(osi_pres_decode_test, resolve_mode_selector_normal_mode_value_in_bounds)
+{
+    uint8_t data[8] = { 0 };
+    data[6] = OSI_PRES_MODE__NORMAL;
+
+    ber_mock_push(0x31, 4);                       // OSI_PRES_TYPE_SEQ
+    ber_mock_push(0xA0, 2);                       // OSI_PRES_MODE_SELECTOR_SEQ
+    ber_mock_push(0x80, 1, 2, true, data + 6);    // OSI_PRES_MODE_VALUE
+
+    Cursor cur;
+    cur.set("test", data, sizeof(data));
+
+    BerReader ber(cur);
+
+    OsiPresPpduModeSelectorType res = resolve_mode_selector(&ber, &cur, OSI_SESSION_SPDU__AC);
+
+    CHECK(res == OSI_PRES_MODE__NORMAL);
+    CHECK_EQUAL(7u, cur.get_pos());
+}
+
+TEST(osi_pres_decode_test, decode_osi_pres_context_list_item_zero_length_context_id)
+{
+    uint8_t data[5] = { 0 };
+    data[4] = OSI_PRES_CONTEXT_ID__ACSE;
+
+    ber_mock_push(0x30, 4);                       // context list item
+    ber_mock_push(0x02, 0, 2, true, data + 4);    // context id, no value octet
+
+    Cursor cur;
+    cur.set("test", data, 4);
+
+    BerReader ber(cur);
+
+    TpktAppliSearchStateType res = decode_osi_pres_context_list_item(&ber, &cur);
+
+    CHECK(res == TPKT_APPLI_SEARCH_STATE__EXIT);
+    CHECK_EQUAL(4u, cur.get_pos());
+    CHECK_EQUAL(1, mock_charge_calls);
+}
+
+TEST(osi_pres_decode_test, decode_osi_pres_context_list_item_truncated_context_id)
+{
+    uint8_t data[5] = { 0 };
+    data[4] = OSI_PRES_CONTEXT_ID__ACSE;
+
+    ber_mock_push(0x30, 8);                       // context list item
+    ber_mock_push(0x02, 1, 2, true, data + 4);    // context id
+
+    Cursor cur;
+    cur.set("test", data, 4);
+
+    BerReader ber(cur);
+
+    TpktAppliSearchStateType res = decode_osi_pres_context_list_item(&ber, &cur);
+
+    CHECK(res == TPKT_APPLI_SEARCH_STATE__EXIT);
+    CHECK_EQUAL(4u, cur.get_pos());
+    CHECK_EQUAL(1, mock_charge_calls);
+}
+
+TEST(osi_pres_decode_test, decode_osi_pres_context_list_item_context_id_in_bounds)
+{
+    uint8_t data[8] = { 0 };
+    data[4] = OSI_PRES_CONTEXT_ID__MMS;
+
+    ber_mock_push(0x30, 6);                       // context list item
+    ber_mock_push(0x02, 1, 2, true, data + 4);    // context id
+    ber_mock_push(0xA0, 2);                       // OSI_PRES_CONTEXT_LIST_PRES_DATA_VALUES
+    ber_mock_push(0xA0, 2);                       // OSI_PRES_SINGLE_ASN1_TYPE
+    ber_mock_push(0x30, 1);                       // mms payload
+
+    Cursor cur;
+    cur.set("test", data, sizeof(data));
+
+    BerReader ber(cur);
+
+    TpktAppliSearchStateType res = decode_osi_pres_context_list_item(&ber, &cur);
+
+    CHECK(res == TPKT_APPLI_SEARCH_STATE__MMS_FOUND);
+    CHECK_EQUAL(2, mock_charge_calls);
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
