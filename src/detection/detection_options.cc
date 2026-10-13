@@ -673,20 +673,7 @@ int detection_option_node_evaluate(
 static void detection_option_node_update_otn_stats(detection_option_tree_node_t* node,
     const dot_node_state_t* stats, unsigned thread_id, std::unordered_map<SigInfo*, OtnState>& entries)
 {
-    dot_node_state_t local_stats(node->state[thread_id]); /* cumulative stats for this node */
-
-    if ( stats )
-    {
-        local_stats.elapsed += stats->elapsed;
-        local_stats.elapsed_match += stats->elapsed_match;
-        local_stats.elapsed_no_match += stats->elapsed_no_match;
-
-        if ( stats->checks > local_stats.checks )
-            local_stats.checks = stats->checks;
-
-        local_stats.latency_suspends += stats->latency_suspends;
-        local_stats.latency_timeouts += stats->latency_timeouts;
-    }
+    dot_node_state_t local_stats = stats ? *stats : node->state[thread_id];
 
     if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
@@ -1252,6 +1239,44 @@ TEST_CASE("Detection Engine: skip_on_retry", "[de_core]")
             }
         }
     }
+}
+
+TEST_CASE("detection_option_node_update_otn_stats: elapsed time", "[de_core]")
+{
+    // Tree: root -> mid -> leaf_node
+    // root.elapsed=333, mid.elapsed=222, leaf_node.elapsed=111
+    // entries must reflect root's elapsed (333), not mid's or leaf's
+
+    OptTreeNode* otn = new OptTreeNode();
+    otn->state = new OtnState[1]();
+
+    auto* leaf_node = new detection_option_tree_node_t(RULE_OPTION_TYPE_LEAF_NODE, otn);
+    leaf_node->state[0].elapsed = TO_DURATION(leaf_node->state[0].elapsed, 111);
+    leaf_node->state[0].checks = 1;
+
+    auto* mid = new detection_option_tree_node_t(RULE_OPTION_TYPE_OTHER, nullptr);
+    mid->state[0].elapsed = TO_DURATION(mid->state[0].elapsed, 222);
+    mid->state[0].checks = 1;
+    mid->num_children = 1;
+    mid->children = (detection_option_tree_node_t**)snort_calloc(1, sizeof(detection_option_tree_node_t*));
+    mid->children[0] = leaf_node;
+
+    auto* root = new detection_option_tree_node_t(RULE_OPTION_TYPE_OTHER, nullptr);
+    root->state[0].elapsed = TO_DURATION(root->state[0].elapsed, 333);
+    root->state[0].checks = 1;
+    root->num_children = 1;
+    root->children = (detection_option_tree_node_t**)snort_calloc(1, sizeof(detection_option_tree_node_t*));
+    root->children[0] = mid;
+
+    std::unordered_map<SigInfo*, OtnState> entries;
+    detection_option_node_update_otn_stats(root, nullptr, 0, entries);
+
+    auto root_elapsed = root->state[0].elapsed;
+    delete root;
+
+    REQUIRE(entries[&otn->sigInfo].elapsed.count() == root_elapsed.count());
+
+    delete otn;
 }
 
 #endif
