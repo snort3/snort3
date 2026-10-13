@@ -1119,3 +1119,153 @@ TEST_CASE("TCP fragment budget state does not suppress SMB reassembly", "[dce_co
     destroy_tracker(cot);
     cleanup();
 }
+
+TEST_CASE("SMB fragment buffers share the retained CO memory limit", "[dce_co]")
+{
+    constexpr uint16_t stub_len = 200;
+    constexpr uint16_t request_size = co_hdr_len + req_hdr_len + stub_len;
+    constexpr uint16_t response_size = co_hdr_len + resp_hdr_len + stub_len;
+    constexpr uint32_t retained_limit = 300;
+
+    std::vector<uint8_t> request(request_size, 0);
+    std::vector<uint8_t> response(response_size, 0);
+    make_first_request_pdu(request.data(), 1, stub_len);
+    make_response_pdu(response.data(), 2, stub_len, DCERPC_CO_PFC_FLAGS__FIRST_FRAG);
+
+    dce2SmbProtoConf config = {};
+    config.common.common.disable_defrag = false;
+    config.common.common.max_frag_len = DCE2_SENTINEL;
+
+    DCE2_SsnData sd = {};
+    sd.trans = DCE2_TRANS_TYPE__SMB;
+    sd.server_policy = DCE2_POLICY__WINXP;
+    sd.client_policy = DCE2_POLICY__WINXP;
+    sd.config = &config;
+
+    dce2_smb_stats = {};
+    uint32_t retained_bytes = 0;
+
+    DCE2_CoTracker client_cot;
+    DCE2_CoInitTracker(&client_cot);
+    DCE2_CoConfigureTracker(&client_cot, &retained_bytes, retained_limit);
+    client_cot.pending_ctx_ids = DCE2_QueueNew(nullptr);
+
+    reset_state(request.data(), request_size);
+    DCE2_CoProcess(&sd, &client_cot, request.data(), request_size);
+
+    REQUIRE(client_cot.frag_tracker.cli_stub_buf != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(client_cot.frag_tracker.cli_stub_buf->size == stub_len); // LCOV_EXCL_BR_LINE
+    CHECK(retained_bytes == stub_len); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 0); // LCOV_EXCL_BR_LINE
+
+    DCE2_CoTracker server_cot;
+    DCE2_CoInitTracker(&server_cot);
+    DCE2_CoConfigureTracker(&server_cot, &retained_bytes, retained_limit);
+
+    reset_state(response.data(), response_size, PKT_FROM_SERVER);
+    DCE2_CoProcess(&sd, &server_cot, response.data(), response_size);
+
+    CHECK(server_cot.frag_tracker.srv_stub_buf == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(retained_bytes == stub_len); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(blocked_packet == &test_packet); // LCOV_EXCL_BR_LINE
+    CHECK(block_session_forced == true); // LCOV_EXCL_BR_LINE
+    CHECK(drop_reason_calls == 1); // LCOV_EXCL_BR_LINE
+    CHECK(recorded_drop_reason == "smb"); // LCOV_EXCL_BR_LINE
+
+    destroy_tracker(server_cot);
+    CHECK(retained_bytes == stub_len); // LCOV_EXCL_BR_LINE
+    destroy_tracker(client_cot);
+    CHECK(retained_bytes == 0); // LCOV_EXCL_BR_LINE
+    cleanup();
+}
+
+TEST_CASE("FIRST LAST request releases stale client fragment buffer", "[dce_co]")
+{
+    constexpr uint16_t stub_len = 200;
+    constexpr uint16_t pdu_size = co_hdr_len + req_hdr_len + stub_len;
+    constexpr uint32_t retained_limit = 300;
+
+    std::vector<uint8_t> data(pdu_size * 2, 0);
+    make_request_pdu(data.data(), 1, stub_len, DCERPC_CO_PFC_FLAGS__FIRST_FRAG);
+    make_request_pdu(data.data() + pdu_size, 2, stub_len,
+        DCERPC_CO_PFC_FLAGS__FIRST_FRAG | DCERPC_CO_PFC_FLAGS__LAST_FRAG);
+
+    dce2SmbProtoConf config = {};
+    config.common.common.disable_defrag = false;
+    config.common.common.max_frag_len = DCE2_SENTINEL;
+
+    DCE2_SsnData sd = {};
+    sd.trans = DCE2_TRANS_TYPE__SMB;
+    sd.server_policy = DCE2_POLICY__WINXP;
+    sd.client_policy = DCE2_POLICY__WINXP;
+    sd.config = &config;
+
+    dce2_smb_stats = {};
+    uint32_t retained_bytes = 0;
+
+    DCE2_CoTracker cot;
+    DCE2_CoInitTracker(&cot);
+    DCE2_CoConfigureTracker(&cot, &retained_bytes, retained_limit);
+    cot.pending_ctx_ids = DCE2_QueueNew(nullptr);
+
+    reset_state(data.data(), static_cast<uint16_t>(data.size()));
+    DCE2_CoProcess(&sd, &cot, data.data(), static_cast<uint16_t>(data.size()));
+
+    CHECK(cot.frag_tracker.cli_stub_buf == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(retained_bytes == 0); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.co_cli_frag_reassembled == 1); // LCOV_EXCL_BR_LINE
+
+    destroy_tracker(cot);
+    cleanup();
+}
+
+TEST_CASE("REJECT releases retained client fragment buffer", "[dce_co]")
+{
+    constexpr uint16_t stub_len = 200;
+    constexpr uint16_t request_size = co_hdr_len + req_hdr_len + stub_len;
+    constexpr uint16_t reject_size = co_hdr_len + resp_hdr_len;
+    constexpr uint32_t retained_limit = 300;
+
+    std::vector<uint8_t> request(request_size, 0);
+    std::vector<uint8_t> reject(reject_size, 0);
+    make_first_request_pdu(request.data(), 1, stub_len);
+    make_response_pdu(reject.data(), 1, 0, 0);
+    reinterpret_cast<DceRpcCoHdr*>(reject.data())->ptype = DCERPC_PDU_TYPE__REJECT;
+
+    dce2SmbProtoConf config = {};
+    config.common.common.disable_defrag = false;
+    config.common.common.max_frag_len = DCE2_SENTINEL;
+
+    DCE2_SsnData sd = {};
+    sd.trans = DCE2_TRANS_TYPE__SMB;
+    sd.server_policy = DCE2_POLICY__WINXP;
+    sd.client_policy = DCE2_POLICY__WINXP;
+    sd.config = &config;
+
+    dce2_smb_stats = {};
+    uint32_t retained_bytes = 0;
+
+    DCE2_CoTracker cot;
+    DCE2_CoInitTracker(&cot);
+    DCE2_CoConfigureTracker(&cot, &retained_bytes, retained_limit);
+    cot.pending_ctx_ids = DCE2_QueueNew(nullptr);
+
+    reset_state(request.data(), request_size);
+    DCE2_CoProcess(&sd, &cot, request.data(), request_size);
+
+    REQUIRE(cot.frag_tracker.cli_stub_buf != nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(retained_bytes == stub_len); // LCOV_EXCL_BR_LINE
+
+    reset_state(reject.data(), reject_size, PKT_FROM_SERVER);
+    DCE2_CoProcess(&sd, &cot, reject.data(), reject_size);
+
+    CHECK(cot.frag_tracker.cli_stub_buf == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(cot.cli_seg.buf == nullptr); // LCOV_EXCL_BR_LINE
+    CHECK(retained_bytes == 0); // LCOV_EXCL_BR_LINE
+    CHECK(cot.call_id == DCE2_SENTINEL); // LCOV_EXCL_BR_LINE
+    CHECK(dce2_smb_stats.co_reject == 1); // LCOV_EXCL_BR_LINE
+
+    destroy_tracker(cot);
+    cleanup();
+}

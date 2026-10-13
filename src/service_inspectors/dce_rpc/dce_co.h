@@ -251,12 +251,17 @@ struct DCE2_CoTracker
     // Aggregate retained segmented-CO buffer accounting. For SMB named pipes
     // this points at the per-SMB-session total (owned by the SMB session
     // tracker, whose lifetime covers this co_tracker); for dce_tcp it is per-flow.
+    // Fragment reassembly uses the same owner and limit, but keeps an independent
+    // per-tracker delta so both buffer classes contribute to the aggregate cap.
     // No in-class initializers: this struct must stay trivially constructible so
     // it can be zeroed via calloc/memset (e.g. embedded in DCE2_TcpSsnData);
     // DCE2_CoInitTracker() sets these fields on every creation path.
     uint32_t* retained_seg_owner;
     uint32_t retained_seg_limit;
     uint32_t tracked_seg_bytes;
+    uint32_t* retained_frag_owner;
+    uint32_t retained_frag_limit;
+    uint32_t tracked_frag_bytes;
 
     // Fragment reassemblies performed within the current DCE/TCP PAF flush.
     // The inline-enforced trip latch persists; passive trips do not set it.
