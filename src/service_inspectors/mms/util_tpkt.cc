@@ -224,10 +224,14 @@ static bool is_osi_session(Cursor* c)
         // message may be present
         // both of these types are the same value and appear to be distinguished by
         // their location in the message
-#define OSI_SESSION_SPDU_GT_DT_SIZE    0x02
         if (hdr->spdu_type == OSI_SESSION_SPDU__GT_DT and hdr->length == 0x00)
         {
-            hdr += OSI_SESSION_SPDU_GT_DT_SIZE;
+            if (c->length() < 2 * sizeof(OsiSessionHdr))
+            {
+                return false;
+            }
+
+            hdr += 1;
             if (hdr->spdu_type == OSI_SESSION_SPDU__GT_DT and hdr->length == 0x00)
             {
                 bool res = false;
@@ -245,7 +249,7 @@ static bool is_osi_session(Cursor* c)
         // message may be present
         if (hdr->spdu_type == OSI_SESSION_SPDU__CN or hdr->spdu_type == OSI_SESSION_SPDU__AC)
         {
-            if (hdr->length < c->size())
+            if (static_cast<unsigned>(hdr->length) + sizeof(OsiSessionHdr) <= c->length())
             {
                 return true;
             }
