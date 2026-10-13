@@ -589,9 +589,9 @@ static int PNorm_scan_fsm(PNormState* s, int c, JSState* js)
     char uc;
     const JSNorm* m = plus_norm + s->fsm;
 
-    uc = toupper(c);
+    uc = toupper((uint8_t)c);
 
-    if (isspace(c))
+    if (isspace((uint8_t)c))
     {
         c = uc =' ';
     }
@@ -775,9 +775,9 @@ static int SFCC_scan_fsm(SFCCState* s, int c)
     int uc;
     const JSNorm* m = sfcc_norm + s->fsm;
 
-    uc = toupper(c);
+    uc = toupper((uint8_t)c);
 
-    if (isspace(c))
+    if (isspace((uint8_t)c))
         return (SFCC_exec(s, SFCC_ACT_SPACE, c));
 
     value = valid_chars[uc];
@@ -1026,14 +1026,14 @@ static int Unescape_exec(UnescapeState* s, ActionUnsc a, int c, JSState* js)
 
 static int Unescape_scan_fsm(UnescapeState* s, int c, JSState* js)
 {
-    if (isspace(c))
+    if (isspace((uint8_t)c))
     {
         c = ' ';
         return(Unescape_exec(s, UNESC_ACT_SPACE, c, js));
     }
 
     const JSNorm* m = unescape_norm + s->fsm;
-    int uc = toupper(c);
+    int uc = toupper((uint8_t)c);
     int value = valid_chars[uc];
     int indexed = value ? 1 : 0;
 
@@ -1208,14 +1208,14 @@ static int JSNorm_exec(JSNormState* s, ActionJSNorm a, int c, const char* src, u
 static int JSNorm_scan_fsm(JSNormState* s, int c, const char* src, uint16_t srclen, const char** ptr,
     JSState* js)
 {
-    if (isspace(c))
+    if (isspace((uint8_t)c))
     {
         c = ' ';
         return(JSNorm_exec(s, ACT_SPACE, c, src, srclen, ptr, js));
     }
 
     const JSNorm* m = javascript_norm + s->fsm;
-    int uc = toupper(c);
+    int uc = toupper((uint8_t)c);
 
     do
     {
@@ -1278,3 +1278,38 @@ int JSNormalizeDecode(const char* src, uint16_t srclen, char* dst, uint16_t dest
     return RET_OK;
 }
 }
+
+#ifdef UNIT_TEST
+
+#include <string>
+
+#include "catch/snort_catch.h"
+
+static std::string normalize_script(const std::string& script)
+{
+    char out[64] = { };
+    const char* ptr = script.c_str();
+    int bytes_copied = 0;
+    JSState js;
+
+    js.allowed_spaces = 200;
+    js.allowed_levels = MAX_ALLOWED_OBFUSCATION;
+    js.alerts = 0;
+
+    snort::JSNormalizeDecode(script.c_str(), (uint16_t)script.size(), out, (uint16_t)sizeof(out),
+        &ptr, &bytes_copied, &js, nullptr);
+
+    return std::string(out, bytes_copied);
+}
+
+TEST_CASE("unescape argument holding byte 0xff", "[util_jsnorm]")
+{
+    CHECK(normalize_script("unescape('\xff%41')") == "'\xff" "A'");
+}
+
+TEST_CASE("String.fromCharCode argument holding byte 0xff", "[util_jsnorm]")
+{
+    CHECK(normalize_script("String.fromCharCode(65,\xff)") == "A\xff)");
+}
+
+#endif
