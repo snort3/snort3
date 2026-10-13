@@ -51,11 +51,6 @@ Http2HeadersFrame::Http2HeadersFrame(const uint8_t* header_buffer, const uint32_
     hpack_decoder = &session_data->hpack_decoder[source_id];
 }
 
-bool Http2HeadersFrame::in_error_state() const
-{
-    return stream->get_state(source_id) == STREAM_ERROR;
-}
-
 bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, bool trailers)
 {
     const uint32_t encoded_headers_length = (data.length() > hpack_headers_offset) ?

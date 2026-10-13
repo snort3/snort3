@@ -46,7 +46,6 @@ protected:
     bool decode_headers(Http2StartLine* start_line_generator, bool trailers);
     void process_decoded_headers(const HttpFlowData* http_flow, HttpCommon::SourceId hi_source_id, snort::Packet* p);
     uint8_t get_flags_mask() const override;
-    virtual bool in_error_state() const;
 
     Field http1_header;                 // finalized headers to be passed to http_inspect
     Http2HpackDecoder* hpack_decoder;
