@@ -72,6 +72,20 @@ struct FragTracker
 
     // Count of IP fragment overlap for each packet id.
     uint32_t overlap_count = 0;
+
+    // post-condition: the tracker describes no stored fragments
+    void clear_fragments(uint32_t keep_flags)
+    {
+        fraglist = nullptr;
+        fraglist_tail = nullptr;
+        fraglist_count = 0;
+        frag_flags &= keep_flags;
+        frag_bytes = 0;
+        calculated_size = 0;
+        frag_pkts = 0;
+        overlap_count = 0;
+        alert_count = 0;
+    }
 };
 
 class IpSession : public Session

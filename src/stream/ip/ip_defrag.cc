@@ -807,8 +807,8 @@ static inline void delete_node(FragTracker* ft, Fragment* node)
     ft->fraglist_count--;
 }
 
-// Delete the contents of a FragTracker, in this instance that just means to
-// dump the fraglist.
+// Dump the fraglist and reset the accounting that describes it, so a caller
+// that reuses the tracker in place restarts from an empty datagram.
 
 static void delete_tracker(FragTracker* ft)
 {
@@ -825,12 +825,16 @@ static void delete_tracker(FragTracker* ft)
         idx = idx->next;
         delete dump_me;
     }
-    ft->fraglist = nullptr;
     if (ft->ip_options_data)
     {
         snort_free(ft->ip_options_data);
         ft->ip_options_data = nullptr;
     }
+    ft->ip_options_len = 0;
+    ft->copied_ip_options_len = 0;
+
+    // a dropped datagram keeps dropping; nothing else outlives the purge
+    ft->clear_fragments(FRAG_DROP_FRAGMENTS);
 
     ip_stats.trackers_cleared++;
 }

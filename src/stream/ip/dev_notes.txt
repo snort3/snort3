@@ -43,3 +43,23 @@ alert-behavior change: 123:7 more accurately describes an oversize datagram,
 and it lets the reassembly bail out cleanly instead of silently dropping the
 rebuilt packet.  Deployments that key on the specific defrag SID may observe
 123:3 events for such fragments become 123:7.
+
+Tracker purge post-condition
+============================
+
+delete_tracker() does not free the FragTracker; two callers keep using it in
+place.  Defrag::expired() purges a timed-out train and lets the fragment that
+triggered the timeout fall through to insert(), and Defrag::process() purges
+after a rebuilt datagram drew a drop or would-drop verdict.  Both require the
+purge to leave the tracker describing an empty datagram, as new_tracker()
+does, which is what FragTracker::clear_fragments() provides: the fraglist and
+its tail and count, the completion flags, frag_bytes, calculated_size,
+frag_pkts, overlap_count and the alert record.
+
+Only the frag_flags bits the caller names cross the purge, and delete_tracker()
+names one: FRAG_DROP_FRAGMENTS is a per-key policy latch rather than fragment
+accounting, so the remaining fragments of a dropped datagram keep being
+dropped.  Tracker identity and configuration - engine, ip_proto, ttl,
+frag_time and frag_policy - are owned by the caller and are untouched; in
+particular engine must stay set, because clearing it would route the next
+fragment to new_tracker() from inside the expired() path.
