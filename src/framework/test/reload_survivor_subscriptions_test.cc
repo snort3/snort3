@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "framework/reload_survivor_subscriptions.h"
 #include "framework/reload_survivor_subscriptions_impl.h"
 
 #include "framework/data_bus.h"
@@ -32,6 +31,10 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -88,8 +91,65 @@ InspectionPolicy* get_inspection_policy()
 void set_network_policy(NetworkPolicy*) { }
 void set_inspection_policy(InspectionPolicy*) { }
 
+char last_warning[512] = "";
+
+std::atomic<unsigned> warning_count { 0 };
+
+std::atomic<bool> saw_wrapper_destruction { false };
+
+// a test that needs the Nth warning to be the last one sets these; the mock rewinds
+// the clock on the warning thread itself, so the count is exact by construction
+std::atomic<unsigned> last_warning_due { 0 };
+std::atomic<std::atomic<bool>*> warning_release_latch { nullptr };
+
+// mirrors the production warning schedule in reload_survivor_subscriptions.cc;
+// warn_third_ms is derived there as slow_wait_second_ms + slow_wait_repeat_ms
+constexpr uint64_t warn_first_ms = 5000;
+constexpr uint64_t warn_second_ms = 60000;
+constexpr uint64_t warn_third_ms = 360000;
+
+// advances the clock to the next scheduled step as each warning lands
+std::atomic<bool> step_clock_on_warning { false };
+
+// serialized so last_warning is not torn and the mock is not entered twice over
+static std::mutex warning_mutex;
+
 void WarningMessage(const char* format, ...)
-{ mock().actualCall("WarningMessage").withParameter("format", format); }
+{
+    std::lock_guard<std::mutex> lock(warning_mutex);
+
+    va_list ap;
+    va_start(ap, format);
+    vsnprintf(last_warning, sizeof(last_warning), format, ap);
+    va_end(ap);
+
+    if ( strstr(last_warning, "wrapper destruction") )
+        saw_wrapper_destruction.store(true, std::memory_order_release);
+
+    const unsigned n = warning_count.fetch_add(1, std::memory_order_release) + 1;
+    const unsigned due = last_warning_due.load(std::memory_order_relaxed);
+
+    if ( due and n >= due )
+    {
+        rss_set_elapsed_for_test(0);
+
+        if ( auto* release = warning_release_latch.load(std::memory_order_relaxed) )
+            release->store(true, std::memory_order_release);
+    }
+    else if ( step_clock_on_warning.load(std::memory_order_relaxed) )
+    {
+        if ( n == 1 )
+            rss_set_elapsed_for_test(warn_second_ms);
+        else if ( n == 2 )
+            rss_set_elapsed_for_test(warn_third_ms);
+    }
+
+    mock().actualCall("WarningMessage").withParameter("format", format);
+}
+
+// mirrors the real body, unchecked deref included, so the null-config test bites
+unsigned SnortConfig::get_reload_id()
+{ return get_conf()->reload_id.load(std::memory_order_relaxed); }
 
 THREAD_LOCAL PacketCount pc;
 }
@@ -133,6 +193,25 @@ private:
     std::atomic<unsigned>& counter;
 };
 
+// safety cap; a timed-out spin marks its test failed in teardown instead of
+// hanging the suite
+static constexpr std::chrono::seconds spin_cap { 5 };
+static std::atomic<bool> spin_wait_timed_out { false };
+
+static bool spin_expired(std::chrono::steady_clock::time_point since)
+{ return std::chrono::steady_clock::now() - since >= spin_cap; }
+
+static void spin_until(const std::atomic<bool>& flag)
+{
+    const auto since = std::chrono::steady_clock::now();
+
+    while ( !flag.load(std::memory_order_acquire) and !spin_expired(since) )
+        std::this_thread::yield();
+
+    if ( !flag.load(std::memory_order_acquire) )
+        spin_wait_timed_out.store(true, std::memory_order_relaxed);
+}
+
 // widens the in-flight window for release() to race against
 class SlowHandler : public DataHandler
 {
@@ -152,6 +231,25 @@ private:
     std::atomic<bool>& entered;
     std::atomic<bool>& done;
     unsigned delay_ms;
+};
+
+// pins a callback in flight until released, so no test has to time anything
+class LatchHandler : public DataHandler
+{
+public:
+    LatchHandler(std::atomic<bool>& entered_, std::atomic<bool>& release_) :
+        DataHandler("rss_ut_latch"), entered(entered_), release(release_) { }
+
+    void handle(DataEvent&, Flow*) override
+    {
+        entered.store(true, std::memory_order_release);
+
+        spin_until(release);
+    }
+
+private:
+    std::atomic<bool>& entered;
+    std::atomic<bool>& release;
 };
 
 // Minimal concrete Inspector: pure-virtual-free; RSS only takes its
@@ -203,12 +301,25 @@ TEST_GROUP(reload_survivor_subscriptions)
 
         rss_reset_for_test();
         rss_stats.reset();
+
+        snort::last_warning[0] = '\0';
+        snort::warning_count.store(0, std::memory_order_relaxed);
+        snort::saw_wrapper_destruction.store(false, std::memory_order_relaxed);
+        snort::last_warning_due.store(0, std::memory_order_relaxed);
+        snort::warning_release_latch.store(nullptr, std::memory_order_relaxed);
+        snort::step_clock_on_warning.store(false, std::memory_order_relaxed);
+        spin_wait_timed_out.store(false, std::memory_order_relaxed);
     }
 
     void teardown() override
     {
+        const bool timed_out = spin_wait_timed_out.load(std::memory_order_relaxed);
+
+        // clear before asserting: a failing CHECK unwinds out of teardown()
         rss_reset_for_test();
         mock().clear();
+
+        CHECK_FALSE(timed_out);
     }
 };
 
@@ -293,8 +404,7 @@ TEST(reload_survivor_subscriptions, await_quiescent_waits_for_inflight_handle)
         DataBus::publish(pub_id, RssUtIds::EVENT, e);
     });
 
-    while ( !entered.load(std::memory_order_acquire) )
-        std::this_thread::yield();
+    spin_until(entered);
 
     CHECK_TRUE(rss_await_quiescent(survivor));
     CHECK_TRUE(handled_done.load(std::memory_order_acquire));
@@ -320,8 +430,7 @@ TEST(reload_survivor_subscriptions, release_waits_for_inflight_handle)
         DataBus::publish(pub_id, RssUtIds::EVENT, e);
     });
 
-    while ( !entered.load(std::memory_order_acquire) )
-        std::this_thread::yield();
+    spin_until(entered);
 
     rss_release(survivor);
     CHECK_TRUE(handled_done.load(std::memory_order_acquire));
@@ -351,9 +460,8 @@ TEST(reload_survivor_subscriptions, release_waits_for_all_inflight_handles)
     std::thread publisher_b([&]()
     { DataBus::publish(pub_id, RssUtIds::EVENT_OTHER, e); });
 
-    while ( !entered_a.load(std::memory_order_acquire) or
-            !entered_b.load(std::memory_order_acquire) )
-        std::this_thread::yield();
+    spin_until(entered_a);
+    spin_until(entered_b);
 
     rss_release(survivor);
     CHECK_TRUE(done_a.load(std::memory_order_acquire));
@@ -361,6 +469,216 @@ TEST(reload_survivor_subscriptions, release_waits_for_all_inflight_handles)
 
     publisher_a.join();
     publisher_b.join();
+}
+
+TEST(reload_survivor_subscriptions, slow_release_drain_warns_and_names_survivor)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    std::atomic<bool> entered{false};
+    std::atomic<bool> latch{false};
+
+    rss.subscribe("slow_key", rss_pub_key, RssUtIds::EVENT, [&]() -> DataHandler*
+        { return new LatchHandler(entered, latch); });
+
+    CountingEvent e;
+    std::thread publisher([&]()
+    { DataBus::publish(pub_id, RssUtIds::EVENT, e); });
+
+    spin_until(entered);
+
+    std::thread releaser([&]()
+    {
+        const auto since = std::chrono::steady_clock::now();
+
+        while ( rss_stats.slow_drains.load(std::memory_order_relaxed) == 0
+            and !spin_expired(since) )
+            std::this_thread::yield();
+
+        latch.store(true, std::memory_order_release);
+    });
+
+    // more than one wait can warn here, so only rss_slow_drains is an exact count
+    mock().ignoreOtherCalls();
+
+    const bool released = rss_release(survivor);
+
+    releaser.join();
+    publisher.join();
+
+    CHECK_TRUE(released);
+    CHECK_TRUE(snort::warning_count.load(std::memory_order_relaxed) >= 1);
+    CHECK_EQUAL(1u, rss_stats.slow_drains.load(std::memory_order_relaxed));
+    STRCMP_CONTAINS("release", snort::last_warning);
+    STRCMP_CONTAINS("rss_ut_latch", snort::last_warning);
+    STRCMP_CONTAINS("slow_key", snort::last_warning);
+
+    STRCMP_CONTAINS("network policy 42", snort::last_warning);
+    STRCMP_CONTAINS("inspection policy 7", snort::last_warning);
+    STRCMP_CONTAINS("1 callback(s) in flight", snort::last_warning);
+
+    STRCMP_CONTAINS("1 borrow(s) held", snort::last_warning);
+    STRCMP_CONTAINS("handler retired", snort::last_warning);
+}
+
+TEST(reload_survivor_subscriptions, slow_drain_warns_without_a_thread_config)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    std::atomic<bool> entered{false};
+    std::atomic<bool> latch{false};
+
+    rss.subscribe("teardown_key", rss_pub_key, RssUtIds::EVENT, [&]() -> DataHandler*
+        { return new LatchHandler(entered, latch); });
+
+    CountingEvent e;
+    std::thread publisher([&]()
+    { DataBus::publish(pub_id, RssUtIds::EVENT, e); });
+
+    spin_until(entered);
+
+    std::thread releaser([&]()
+    {
+        const auto since = std::chrono::steady_clock::now();
+
+        while ( rss_stats.slow_drains.load(std::memory_order_relaxed) == 0
+            and !spin_expired(since) )
+            std::this_thread::yield();
+
+        latch.store(true, std::memory_order_release);
+    });
+
+    // more than one wait can warn here, so only the warning text matters
+    mock().ignoreOtherCalls();
+
+    // snort_conf is thread-local, so this only blinds the draining thread
+    SnortConfig* saved = snort::snort_conf;
+    snort::snort_conf = nullptr;
+
+    const bool released = rss_release(survivor);
+
+    snort::snort_conf = saved;
+
+    releaser.join();
+    publisher.join();
+
+    CHECK_TRUE(released);
+    CHECK_TRUE(snort::warning_count.load(std::memory_order_relaxed) >= 1);
+    STRCMP_CONTAINS("teardown_key", snort::last_warning);
+    STRCMP_CONTAINS("reload id 0", snort::last_warning);
+}
+
+TEST(reload_survivor_subscriptions, slow_await_quiescent_drain_reports_its_phase)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    std::atomic<bool> entered{false};
+    std::atomic<bool> latch{false};
+
+    rss.subscribe("aq_key", rss_pub_key, RssUtIds::EVENT, [&]() -> DataHandler*
+        { return new LatchHandler(entered, latch); });
+
+    CountingEvent e;
+    std::thread publisher([&]()
+    { DataBus::publish(pub_id, RssUtIds::EVENT, e); });
+
+    spin_until(entered);
+
+    std::thread releaser([&]()
+    {
+        const auto since = std::chrono::steady_clock::now();
+
+        while ( rss_stats.slow_drains.load(std::memory_order_relaxed) == 0
+            and !spin_expired(since) )
+            std::this_thread::yield();
+
+        latch.store(true, std::memory_order_release);
+    });
+
+    // more than one wait can warn here, so only rss_slow_drains is an exact count
+    mock().ignoreOtherCalls();
+
+    const bool quiesced = rss_await_quiescent(survivor);
+
+    releaser.join();
+    publisher.join();
+
+    CHECK_TRUE(quiesced);
+    CHECK_TRUE(snort::warning_count.load(std::memory_order_relaxed) >= 1);
+    CHECK_EQUAL(1u, rss_stats.slow_drains.load(std::memory_order_relaxed));
+    STRCMP_CONTAINS("await_quiescent", snort::last_warning);
+    STRCMP_CONTAINS("aq_key", snort::last_warning);
+
+    STRCMP_CONTAINS("handler live", snort::last_warning);
+}
+
+TEST(reload_survivor_subscriptions, stuck_drain_rewarns_on_a_widening_interval)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    std::atomic<bool> entered{false};
+    std::atomic<bool> latch{false};
+
+    rss.subscribe("escalate_key", rss_pub_key, RssUtIds::EVENT, [&]() -> DataHandler*
+        { return new LatchHandler(entered, latch); });
+
+    CountingEvent e;
+    std::thread publisher([&]()
+    { DataBus::publish(pub_id, RssUtIds::EVENT, e); });
+
+    spin_until(entered);
+
+    // the drain cannot re-warn until production says the next step is due; the 3rd
+    // rewinds the clock and drops the latch from the mock, so a 4th never comes due
+    snort::step_clock_on_warning.store(true, std::memory_order_relaxed);
+    snort::warning_release_latch.store(&latch, std::memory_order_relaxed);
+    snort::last_warning_due.store(3, std::memory_order_relaxed);
+
+    mock().expectNCalls(3, "WarningMessage").ignoreOtherParameters();
+
+    const bool released = rss_release(survivor);
+
+    publisher.join();
+    // must outlive the local latch it points at, so clear it before any check
+    snort::warning_release_latch.store(nullptr, std::memory_order_relaxed);
+
+    CHECK_TRUE(released);
+    CHECK_EQUAL(3u, snort::warning_count.load(std::memory_order_relaxed));
+
+    CHECK_EQUAL(1u, rss_stats.slow_drains.load(std::memory_order_relaxed));
+
+    mock().checkExpectations();
+}
+
+TEST(reload_survivor_subscriptions, prompt_drain_does_not_warn)
+{
+    // past the first step, so the silence is due to nothing being in flight
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT, [&]() -> DataHandler*
+        { return new CountingHandler(); });
+
+    CHECK_TRUE(rss_release(survivor));
+
+    CHECK_EQUAL(0u, rss_stats.slow_drains.load(std::memory_order_relaxed));
+    STRCMP_EQUAL("", snort::last_warning);
+
+    mock().checkExpectations();
 }
 
 // Same (survivor, target ip, key) tuple subscribed twice: a known duplicate
@@ -391,6 +709,8 @@ TEST(reload_survivor_subscriptions, dedup_same_tuple)
         });
 
     CHECK_EQUAL(1u, factory_calls);
+    CHECK_EQUAL(0u, rss_stats.dedup_conflicts.load(std::memory_order_relaxed));
+    CHECK_EQUAL(0u, snort::warning_count.load(std::memory_order_relaxed));
 
     CountingEvent e;
     DataBus::publish(pub_id, RssUtIds::EVENT, e);
@@ -578,13 +898,13 @@ TEST(reload_survivor_subscriptions, zero_flow_destroy_releases_before_free)
     CountingHandler* h = new CountingHandler();
     rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT, [h]() -> DataHandler* { return h; });
 
-    auto snap = rss_list_survivors();
+    auto snap = rss_list_survivors(0);
     CHECK_EQUAL(1u, snap.size());
     rss_end_reconcile(*survivor);
 
     delete survivor;
 
-    CHECK_EQUAL(0u, rss_list_survivors().size());
+    CHECK_EQUAL(0u, rss_list_survivors(0).size());
     CHECK_FALSE(h->live.load());
 
     CountingEvent e;
@@ -613,7 +933,7 @@ TEST(reload_survivor_subscriptions, bus_destroyed_strips_handlers_keeps_entry)
     }
 
     // Registry entry exists with snapshotted ids.
-    auto pre = rss_list_survivors();
+    auto pre = rss_list_survivors(0);
     CHECK_EQUAL(1u, pre.size());
     POINTERS_EQUAL(&survivor, pre[0].survivor);
     rss_end_reconcile(survivor);
@@ -627,7 +947,7 @@ TEST(reload_survivor_subscriptions, bus_destroyed_strips_handlers_keeps_entry)
     delete ip;
 
     // Entry still present.
-    auto post = rss_list_survivors();
+    auto post = rss_list_survivors(0);
     CHECK_EQUAL(1u, post.size());
     POINTERS_EQUAL(&survivor, post[0].survivor);
     CHECK_EQUAL(42u, post[0].np_user_id);
@@ -638,7 +958,7 @@ TEST(reload_survivor_subscriptions, bus_destroyed_strips_handlers_keeps_entry)
     // of the freed handler occurs.  Entry is erased after this call.
     rss_release(survivor);
 
-    auto after_release = rss_list_survivors();
+    auto after_release = rss_list_survivors(0);
     CHECK_EQUAL(0u, after_release.size());
 }
 
@@ -731,7 +1051,7 @@ TEST(reload_survivor_subscriptions, concurrent_subscribe_and_release)
 
     std::thread releaser([&]()
     {
-        while ( !start.load(std::memory_order_acquire) ) { }
+        spin_until(start);
         for ( unsigned i = 0; i < ITERATIONS; i++ )
         {
             rss_release(survivor);
@@ -751,7 +1071,7 @@ TEST(reload_survivor_subscriptions, concurrent_subscribe_and_release)
 
     releaser.join();
 
-    auto v = rss_list_survivors();
+    auto v = rss_list_survivors(0);
     CHECK_TRUE(v.size() <= 1);
 }
 
@@ -765,7 +1085,7 @@ TEST(reload_survivor_subscriptions, release_orders_tterm_write_against_reconcile
     CountingHandler* h = new CountingHandler();
     rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT, [h]() -> DataHandler* { return h; });
 
-    auto snap = rss_list_survivors();
+    auto snap = rss_list_survivors(0);
     CHECK_EQUAL(1u, snap.size());
 
     // Direct contract check: a packet thread attempting release() while
@@ -777,7 +1097,9 @@ TEST(reload_survivor_subscriptions, release_orders_tterm_write_against_reconcile
 
     std::thread packet_thread([&]()
     {
-        while ( !rss_release(survivor) )
+        const auto since = std::chrono::steady_clock::now();
+
+        while ( !rss_release(survivor) and !spin_expired(since) )
             std::this_thread::yield();
 
         survivor.state = 99;   // stands in for tterm()'s state mutation
@@ -793,7 +1115,162 @@ TEST(reload_survivor_subscriptions, release_orders_tterm_write_against_reconcile
     CHECK_TRUE(packet_done.load(std::memory_order_acquire));
     CHECK_EQUAL(99, survivor.state);
     CHECK_FALSE(h->live.load());
-    CHECK_EQUAL(0u, rss_list_survivors().size());
+    CHECK_EQUAL(0u, rss_list_survivors(0).size());
+}
+
+TEST(reload_survivor_subscriptions, reconcile_gate_deferrals_are_counted_quietly)
+{
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT,
+        []() -> DataHandler* { return new CountingHandler(); });
+
+    CHECK_EQUAL(1u, rss_list_survivors(0).size());
+
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(1u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+
+    // one ms short of the first step, so a schedule that warns any sooner fails
+    rss_set_elapsed_for_test(snort::warn_first_ms - 1);
+
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(2u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+
+    STRCMP_EQUAL("", snort::last_warning);
+
+    rss_end_reconcile(survivor);
+    CHECK_TRUE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(2u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+}
+
+TEST(reload_survivor_subscriptions, slow_reconcile_gate_warns_once_and_names_the_gate)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT,
+        []() -> DataHandler* { return new CountingHandler(); });
+
+    CHECK_EQUAL(1u, rss_list_survivors(12).size());
+
+    mock().expectOneCall("WarningMessage").ignoreOtherParameters();
+
+    CHECK_FALSE(rss_await_quiescent(survivor));
+
+    STRCMP_CONTAINS("await_quiescent deferred", snort::last_warning);
+    STRCMP_CONTAINS("reconciliation gate", snort::last_warning);
+    STRCMP_CONTAINS("on top of configuration 12", snort::last_warning);
+    STRCMP_CONTAINS("1 deferral(s)", snort::last_warning);
+    STRCMP_CONTAINS("rss_end_reconcile", snort::last_warning);
+
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(1u, rss_list_survivors(13).size());
+    CHECK_FALSE(rss_await_quiescent(survivor));
+
+    STRCMP_CONTAINS("on top of configuration 12", snort::last_warning);
+
+    CHECK_EQUAL(3u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+
+    mock().checkExpectations();
+}
+
+TEST(reload_survivor_subscriptions, slow_reconcile_gate_warns_on_a_deferred_release)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT,
+        []() -> DataHandler* { return new CountingHandler(); });
+
+    CHECK_EQUAL(1u, rss_list_survivors(9).size());
+
+    mock().expectOneCall("WarningMessage").ignoreOtherParameters();
+
+    CHECK_FALSE(rss_release(survivor));
+
+    STRCMP_CONTAINS("release deferred", snort::last_warning);
+    STRCMP_CONTAINS("on top of configuration 9", snort::last_warning);
+    STRCMP_CONTAINS("network policy 42", snort::last_warning);
+    STRCMP_CONTAINS("inspection policy 7", snort::last_warning);
+    CHECK_EQUAL(1u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+
+    rss_end_reconcile(survivor);
+    CHECK_TRUE(rss_release(survivor));
+
+    mock().checkExpectations();
+}
+
+TEST(reload_survivor_subscriptions, reconcile_gate_warning_rearms_for_a_fresh_generation)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT,
+        []() -> DataHandler* { return new CountingHandler(); });
+
+    mock().expectNCalls(2, "WarningMessage").ignoreOtherParameters();
+
+    CHECK_EQUAL(1u, rss_list_survivors(20).size());
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    rss_end_reconcile(survivor);
+
+    CHECK_EQUAL(1u, rss_list_survivors(21).size());
+    CHECK_FALSE(rss_await_quiescent(survivor));
+
+    STRCMP_CONTAINS("on top of configuration 21", snort::last_warning);
+    STRCMP_CONTAINS("1 deferral(s)", snort::last_warning);
+    CHECK_EQUAL(2u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+
+    mock().checkExpectations();
+}
+
+TEST(reload_survivor_subscriptions, held_reconcile_gate_rewarns_on_a_widening_interval)
+{
+    // the clock is the knob: each step below is due by construction
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    FakeInspector survivor;
+    ReloadSurvivorSubscriptions rss(my_network_policy, my_inspection_policy, survivor);
+
+    rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT,
+        []() -> DataHandler* { return new CountingHandler(); });
+
+    mock().expectNCalls(3, "WarningMessage").ignoreOtherParameters();
+
+    CHECK_EQUAL(1u, rss_list_survivors(30).size());
+
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(1u, snort::warning_count.load(std::memory_order_relaxed));
+
+    // one ms short of each step, so a schedule that re-warns any sooner fails
+    rss_set_elapsed_for_test(snort::warn_second_ms - 1);
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(1u, snort::warning_count.load(std::memory_order_relaxed));
+
+    rss_set_elapsed_for_test(snort::warn_second_ms);
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(2u, snort::warning_count.load(std::memory_order_relaxed));
+
+    rss_set_elapsed_for_test(snort::warn_third_ms - 1);
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(2u, snort::warning_count.load(std::memory_order_relaxed));
+
+    rss_set_elapsed_for_test(snort::warn_third_ms);
+    CHECK_FALSE(rss_await_quiescent(survivor));
+    CHECK_EQUAL(3u, snort::warning_count.load(std::memory_order_relaxed));
+
+    STRCMP_CONTAINS("on top of configuration 30", snort::last_warning);
+    STRCMP_CONTAINS("5 deferral(s)", snort::last_warning);
+    CHECK_EQUAL(5u, rss_stats.reconcile_deferrals.load(std::memory_order_relaxed));
+
+    mock().checkExpectations();
 }
 
 // subscribe() snapshots the (np, ip) user_policy_id pair on the first
@@ -809,7 +1286,7 @@ TEST(reload_survivor_subscriptions, subscribe_snapshots_ids_once)
     rss.subscribe("k1", rss_pub_key, RssUtIds::EVENT,
         []() -> DataHandler* { return new CountingHandler(); });
 
-    auto v = rss_list_survivors();
+    auto v = rss_list_survivors(0);
     CHECK_EQUAL(1u, v.size());
     POINTERS_EQUAL(&survivor, v[0].survivor);
     CHECK_EQUAL(42u, v[0].np_user_id);
@@ -827,7 +1304,7 @@ TEST(reload_survivor_subscriptions, subscribe_snapshots_ids_once)
     rss2.subscribe("k2", rss_pub_key, RssUtIds::EVENT,
         []() -> DataHandler* { return new CountingHandler(); });
 
-    auto v2 = rss_list_survivors();
+    auto v2 = rss_list_survivors(0);
     CHECK_EQUAL(1u, v2.size());
     CHECK_EQUAL(42u, v2[0].np_user_id);
     CHECK_EQUAL(7u, v2[0].ip_user_id);
@@ -854,7 +1331,7 @@ TEST(reload_survivor_subscriptions, list_survivors_one_row_per_inspector)
             []() -> DataHandler* { return new CountingHandler(); });
     }
 
-    auto v = rss_list_survivors();
+    auto v = rss_list_survivors(0);
     CHECK_EQUAL(2u, v.size());
 }
 
@@ -879,7 +1356,7 @@ TEST(reload_survivor_subscriptions, multi_reload_reattach_chain)
 
     // SC1 dies.  Handler list stripped; entry retained.
     delete ip1;
-    auto after_sc1 = rss_list_survivors();
+    auto after_sc1 = rss_list_survivors(0);
     CHECK_EQUAL(1u, after_sc1.size());
     CHECK_EQUAL(7u, after_sc1[0].ip_user_id);
     rss_end_reconcile(survivor);
@@ -896,7 +1373,7 @@ TEST(reload_survivor_subscriptions, multi_reload_reattach_chain)
 
     // SC2 dies.  Handler list stripped; entry retained.
     delete ip2;
-    auto after_sc2 = rss_list_survivors();
+    auto after_sc2 = rss_list_survivors(0);
     CHECK_EQUAL(1u, after_sc2.size());
     CHECK_EQUAL(7u, after_sc2[0].ip_user_id);
     rss_end_reconcile(survivor);
@@ -914,7 +1391,7 @@ TEST(reload_survivor_subscriptions, multi_reload_reattach_chain)
     // here) and erases the entry.
     rss_release(survivor);
 
-    auto after_release = rss_list_survivors();
+    auto after_release = rss_list_survivors(0);
     CHECK_EQUAL(0u, after_release.size());
 
     // Subsequent ~DataBus(ip3) must still be safe even though release
@@ -1073,7 +1550,7 @@ TEST(reload_survivor_subscriptions, many_reload_cycles_single_survivor_returns_t
         // Mirrors reconcile_map()'s list_survivors() sweep on every reload;
         // every entry returned needs exactly one end_reconcile() call. The
         // very first sweep predates any subscribe(), so it returns nothing.
-        auto snap = rss_list_survivors();
+        auto snap = rss_list_survivors(0);
         CHECK_EQUAL(i == 0 ? 0u : 1u, snap.size());
         rss_end_reconcile(survivor);
 
@@ -1232,8 +1709,8 @@ TEST(reload_survivor_subscriptions, pegs_list_survivors_returned)
     r2.subscribe("k", rss_pub_key, RssUtIds::EVENT,
         []() -> DataHandler* { return new CountingHandler(); });
 
-    (void)rss_list_survivors();  // +2
-    (void)rss_list_survivors();  // +2
+    (void)rss_list_survivors(0);  // +2
+    (void)rss_list_survivors(0);  // +2
 
     CHECK_EQUAL(4u, rss_stats.list_returned);
 }
@@ -1254,6 +1731,8 @@ TEST(reload_survivor_subscriptions, prep_counts_mapping_matches_named_indices)
     stats.active.store(108, std::memory_order_relaxed);
     stats.registry_tracked.store(109, std::memory_order_relaxed);
     stats.dedup_conflicts.store(110, std::memory_order_relaxed);
+    stats.slow_drains.store(111, std::memory_order_relaxed);
+    stats.reconcile_deferrals.store(112, std::memory_order_relaxed);
 
     PegCount out[static_cast<size_t>(RssPeg::Count)] = {};
     rss_stats_to_pegcounts(stats, out);
@@ -1268,6 +1747,8 @@ TEST(reload_survivor_subscriptions, prep_counts_mapping_matches_named_indices)
     CHECK_EQUAL(108u, out[static_cast<size_t>(RssPeg::Active)]);
     CHECK_EQUAL(109u, out[static_cast<size_t>(RssPeg::RegistryTracked)]);
     CHECK_EQUAL(110u, out[static_cast<size_t>(RssPeg::DedupConflicts)]);
+    CHECK_EQUAL(111u, out[static_cast<size_t>(RssPeg::SlowDrains)]);
+    CHECK_EQUAL(112u, out[static_cast<size_t>(RssPeg::ReconcileDeferrals)]);
 }
 
 // reset() must not zero the NOW-type active/registry_tracked gauges while
@@ -1383,7 +1864,7 @@ TEST(reload_survivor_subscriptions, subscribed_survivor_deleted_with_zero_flow_r
     delete survivor;
 
     // registry entry is retired -- no dangling survivor left behind
-    auto v = rss_list_survivors();
+    auto v = rss_list_survivors(0);
     CHECK_EQUAL(0u, v.size());
 
     // ASAN gate: would UAF here if release() had left the handler live
@@ -1408,8 +1889,7 @@ TEST(reload_survivor_subscriptions, subscribed_survivor_delete_races_inflight_ha
     std::thread publisher([&]()
     { DataBus::publish(pub_id, RssUtIds::EVENT, e); });
 
-    while ( !entered.load(std::memory_order_acquire) )
-        std::this_thread::yield();
+    spin_until(entered);
 
     delete survivor;
 
@@ -1456,8 +1936,7 @@ TEST(reload_survivor_subscriptions, await_quiescent_races_tentative_bus_teardown
     std::thread publisher([&]()
     { DataBus::publish(local_pub_id, RssUtIds::EVENT, e); });
 
-    while ( !entered.load(std::memory_order_acquire) )
-        std::this_thread::yield();
+    spin_until(entered);
 
     // Copies the lease into to_drain and starts spinning in drain() while
     // handle() is still mid-sleep (inflight == 1).
@@ -1475,6 +1954,66 @@ TEST(reload_survivor_subscriptions, await_quiescent_races_tentative_bus_teardown
 
     publisher.join();
     waiter.join();
+}
+
+TEST(reload_survivor_subscriptions, slow_wrapper_destruction_reports_its_phase)
+{
+    rss_set_elapsed_for_test(snort::warn_first_ms);
+
+    // both waits warn once here, so only the phase reaching the log is asserted
+    mock().ignoreOtherCalls();
+
+    FakeInspector survivor;
+
+    auto* ip = new InspectionPolicy();
+    ip->user_policy_id = 7;
+
+    std::atomic<bool> entered{false};
+    std::atomic<bool> latch{false};
+    unsigned local_pub_id;
+
+    {
+        ReloadSurvivorSubscriptions rss(my_network_policy, *ip, survivor);
+        rss.subscribe("borrow_key", rss_pub_key, RssUtIds::EVENT, [&]() -> DataHandler*
+            { return new LatchHandler(entered, latch); });
+        local_pub_id = DataBus::get_id(rss_pub_key);
+    }
+
+    mock().setDataObject("my_inspection_policy", "InspectionPolicy", ip);
+
+    CountingEvent e;
+    std::thread publisher([&]()
+    { DataBus::publish(local_pub_id, RssUtIds::EVENT, e); });
+
+    spin_until(entered);
+
+    std::thread waiter([&]()
+    { rss_await_quiescent(survivor); });
+
+    // the drain's own warning is proof the borrow is held, so nothing is timed
+    const auto warned = std::chrono::steady_clock::now();
+
+    while ( rss_stats.slow_drains.load(std::memory_order_relaxed) == 0
+        and !spin_expired(warned) )
+        std::this_thread::yield();
+
+    // bounded so a dropped warning fails the check below instead of hanging
+    std::thread releaser([&]()
+    {
+        spin_until(snort::saw_wrapper_destruction);
+
+        latch.store(true, std::memory_order_release);
+    });
+
+    delete ip;
+
+    releaser.join();
+    waiter.join();
+    publisher.join();
+
+    CHECK_TRUE(snort::saw_wrapper_destruction.load(std::memory_order_relaxed));
+
+    CHECK(rss_stats.slow_drains.load(std::memory_order_relaxed) >= 2);
 }
 
 //-------------------------------------------------------------------------

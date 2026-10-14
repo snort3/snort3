@@ -118,9 +118,16 @@ NetworkPolicy* PolicyMap::get_user_network(uint64_t user_id) const
 
 void clear_buffer_map() { }
 
+// stands in for update_reload_id() on the incoming config
+static const unsigned stub_reload_id = 77;
+
+// the active config's id, deliberately different so assertions show which was used
+static const unsigned stub_active_reload_id = 42;
+
 SnortConfig::SnortConfig(const char*)
 {
     policy_map = new PolicyMap();
+    reload_id.store(stub_reload_id, std::memory_order_relaxed);
     mock().setDataObject("snort_config", "const SnortConfig", this);
 }
 
@@ -132,7 +139,7 @@ SnortConfig::~SnortConfig()
 const SnortConfig* SnortConfig::get_conf()
 { return (const SnortConfig*)mock().getData("snort_config").getObjectPointer(); }
 
-unsigned SnortConfig::get_reload_id() { return 0; }
+unsigned SnortConfig::get_reload_id() { return stub_active_reload_id; }
 
 PlugContext* PluginManager::get_context(char const* s)
 { return (PlugContext*)mock().getData(s).getObjectPointer(); }
@@ -202,12 +209,13 @@ public:
     { }
 
     Usage get_usage() const override
-    { return Module::INSPECT; }
+    { return usage; }
 
     static Module* ctor() { return nullptr; }
     static void dtor(Module*) { }
 
     ReloadCounts* reload_counts = nullptr;
+    Usage usage = Module::INSPECT;
 };
 
 class ReloadInspector : public Inspector
@@ -423,9 +431,13 @@ static unsigned get_thread_refs(Inspector* pin)
 
 struct ReloadPlugin
 {
-    explicit ReloadPlugin(const char* name) : module(name), api(reload_api_template)
+    // usage/type must be set before get_interface(): GLOBAL asserts api != IT_SERVICE
+    ReloadPlugin(const char* name, Module::Usage usage = Module::INSPECT,
+        InspectorType type = IT_SERVICE) : module(name), api(reload_api_template)
     {
         api.base.name = name;
+        api.type = type;
+        module.usage = usage;
         plug = InspectorManager::get_interface(&api);
         context = plug->get_context();
         mock().setDataObject(name, "PlugContext", context);
@@ -466,6 +478,9 @@ TEST_GROUP(inspector_manager_reload_tests)
     std::unique_ptr<SnortConfig> sc;
     std::unique_ptr<ReloadPlugin> reload_plugin;
 
+    // must be a member: a pig dtor can call api->dtor() after a TEST-local one dies
+    std::unique_ptr<ReloadPlugin> alt_plugin;
+
     void setup() override
     {
         InspectorManager::new_map();
@@ -482,6 +497,7 @@ TEST_GROUP(inspector_manager_reload_tests)
         InspectorManager::empty_trash();
         InspectorManager::cleanup();
         reload_plugin.reset();
+        alt_plugin.reset();
     }
 
     void activate_current_map()
@@ -1177,6 +1193,48 @@ TEST(inspector_manager_reload_tests, policy_resolve_failure_warning_names_networ
     restore_old_map_for_teardown(reload_sc);
 }
 
+TEST(inspector_manager_reload_tests, removing_global_inspector_is_not_a_policy_resolve_failure)
+{
+    const uint64_t baseline = snort::rss_stats.policy_resolution_failures.load();
+    ReloadCounts old_counts;
+
+    alt_plugin.reset(new ReloadPlugin("global_reload_test", Module::GLOBAL, IT_PASSIVE));
+    alt_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+
+    last_warning_message.clear();
+    std::unique_ptr<SnortConfig> reload_sc = start_removal_reload();
+
+    CHECK_EQUAL(1, old_counts.tear_down);
+    CHECK_EQUAL(0, snort::rss_capture.ctor_calls);
+
+    CHECK_EQUAL(baseline, snort::rss_stats.policy_resolution_failures.load());
+    CHECK(last_warning_message.find("RSS: survivor") == std::string::npos);
+
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, removing_context_inspector_is_not_a_policy_resolve_failure)
+{
+    const uint64_t baseline = snort::rss_stats.policy_resolution_failures.load();
+    ReloadCounts old_counts;
+
+    alt_plugin.reset(new ReloadPlugin("context_reload_test", Module::CONTEXT, IT_PACKET));
+    alt_plugin->instantiate(sc.get(), old_counts);
+    activate_current_map();
+
+    last_warning_message.clear();
+    std::unique_ptr<SnortConfig> reload_sc = start_removal_reload();
+
+    CHECK_EQUAL(1, old_counts.tear_down);
+    CHECK_EQUAL(0, snort::rss_capture.ctor_calls);
+
+    CHECK_EQUAL(baseline, snort::rss_stats.policy_resolution_failures.load());
+    CHECK(last_warning_message.find("RSS: survivor") == std::string::npos);
+
+    restore_old_map_for_teardown(reload_sc);
+}
+
 // A survivor from an earlier reload (absent from both prev_iv and curr_iv
 // now) must still get re-attached on every later reconcile_map -- the
 // dropped-inspector loop can't see it, only the for_each-survivor loop can.
@@ -1209,6 +1267,9 @@ TEST(inspector_manager_reload_tests, reconcile_map_reattaches_carried_survivors)
     POINTERS_EQUAL(expected_ip, snort::rss_capture.last_ip);
 
     POINTERS_EQUAL(&fake_survivor, snort::rss_capture.last_survivor);
+
+    // the configuration the reload ran on top of, not the incoming stub_reload_id
+    CHECK_EQUAL(stub_active_reload_id, snort::rss_capture.last_list_reload_id);
 
     restore_old_map_for_teardown(reload_sc);
 }

@@ -236,6 +236,31 @@ TEST(survivor_flow_data, second_distinct_pending_inspector_is_also_pinned)
     flow.clear_gadget();
 }
 
+// A -> B -> A -> C: the flow leaves A twice, so add_pin() gets a pin it holds
+TEST(survivor_flow_data, pinning_the_same_inspector_twice_adds_one_ref)
+{
+    TestInspector a, b, c;
+    Flow flow;
+
+    flow.set_gadget(&a);
+    // cppcheck-suppress danglingLifetime ; false positive: pending is cleared in setup() before every test; &a is inserted and queried only while a is alive in this test
+    pending.insert(&a);
+
+    flow.set_gadget(&b);             // A -> B: A is pending, so it gets pinned
+    CHECK_EQUAL(1u, a.get_ref(1));   // the pin alone; the gadget ref is gone
+
+    flow.set_gadget(&a);             // B -> A: B is not pending, A regains a gadget ref
+    CHECK_EQUAL(2u, a.get_ref(1));   // pin + gadget
+    CHECK_EQUAL(0u, b.get_ref(1));
+
+    flow.set_gadget(&c);             // A -> C again: add_pin() must dedup
+
+    CHECK_EQUAL(1u, a.get_ref(1));   // still just the one pin, not two
+    CHECK_EQUAL(1u, c.get_ref(1));
+
+    flow.clear_gadget();
+}
+
 int main(int argc, char** argv)
 {
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();

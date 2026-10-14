@@ -35,7 +35,7 @@
 #include "flow/expect_flow.h"
 #include "flow/flow.h"
 #include "flow/session.h"
-#include "framework/reload_survivor_subscriptions.h"
+#include "framework/inspector.h"
 #include "framework/reload_survivor_subscriptions_impl.h"
 #include "log/log_stats.h"
 #include "log/messages.h"
@@ -224,7 +224,7 @@ struct PendingTterm
 class ReconciliationGuard
 {
 public:
-    ReconciliationGuard() : survivors(rss_list_survivors())
+    explicit ReconciliationGuard(unsigned reload_id) : survivors(rss_list_survivors(reload_id))
     { }
 
     ~ReconciliationGuard()
@@ -641,23 +641,17 @@ void InspectorManager::reconcile_map(SnortConfig* sc)
                     registered_this_reload.insert(insd.pin);
                     insd.pin->register_reload_survivor_handlers(rss);
                 }
-                else if ( !insd.np )
-                {
-                    snort::rss_stats.policy_resolution_failures.fetch_add(1, std::memory_order_relaxed);
-                    WarningMessage("RSS: survivor '%s' has no network policy binding "
-                        "(global-scope inspector removed from the new config); "
-                        "handlers not registered\n",
-                        insd.pin->get_api() ? insd.pin->get_name() : insd.name.c_str());
-                }
-                else
+                // New-policy resolution failed. A null old network or
+                // inspection policy is not an error: RSS takes both by
+                // reference and does not apply to GLOBAL or CONTEXT scope.
+                else if ( insd.np and insd.ip )
                 {
                     snort::rss_stats.policy_resolution_failures.fetch_add(1, std::memory_order_relaxed);
                     WarningMessage("RSS: survivor '%s' (network policy " STDu64
                         ", inspection policy " STDu64 ") could not resolve its %s policy in the "
                         "new config; handlers not registered\n",
                         insd.pin->get_api() ? insd.pin->get_name() : insd.name.c_str(),
-                        insd.np->user_policy_id,
-                        insd.ip ? insd.ip->user_policy_id : 0,
+                        insd.np->user_policy_id, insd.ip->user_policy_id,
                         !new_np ? "network" : "inspection");
                 }
 
@@ -668,7 +662,7 @@ void InspectorManager::reconcile_map(SnortConfig* sc)
 
     if ( sc and sc->policy_map )
     {
-        ReconciliationGuard reconciliation;
+        ReconciliationGuard reconciliation(SnortConfig::get_reload_id());
 
         for ( const auto& sv : reconciliation.get() )
         {

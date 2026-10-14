@@ -29,6 +29,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -36,12 +37,16 @@
 #include "target_based/snort_protocols.h"
 
 class Session;
+struct InspectionPolicy;
+struct NetworkPolicy;
 
 namespace snort
 {
+class DataHandler;
 class ReloadSurvivorSubscriptions;
 struct SnortConfig;
 struct Packet;
+struct PubKey;
 
 // this is the current version of the api
 #define INSAPI_VERSION ((BASE_API_VERSION << 16) | 5)
@@ -211,6 +216,27 @@ private:
     SnortProtocolId snort_protocol_id = 0;
     std::string alias_name;
     uint64_t network_policy_user_id = 0;
+};
+
+// opt-in DataBus subscriptions for inspectors that outlive a reload; see
+// "RSS dispatch overlap and tterm()" in dev_notes.txt
+
+class ReloadSurvivorSubscriptions
+{
+public:
+    using Factory = std::function<DataHandler*()>;
+
+    ReloadSurvivorSubscriptions(NetworkPolicy& np, InspectionPolicy& ip, Inspector& survivor);
+
+    ReloadSurvivorSubscriptions(const ReloadSurvivorSubscriptions&) = delete;
+    ReloadSurvivorSubscriptions& operator=(const ReloadSurvivorSubscriptions&) = delete;
+
+    SO_PUBLIC void subscribe(const char* key, const PubKey& pub, unsigned eid, Factory factory);
+
+private:
+    NetworkPolicy& np;
+    InspectionPolicy& ip;
+    Inspector& survivor;
 };
 
 // at present there is no sequencing among like types except that appid

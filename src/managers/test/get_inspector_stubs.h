@@ -34,7 +34,7 @@
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "managers/plugin_manager.h"
-#include "framework/reload_survivor_subscriptions.h"
+#include "framework/inspector.h"
 #include "framework/reload_survivor_subscriptions_impl.h"
 #include "network_inspectors/binder/bind_module.h"
 #include "profiler/rule_profiler_defs.h"
@@ -104,6 +104,8 @@ struct RssCapture
 
     std::vector<RssSurvivorView> survivors;
 
+    unsigned last_list_reload_id = 0;
+
     // release() defers (returns false) for the first release_defer_count calls
     unsigned release_defer_count = 0;
     unsigned release_calls = 0;
@@ -121,6 +123,7 @@ struct RssCapture
         last_ip = nullptr;
         last_survivor = nullptr;
         survivors.clear();
+        last_list_reload_id = 0;
         release_defer_count = 0;
         release_calls = 0;
         await_quiescent_defer_count = 0;
@@ -160,8 +163,10 @@ void rss_end_reconcile(Inspector&)
 { ++rss_capture.end_reconcile_calls; }
 
 std::vector<RssSurvivorView>
-rss_list_survivors()
+rss_list_survivors(unsigned reload_id)
 {
+    rss_capture.last_list_reload_id = reload_id;
+
     std::vector<RssSurvivorView> out = rss_capture.survivors;
     return out;
 }

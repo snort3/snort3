@@ -35,8 +35,6 @@
 
 #include "main/snort_types.h"
 
-struct InspectionPolicy;
-
 namespace snort
 {
 class Flow;
@@ -117,9 +115,6 @@ public:
     static void subscribe_network(const PubKey&, unsigned id, DataHandler*);
     static void subscribe_global(const PubKey&, unsigned id, DataHandler*, SnortConfig&);
 
-    // hidden: plugins must not bind a handler to an arbitrary inspection policy
-    SO_PRIVATE static void subscribe(InspectionPolicy&, const PubKey&, unsigned id, DataHandler*);
-
     // runtime methods
     static void publish(unsigned pub_id, unsigned evt_id, DataEvent&, Flow* = nullptr);
 
@@ -129,6 +124,8 @@ public:
     static void publish_to_all_network_policies(unsigned pub_id, unsigned evt_id);
 
 private:
+    friend class ReloadSurvivorSubscriptions;
+
     void _subscribe(unsigned pub_id, unsigned evt_id, DataHandler*);
     void _subscribe(const PubKey&, unsigned evt_id, DataHandler*);
     void _publish(unsigned pub_id, unsigned evt_id, DataEvent&, Flow*) const;

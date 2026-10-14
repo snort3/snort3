@@ -47,16 +47,22 @@ How Inspectors and other modules interact with DataBus
   needed, resubscribed by whatever owns it, same as before RSS existed.
 
 Plugin-facing vs framework-internal surface
-  reload_survivor_subscriptions.h is installed and holds only what a plugin
-  needs: the class, Factory, and subscribe(), which is the sole SO_PUBLIC
-  member.  Everything else -- the pegs, RssSurvivorView, SurvivorFlowData
-  and the rss_*() lifecycle entry points -- lives in
-  reload_survivor_subscriptions_impl.h, which is not installed.  The
-  lifecycle calls are free functions rather than static members precisely
-  so they can live in the uninstalled header; a class cannot be split
-  across headers.  Keeping the constructor unexported means supported
+  ReloadSurvivorSubscriptions lives in inspector.h, next to the
+  register_reload_survivor_handlers() virtual that hands it out, and holds
+  only what a plugin needs: the class, Factory, and subscribe(), which is
+  the sole SO_PUBLIC member.  It is not a header of its own: RSS should not
+  add to the installed set when the one installed header a survivor already
+  includes can carry an 18-line class.  Everything else -- the pegs,
+  RssSurvivorView, SurvivorFlowData and the rss_*() lifecycle entry points
+  -- lives in reload_survivor_subscriptions_impl.h, which is not installed.
+  The lifecycle calls are free functions rather than static members
+  precisely so they can live in the uninstalled header; a class cannot be
+  split across headers.  Keeping the constructor unexported means supported
   plugins receive the object by reference and use only subscribe(); the
   private members are not part of the intended plugin ABI surface.
+  Because inspector.h is in the plugins.h include closure, the class is now
+  covered by the api_version headers test -- editing this contract means
+  refreshing that expected/ copy in the test repo.
 
 What an Inspector should do (and must not do)
   To survive a reload, override register_reload_survivor_handlers() and
@@ -77,12 +83,37 @@ RSS dispatch overlap and tterm()
   call drains callbacks already in flight but does not close the survivor
   subscription, so a later callback may still start.
 
+  Both waits around a survivor are intentionally unbounded: drain() on
+  in-flight callbacks, and the lease wrapper's destructor on a held
+  borrow.  Either one outliving the slow-wait threshold warns -- naming
+  the wait phase, survivor, handler, subscription key, policy ids, and
+  the in-flight and borrow counts -- and bumps rss_slow_drains once per
+  wait, not per warning.  Both warn with the registry lock dropped, which
+  is why everything a warning needs is captured up front: the subscription
+  key is an owned copy, since rss_release() erases the registry entry it
+  came from before the drain runs, and the survivor is a name taken at
+  subscribe time plus a bare address, so neither wait dereferences it.
+  Only the reconcile-gate deferral warning names the survivor live and
+  under the lock, which is safe because Inspector::get_name() is
+  non-virtual and stays callable from ~Inspector, where rss_release() runs.
+  Still stuck, the wait re-warns at 1x the threshold, then 12x, then 60x
+  further each time -- 5 s, 60 s, then every 5 minutes at the default -- so
+  a permanent wait keeps reporting without flooding the log.  Neither
+  abandons the wait: returning early frees a handler that is still being
+  dispatched.
+
+  A slow wrapper destruction with no drain warning means a leaked
+  unborrow() rather than a stuck callback: a nonzero borrow count means
+  some thread is inside drain().
+
   If an event carries a Flow or other owner-identifying context, a survivor
   handler must validate that it belongs to the handler's inspector before
   accessing owner-specific state.  An event without such context cannot be
   owner-checked; its handler must use only state guaranteed to outlive
   tterm().  An owner-agnostic handler that needs inspector-specific state
-  should not be registered as a survivor subscription.
+  should not be registered as a survivor subscription.  Configuration is
+  such state: a survivor handler must hold it by shared snapshot rather
+  than by a pointer into its inspector, which may already be gone.
 
   Replacement leaves the new instance's normal handler and the outgoing
   instance's survivor handler on the same event, so a survivor handler runs

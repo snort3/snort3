@@ -52,6 +52,8 @@ enum class RssPeg : size_t
     Active,
     RegistryTracked,
     DedupConflicts,
+    SlowDrains,
+    ReconcileDeferrals,
     Count
 };
 
@@ -68,6 +70,8 @@ struct RssStats
     std::atomic<PegCount> active{0};
     std::atomic<PegCount> registry_tracked{0};
     std::atomic<PegCount> dedup_conflicts{0};
+    std::atomic<PegCount> slow_drains{0};
+    std::atomic<PegCount> reconcile_deferrals{0};
 
     void reset()
     {
@@ -79,6 +83,8 @@ struct RssStats
         stripped.store(0, std::memory_order_relaxed);
         dead_handler_skips.store(0, std::memory_order_relaxed);
         dedup_conflicts.store(0, std::memory_order_relaxed);
+        slow_drains.store(0, std::memory_order_relaxed);
+        reconcile_deferrals.store(0, std::memory_order_relaxed);
     }
 };
 
@@ -116,13 +122,17 @@ bool rss_await_quiescent(Inspector& survivor);
 
 void rss_on_bus_destroyed(const DataBus* dying_bus);
 
-std::vector<RssSurvivorView> rss_list_survivors();
+std::vector<RssSurvivorView> rss_list_survivors(unsigned reload_id);
 
-// must be called exactly once for every entry rss_list_survivors() returns,
+// must be called exactly once for every entry rss_list_survivors(reload_id) returns,
 // or that survivor's teardown stalls forever.
 void rss_end_reconcile(Inspector& survivor);
 
 void rss_reset_for_test();
+
+#ifdef UNIT_TEST
+void rss_set_elapsed_for_test(uint64_t ms);
+#endif
 
 // pins a survivor Inspector alive across mid-flow gadget rebinds.
 class SurvivorFlowData : public FlowData

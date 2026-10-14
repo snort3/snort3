@@ -71,9 +71,14 @@ rss_release(), whose sole caller is ~Inspector once every thread slot
 is inactive.
 
 The same-API replacement and deferred cleanup paths retry while
-rss_await_quiescent() reports that reconciliation is active.  These waits are
-intentionally unbounded for correctness and should receive slow-wait
-diagnostics in a follow-up lifecycle story.
+rss_await_quiescent() reports that reconciliation is active.  These retries
+are intentionally unbounded for correctness.  Every refusal bumps
+rss_reconcile_deferrals, and a gate held past the slow-wait threshold warns,
+naming the survivor, the configuration the gate opened on top of and how many
+release or quiescence requests it has refused.  Like a slow drain it re-warns
+at a widening interval rather than once, since a skipped rss_end_reconcile()
+makes every later release fail for good -- that pairing is what the warning
+points at.
 
 If reload initializes a same-API inspector while an old same-API inspector
 is removed, the old inspector's tterm() may run before the new tinit() to

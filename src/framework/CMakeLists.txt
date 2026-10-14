@@ -24,7 +24,6 @@ set (FRAMEWORK_INCLUDES
     plugins.h
     policy_selector.h
     range.h
-    reload_survivor_subscriptions.h
     so_rule.h
     tracer.h
     value.h

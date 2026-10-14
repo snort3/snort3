@@ -126,11 +126,6 @@ void DataBus::subscribe_global(const PubKey& key, unsigned eid, DataHandler* h, 
     sc.global_dbus->_subscribe(key, eid, h);
 }
 
-void DataBus::subscribe(InspectionPolicy& ip, const PubKey& key, unsigned eid, DataHandler* h)
-{
-    ip.dbus._subscribe(key, eid, h);
-}
-
 // notify subscribers of event
 void DataBus::publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f)
 {

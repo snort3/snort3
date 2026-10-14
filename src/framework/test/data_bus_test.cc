@@ -75,6 +75,9 @@ void set_inspection_policy(InspectionPolicy*)
 void WarningMessage(const char*, ...)
 { }
 
+unsigned SnortConfig::get_reload_id()
+{ return 0; }
+
 THREAD_LOCAL PacketCount pc;
 }
 
