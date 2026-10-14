@@ -45,23 +45,29 @@ using namespace snort;
 
 THREAD_LOCAL class FlowControl* flow_con;
 
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 const FlowCacheConfig& FlowControl::get_flow_cache_config() const
 {
     static FlowCacheConfig config;
     return config;
 }
 
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 bool FlowControl::move_to_allowlist(Flow*) { return true; }
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 void FlowControl::unlink_uni(Flow*) { }
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 void FlowControl::relink_uni(Flow*) { }
 
 namespace snort
 {
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void LogMessage(const char*, ...) { }
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 void Inspector::rem_ref() { }
 bool HighAvailabilityManager::active() { return false; }
 FlowHAState::FlowHAState() = default;
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 void FlowHAState::reset() { }
 void DetectionEngine::onload(const Flow*) { }
 Packet* DetectionEngine::set_next_packet(const Packet*, Flow*) { return nullptr; }
@@ -69,11 +75,13 @@ IpsContext* DetectionEngine::get_context() { return nullptr; }
 DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;
 bool layer::set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t&) { return false; }
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 uint8_t ip::IpApi::ttl() const { return 0; }
 const Layer* layer::get_mpls_layer(const Packet* const) { return nullptr; }
 }
 
 ContextSwitcher* Analyzer::get_switcher() { return nullptr; }
+// cppcheck-suppress functionStatic ; stub must match the non-static member signature
 IpsContext* ContextSwitcher::get_context() const { return nullptr; }
 PolicySwitcher::PolicySwitcher(Flow*) { }
 PolicySwitcher::~PolicySwitcher() { }
