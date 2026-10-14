@@ -30,6 +30,8 @@
 #include "app_info_table.h"
 #include "protocols/packet.h"
 
+#include <cstdint>
+
 using namespace snort;
 
 static const char SIP_REGISTER_BANNER[] = "REGISTER ";
@@ -192,7 +194,14 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
         asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS);
     }
 
-    // create an RTCP flow as well
+    // create an RTCP flow as well,
+    // when overflow won't happen
+    if (cliPort == UINT16_MAX or srvPort == UINT16_MAX)
+    {
+        appid_stats.suppressed_future_flows++;
+        APPID_LOG(pkt, TRACE_DEBUG_LEVEL, "SIP: suppressed creating RTCP expected session for port 0\n");
+        return;
+    }
 
     AppIdSession* fp2 = AppIdSession::create_future_session(pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol,
         asd.config.snort_proto_ids[PROTO_INDEX_SIP], odp_ctxt, false, true);

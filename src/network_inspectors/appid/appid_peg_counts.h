@@ -61,6 +61,7 @@ struct AppIdStats
     PegCount tp_mem_allocations;
     PegCount tp_mem_frees;
     PegCount tp_mem_bytes_in_use;
+    PegCount suppressed_future_flows;
 };
 
 class AppIdPegCounts

@@ -600,6 +600,7 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "tp_mem_allocations", "number of memory allocations in third-party module" },
     { CountType::SUM, "tp_mem_frees", "number of memory frees in third-party module" },
     { CountType::NOW, "tp_mem_bytes_in_use", "number of bytes in use in third-party module" },
+    { CountType::SUM, "suppressed_future_flows", "number of suppressed expected flows" },
     { CountType::END, nullptr, nullptr },
 };
 
