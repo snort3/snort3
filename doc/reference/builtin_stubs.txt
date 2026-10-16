@@ -1324,6 +1324,12 @@ line termination.
 A message header contains a negative Content-Length value, or both a Content-Length and
 a Transfer-Encoding header where that combination is not allowed.
 
+119:304
+
+An HTTP request or response header contains a name byte outside the HTTP token character
+set, a bare control character in a value (TAB is allowed), or obsolete line folding.
+Trailers are not included.
+
 121:1
 
 Invalid flag set on HTTP/2 frame header

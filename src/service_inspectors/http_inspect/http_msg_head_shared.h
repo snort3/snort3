@@ -95,11 +95,14 @@ private:
     static const int MAX = HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS;
 
     void parse_header_block();
-    int32_t find_next_header(const uint8_t* buffer, int32_t length, int32_t& num_seps);
+    int32_t find_next_header(const uint8_t* buffer, int32_t length, int32_t& num_seps,
+        bool& unsafe_value);
     void parse_header_lines();
     void create_norm_head_list();
     void derive_header_name_id(int index);
     const Field& get_classic_raw_header();
+
+    void raise_unsafe_header(const Field& raw_header);
 
     Field classic_raw_header;    // raw headers with cookies spliced out
     Field classic_norm_header;   // URI normalization applied

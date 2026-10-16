@@ -58,12 +58,16 @@ struct HttpTmpBufferCache
                 slot->clear();
         }
         decoded_path.reset();
+        unsafe_header.reset();
     }
 
     std::array<std::unique_ptr<HttpTmpBuffer>, HTTP_TMP_BUFFER_CNT> tmp_bufs;
 
     // Sidecar for decoded URI path (paired with HTTP_BUFFER_DECODED_URI slot).
     Field decoded_path;
+
+    // Raw header line used to materialize DETAIL_119_304.
+    Field unsafe_header;
 };
 
 #endif

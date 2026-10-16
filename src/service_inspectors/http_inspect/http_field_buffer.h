@@ -39,4 +39,7 @@ bool is_wire_reportable_buffer(unsigned buf_type);
 
 void append_escaped(std::string& out, const uint8_t* data, int32_t len, int32_t max_append);
 
+// Appends a header line, replacing the value of a credential-bearing header with a placeholder.
+void append_header_detail(std::string& out, const uint8_t* data, int32_t len, int32_t max_append);
+
 #endif

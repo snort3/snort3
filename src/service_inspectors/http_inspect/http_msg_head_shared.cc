@@ -25,7 +25,9 @@
 
 #include "hash/hash_key_operations.h"
 
+#include "http_cache_data.h"
 #include "http_common.h"
+#include "http_context_data.h"
 #include "http_enum.h"
 #include "http_msg_request.h"
 
@@ -122,6 +124,7 @@ void HttpMsgHeadShared::parse_header_block()
     num_headers = 0;
     max_header_line = 0;
     int32_t num_seps;
+    int32_t unsafe_value_index = STAT_NOT_COMPUTE;
 
     // The number of header lines in a message may be zero
     const int32_t nlines = session_data->num_head_lines[source_id];
@@ -133,8 +136,9 @@ void HttpMsgHeadShared::parse_header_block()
     // calculated correctly.
     while (bytes_used < msg_text.length())
     {
+        bool unsafe_value = false;
         const int32_t header_length = find_next_header(msg_text.start() + bytes_used,
-            msg_text.length() - bytes_used, num_seps);
+            msg_text.length() - bytes_used, num_seps, unsafe_value);
         if (header_length == 0)
             break;
 
@@ -150,6 +154,8 @@ void HttpMsgHeadShared::parse_header_block()
             create_event(EVENT_LONG_HDR);
         }
         bytes_used += num_seps + header_line[num_headers].length();
+        if (unsafe_value && unsafe_value_index == STAT_NOT_COMPUTE)
+            unsafe_value_index = num_headers;
         ++num_headers;
     }
     if (num_headers > params->maximum_headers)
@@ -158,6 +164,8 @@ void HttpMsgHeadShared::parse_header_block()
         create_event(EVENT_MAX_HEADERS);
         HttpModule::increment_peg_counts(PEG_HEADER_COUNT_EXCEEDED);
     }
+    if (unsafe_value_index != STAT_NOT_COMPUTE)
+        raise_unsafe_header(header_line[unsafe_value_index]);
 }
 
 // The header section produced by the splitter is of the form:
@@ -186,15 +194,28 @@ void HttpMsgHeadShared::parse_header_block()
 // FIXIT-M Need to generate EVENT_EXCEEDS_SPACES for excessive white space within a header.
 
 int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t length,
-    int32_t& num_seps)
+    int32_t& num_seps, bool& unsafe_value)
 {
     int32_t k = 0;
     // Splitter guarantees buffer will not end on CR or LF.
     for (; is_cr_lf[buffer[k]]; k++);
     num_seps = k;
 
+    // Header names reject non-token bytes; values allow HTAB and RFC 9110 obs-text.
+    bool value_started = buffer[k] == ':';
+    bool has_unsafe_value = false;
+    bool wrapped = false;
     for (k++; k < length; k++)
     {
+        const uint8_t c = buffer[k];
+        if (value_started)
+        {
+            if ((c < 0x20 && c != '\t' && !is_cr_lf[c]) || c == 0x7f)
+                has_unsafe_value = true;
+        }
+        else if (c == ':')
+            value_started = true;
+
         if (is_cr_lf[buffer[k]])
         {
             // Check for wrapping
@@ -205,18 +226,29 @@ int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t lengt
                 (k + 1 < length && buffer[k] == '\r' &&
                     !is_sp_tab_lf[buffer[k + 1]]))
             {
-                return k - num_seps;
+                const auto len = k - num_seps;
+                if (wrapped && len > 0)
+                    raise_unsafe_header(Field(len, buffer + num_seps));
+                unsafe_value = has_unsafe_value;
+                return len;
             }
             else
             {
                 add_infraction(INF_HEADER_WRAPPING);
                 create_event(EVENT_HEADER_WRAPPING);
+
+                wrapped = true;
             }
         }
     }
     if (session_data->partial_flush[source_id] && session_data->num_excess[source_id] == 0)
         return 0;
-    return length - num_seps;
+
+    const auto len = length - num_seps;
+    if (wrapped && len > 0)
+        raise_unsafe_header(Field(len, buffer + num_seps));
+    unsafe_value = has_unsafe_value;
+    return len;
 }
 
 // Divide header field lines into field name and field value
@@ -265,6 +297,7 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
     // Normalize header field name to lower case and remove LWS for matching purposes
     int32_t lower_length = 0;
     uint8_t* lower_name = new uint8_t[length];
+    bool unsafe_name = false;
     for (int32_t k=0; k < length; k++)
     {
         if (!is_sp_tab_cr_lf[buffer[k]])
@@ -282,9 +315,37 @@ void HttpMsgHeadShared::derive_header_name_id(int index)
             add_infraction(INF_HEAD_NAME_WHITESPACE);
             create_event(EVENT_HEAD_NAME_WHITESPACE);
         }
+
+        if (!token_char[buffer[k]])
+            unsafe_name = true;
     }
     header_name_id[index] = (HeaderId)str_to_code(lower_name, lower_length, params->header_list);
     delete[] lower_name;
+
+    if (unsafe_name)
+        raise_unsafe_header(header_line[index]);
+}
+
+void HttpMsgHeadShared::raise_unsafe_header(const Field& raw_header)
+{
+    if (get_inspection_section() != PS_HEADER)
+        return;
+
+    if (session_data->partial_flush[source_id])
+        return;
+
+    HttpTmpBufferCache& tmp_cache = HttpContextData::get_tmp_buffers();
+
+    if (tmp_cache.unsafe_header.length() != STAT_NOT_COMPUTE)
+        return;
+
+    HttpModule::increment_peg_counts(PEG_UNSAFE_HEADER_CHAR);
+
+    // Every caller passes a parsed header line, so the stash always arms the check above.
+    assert(raw_header.length() > 0);
+    tmp_cache.unsafe_header.set(raw_header.length(), raw_header.start());
+
+    create_event(EVENT_UNSAFE_CHARACTERS_IN_HEADER);
 }
 
 NormalizedHeader* HttpMsgHeadShared::get_header_node(HeaderId header_id) const

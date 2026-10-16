@@ -24,8 +24,12 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
+#include "service_inspectors/http_inspect/http_cache_data.h"
+#include "service_inspectors/http_inspect/http_context_data.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_msg_head_shared.h"
@@ -155,11 +159,23 @@ void HttpMsgSection::add_infraction(int infraction)
     test_infractions += HttpInfractions(infraction);
 }
 
-static int test_events = 0;
+static HttpTmpBufferCache test_tmp_buffers;
+
+HttpTmpBufferCache& HttpContextData::get_tmp_buffers()
+{
+    return test_tmp_buffers;
+}
+
+static std::vector<int> test_events;
 
 void HttpMsgSection::create_event(int event_id)
 {
-    test_events |= event_id;
+    test_events.push_back(event_id);
+}
+
+static bool test_event_was_created(int event_id)
+{
+    return std::find(test_events.begin(), test_events.end(), event_id) != test_events.end();
 }
 
 bool HttpMsgSection::run_detection(snort::Packet*) { return false; }
@@ -189,6 +205,7 @@ public:
         params_)
     { }
 
+    PduSection get_inspection_section() const override { return PS_HEADER; }
     bool detection_required() const override { return false; }
     void update_flow() override {}
 #ifdef REG_TEST
@@ -200,9 +217,14 @@ class HttpMsgHeadSharedTestPeer
 {
 public:
     static int32_t find_next_header_test(HttpMsgHeadShared& msg, const uint8_t* buffer,
-        int32_t length, int32_t& num_seps)
+        int32_t length, int32_t& num_seps, bool& unsafe_value)
     {
-        return msg.find_next_header(buffer, length, num_seps);
+        return msg.find_next_header(buffer, length, num_seps, unsafe_value);
+    }
+
+    static void reset_unsafe_header_state()
+    {
+        HttpContextData::get_tmp_buffers().clear();
     }
 
     static void set_content_disposition(HttpMsgHeadShared& msg, const uint8_t* value,
@@ -250,6 +272,12 @@ public:
         delete flow->gadget;
         delete flow_data;
         delete flow;
+
+        for (auto& slot : test_tmp_buffers.tmp_bufs)
+            slot.reset();
+
+        // clear() keeps the vector's capacity, which CppUTest reports as a leak.
+        std::vector<int>().swap(test_events);
     }
 };
 
@@ -266,20 +294,24 @@ struct FindNextHeaderCase
     bool exp_wrap_evt;
     bool partial_flush;
     uint32_t num_excess;
+    bool exp_unsafe_evt;
+    bool exp_unsafe_value;
 };
 
 static void run_test_case(const FindNextHeaderCase& test_case, HttpMsgHeadTest& msg, HttpFlowData* flow_data)
 {
     test_infractions = HttpInfractions();
-    test_events = 0;
+    test_events.clear();
+    HttpMsgHeadSharedTestPeer::reset_unsafe_header_state();
     HttpUnitTestSetup::set_partial_flush(flow_data, SRC_CLIENT,
         test_case.partial_flush,
         test_case.partial_flush ? test_case.num_excess : 0);
 
     int32_t num_seps = 0;
+    bool unsafe_value = false;
     const int32_t input_len = static_cast<int32_t>(test_case.input_len);
     const int32_t result = HttpMsgHeadSharedTestPeer::find_next_header_test(
-        msg, test_case.input, input_len, num_seps);
+        msg, test_case.input, input_len, num_seps, unsafe_value);
 
     CHECK_EQUAL_TEXT(test_case.exp_num_seps, num_seps, test_case.name);
     CHECK_EQUAL_TEXT(test_case.exp_result, result, test_case.name);
@@ -287,8 +319,12 @@ static void run_test_case(const FindNextHeaderCase& test_case, HttpMsgHeadTest& 
         test_infractions & HttpInfractions(INF_HEADER_WRAPPING),
         test_case.name);
     CHECK_EQUAL_TEXT(test_case.exp_wrap_evt,
-        static_cast<bool>(test_events & EVENT_HEADER_WRAPPING),
+        test_event_was_created(EVENT_HEADER_WRAPPING),
         test_case.name);
+    CHECK_EQUAL_TEXT(test_case.exp_unsafe_evt,
+        test_event_was_created(EVENT_UNSAFE_CHARACTERS_IN_HEADER),
+        test_case.name);
+    CHECK_EQUAL_TEXT(test_case.exp_unsafe_value, unsafe_value, test_case.name);
 }
 
 // Use explicit byte arrays to avoid implicit trailing '\0' in boundary cases.
@@ -306,11 +342,36 @@ TEST(find_next_header, end_of_buffer_cases)
 
     static const FindNextHeaderCase cases[] = {
         { "carriage_return_at_buffer_end", cr_end, sizeof(cr_end),
-            0, sizeof(cr_end), true, true, false, 0 },
+            0, sizeof(cr_end), true, true, false, 0, true },
         { "line_feed_at_buffer_end", lf_end, sizeof(lf_end),
-            0, sizeof(lf_end), true, true, false, 0 },
+            0, sizeof(lf_end), true, true, false, 0, true },
         { "carriage_return_line_feed_at_buffer_end", crlf_end, sizeof(crlf_end),
-            0, sizeof(crlf_end), true, true, false, 0 }
+            0, sizeof(crlf_end), true, true, false, 0, true }
+    };
+
+    for (const auto& test_case : cases)
+        run_test_case(test_case, *msg, flow_data);
+}
+
+TEST(find_next_header, unsafe_value_cases)
+{
+    constexpr uint8_t value_ctl[] = { 'H', ':', 0x01, '\r', 'x' };
+    constexpr uint8_t value_del[] = { 'H', ':', 0x7f, '\r', 'x' };
+    constexpr uint8_t value_tab[] = { 'H', ':', '\t', '\r', 'x' };
+    constexpr uint8_t value_obs_text[] = { 'H', ':', 0x80, '\r', 'x' };
+    constexpr uint8_t ctl_before_colon[] = { 'H', 0x01, ':', '1', '\r', 'x' };
+
+    static const FindNextHeaderCase cases[] = {
+        { "control_byte_in_value_is_unsafe", value_ctl,
+            sizeof(value_ctl), 0, 3, false, false, false, 0, false, true },
+        { "delete_byte_in_value_is_unsafe", value_del,
+            sizeof(value_del), 0, 3, false, false, false, 0, false, true },
+        { "horizontal_tab_in_value_is_allowed", value_tab,
+            sizeof(value_tab), 0, 3, false, false, false, 0, false, false },
+        { "obsolete_text_in_value_is_allowed", value_obs_text,
+            sizeof(value_obs_text), 0, 3, false, false, false, 0, false, false },
+        { "control_byte_before_colon_is_not_a_value", ctl_before_colon,
+            sizeof(ctl_before_colon), 0, 4, false, false, false, 0, false, false }
     };
 
     for (const auto& test_case : cases)
@@ -330,21 +391,21 @@ TEST(find_next_header, normal_terminator_cases)
 
     static const FindNextHeaderCase cases[] = {
         { "carriage_return_followed_by_non_space_ends_header", cr_term,
-            sizeof(cr_term), 0, 3, false, false, false, 0 },
+            sizeof(cr_term), 0, 3, false, false, false, 0, false },
         { "line_feed_followed_by_non_space_ends_header", lf_term,
-            sizeof(lf_term), 0, 3, false, false, false, 0 },
+            sizeof(lf_term), 0, 3, false, false, false, 0, false },
         { "carriage_return_line_feed_followed_by_non_space_ends_header", crlf_term,
-            sizeof(crlf_term), 0, 3, false, false, false, 0 },
+            sizeof(crlf_term), 0, 3, false, false, false, 0, false },
         { "leading_carriage_return_carriage_return_line_feed_is_counted_in_num_seps", leading_crcrlf,
-            sizeof(leading_crcrlf), 3, 3, false, false, false, 0 },
+            sizeof(leading_crcrlf), 3, 3, false, false, false, 0, false },
         { "leading_carriage_return_line_feed_is_counted_in_num_seps", leading_crlf,
-            sizeof(leading_crlf), 2, 3, false, false, false, 0 },
+            sizeof(leading_crlf), 2, 3, false, false, false, 0, false },
         { "leading_line_feed_carriage_return_is_counted_in_num_seps", leading_lfcr,
-            sizeof(leading_lfcr), 2, 3, false, false, false, 0 },
+            sizeof(leading_lfcr), 2, 3, false, false, false, 0, false },
         { "leading_line_feed_is_counted_in_num_seps", leading_lf,
-            sizeof(leading_lf), 1, 3, false, false, false, 0 },
+            sizeof(leading_lf), 1, 3, false, false, false, 0, false },
         { "leading_carriage_return_is_counted_in_num_seps", leading_cr,
-            sizeof(leading_cr), 1, 3, false, false, false, 0 }
+            sizeof(leading_cr), 1, 3, false, false, false, 0, false }
     };
 
     for (const auto& test_case : cases)
@@ -359,23 +420,30 @@ TEST(find_next_header, wrapping_and_partial_flush_cases)
     constexpr uint8_t lf_space[] = { 'H', ':', '1', '\n', ' ', 'x' };
     constexpr uint8_t lf_tab[] = { 'H', ':', '1', '\n', '\t', 'x' };
     constexpr uint8_t partial_flush_buf[] = { 'H', ':', '1' };
+    // Takes the early-return obs-fold path, not the end-of-buffer fallback.
+    constexpr uint8_t wrapped_then_terminated[] =
+        { 'H', ':', '1', '\r', '\n', ' ', 'v', '\r', '\n', 'x' };
 
     static const FindNextHeaderCase cases[] = {
+        { "wrapped_line_followed_by_proper_terminator_raises_obs_fold", wrapped_then_terminated,
+            sizeof(wrapped_then_terminated), 0, 7, true, true, false, 0, true },
         { "carriage_return_line_feed_followed_by_space_wraps_header", crlf_space,
-            sizeof(crlf_space), 0, 7, true, true, false, 0 },
+            sizeof(crlf_space), 0, 7, true, true, false, 0, true },
         { "carriage_return_followed_by_space_wraps_header", cr_space,
-            sizeof(cr_space), 0, 6, true, true, false, 0 },
+            sizeof(cr_space), 0, 6, true, true, false, 0, true },
         { "carriage_return_followed_by_tab_wraps_header", cr_tab,
-            sizeof(cr_tab), 0, 6, true, true, false, 0 },
+            sizeof(cr_tab), 0, 6, true, true, false, 0, true },
         { "line_feed_followed_by_space_wraps_header", lf_space,
-            sizeof(lf_space), 0, 6, true, true, false, 0 },
+            sizeof(lf_space), 0, 6, true, true, false, 0, true },
         { "line_feed_followed_by_tab_wraps_header", lf_tab,
-            sizeof(lf_tab), 0, 6, true, true, false, 0 },
+            sizeof(lf_tab), 0, 6, true, true, false, 0, true },
         // Only partial_flush with zero excess takes the defer-parsing path.
         { "partial_flush_without_complete_eol_defers_parsing", partial_flush_buf,
-            sizeof(partial_flush_buf), 0, 0, false, false, true, 0 },
+            sizeof(partial_flush_buf), 0, 0, false, false, true, 0, false },
         { "partial_flush_with_excess_returns_buffer_length", partial_flush_buf,
-            sizeof(partial_flush_buf), 0, 3, false, false, true, 1 }
+            sizeof(partial_flush_buf), 0, 3, false, false, true, 1, false },
+        { "partial_flush_defers_obs_fold_to_full_inspection", crlf_space,
+            sizeof(crlf_space), 0, 7, true, true, true, 1, false }
     };
 
     for (const auto& test_case : cases)

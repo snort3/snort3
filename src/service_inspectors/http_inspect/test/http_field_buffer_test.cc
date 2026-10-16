@@ -197,6 +197,7 @@ TEST(http_field_buffer_wire_domain_test, reports_only_snapshot_supported_tmp_buf
     CHECK(is_wire_reportable_buffer(DETAIL_119_299));
     CHECK(is_wire_reportable_buffer(DETAIL_119_300));
     CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_301));
+    CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_304));
 }
 
 TEST(http_field_buffer_wire_domain_test, materializes_numeric_request_facts_from_snapshot)
@@ -338,6 +339,134 @@ TEST(http_field_buffer_wire_domain_test, context_clear_resets_cached_wire_slots)
 }
 
 // ---------------------------------------------------------------------------
+// append_header_detail tests
+// ---------------------------------------------------------------------------
+
+TEST_GROUP(append_header_detail_test) {};
+
+static std::string header_detail(const char* line)
+{
+    std::string out;
+    append_header_detail(out, reinterpret_cast<const uint8_t*>(line),
+        static_cast<int32_t>(strlen(line)), 256);
+    return out;
+}
+
+TEST(append_header_detail_test, ordinary_header_keeps_its_value)
+{
+    CHECK_EQUAL(std::string("X-Custom: plain"), header_detail("X-Custom: plain"));
+}
+
+TEST(append_header_detail_test, credential_headers_have_values_redacted)
+{
+    CHECK_EQUAL(std::string("Cookie: <redacted>"), header_detail("Cookie: secret"));
+    CHECK_EQUAL(std::string("Authorization: <redacted>"),
+        header_detail("Authorization: Bearer abc"));
+    CHECK_EQUAL(std::string("Proxy-Authorization: <redacted>"),
+        header_detail("Proxy-Authorization: Basic abc"));
+    CHECK_EQUAL(std::string("Set-Cookie: <redacted>"), header_detail("Set-Cookie: a=b"));
+    CHECK_EQUAL(std::string("X-API-Key: <redacted>"), header_detail("X-API-Key: abc"));
+    CHECK_EQUAL(std::string("X-Auth-Token: <redacted>"), header_detail("X-Auth-Token: abc"));
+}
+
+TEST(append_header_detail_test, credential_name_matches_case_insensitively)
+{
+    CHECK_EQUAL(std::string("cOOkIe: <redacted>"), header_detail("cOOkIe: secret"));
+}
+
+TEST(append_header_detail_test, non_token_bytes_cannot_evade_the_match)
+{
+    std::string out;
+    const uint8_t mangled[] = { 'C', 'o', 'o', 'k', 'i', 'e', 0x01, ':', ' ', 's' };
+    append_header_detail(out, mangled, sizeof(mangled), 256);
+    CHECK_EQUAL(std::string("Cookie\\x01: <redacted>"), out);
+    CHECK(out.find('s') == std::string::npos);
+}
+
+TEST(append_header_detail_test, padded_credential_name_cannot_evade_the_match)
+{
+    // derive_header_name_id() strips the padding and still recognizes Cookie, so a name
+    // longer than any credential name must not skip redaction.
+    const std::string line = "Cookie" + std::string(33, ' ') + ": session=secret";
+    const std::string out = header_detail(line.c_str());
+    CHECK(out.find("<redacted>") != std::string::npos);
+    CHECK(out.find("session=secret") == std::string::npos);
+}
+
+TEST(append_header_detail_test, long_ordinary_name_keeps_its_value)
+{
+    const std::string line = std::string(40, 'x') + ": plain";
+    const std::string out = header_detail(line.c_str());
+    CHECK_EQUAL(line, out);
+}
+
+TEST(append_header_detail_test, header_with_non_token_name_has_its_value_redacted)
+{
+    std::string out;
+    const uint8_t mangled[] = { 'X', '-', 'B', 'a', 'd', '{', ':', ' ', 'v' };
+    append_header_detail(out, mangled, sizeof(mangled), 256);
+    CHECK_EQUAL(std::string("X-Bad{: <redacted>"), out);
+}
+
+TEST(append_header_detail_test, credential_name_padded_with_a_token_byte_is_redacted)
+{
+    // Cookie@X drops to cookiex, so the credential list cannot match it; the non-token byte
+    // in the name is what keeps the value out of the detail.
+    const std::string out = header_detail("Cookie@X: secret123");
+    CHECK_EQUAL(std::string("Cookie@X: <redacted>"), out);
+    CHECK(out.find("secret123") == std::string::npos);
+}
+
+TEST(append_header_detail_test, whitespace_in_the_name_redacts_the_value)
+{
+    CHECK_EQUAL(std::string("Host : <redacted>"), header_detail("Host : example.com"));
+}
+
+TEST(append_header_detail_test, unparseable_line_is_redacted_entirely)
+{
+    CHECK_EQUAL(std::string("<redacted>"), header_detail("Cookie secret"));
+}
+
+TEST(append_header_detail_test, folded_line_has_its_value_redacted)
+{
+    const std::string out = header_detail("X-Custom: harmless\r\n\tCookie: secret");
+    CHECK_EQUAL(std::string("X-Custom: <redacted>"), out);
+    CHECK(out.find("secret") == std::string::npos);
+}
+
+TEST(append_header_detail_test, folded_line_keeps_the_separator_it_had)
+{
+    CHECK_EQUAL(std::string("Host:<redacted>"), header_detail("Host:t.com\r\n : topsecret"));
+}
+
+TEST(append_header_detail_test, fold_before_the_colon_redacts_the_name_too)
+{
+    const std::string out = header_detail("Foo\r\n Cookie: secret");
+    CHECK_EQUAL(std::string("<redacted>"), out);
+    CHECK(out.find("Cookie") == std::string::npos);
+}
+
+TEST(append_header_detail_test, folded_ordinary_value_is_redacted_as_well)
+{
+    CHECK_EQUAL(std::string("X-Custom: <redacted>"),
+        header_detail("X-Custom: first\r\n continued"));
+}
+
+TEST(append_header_detail_test, bare_cr_fold_is_also_redacted)
+{
+    CHECK_EQUAL(std::string("X-Custom: <redacted>"),
+        header_detail("X-Custom: first\r continued"));
+}
+
+TEST(append_header_detail_test, redacted_detail_respects_max_append)
+{
+    std::string out;
+    const char* line = "Cookie: secret";
+    append_header_detail(out, reinterpret_cast<const uint8_t*>(line),
+        static_cast<int32_t>(strlen(line)), 12);
+    CHECK(out.length() <= 12);
+}
+
 // append_escaped tests
 // ---------------------------------------------------------------------------
 

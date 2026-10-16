@@ -72,6 +72,85 @@ void append_escaped(std::string& out, const uint8_t* data, int32_t len, int32_t 
     }
 }
 
+static constexpr char REDACTED[] = "<redacted>";
+
+// A name carrying non-token bytes cannot be matched against the list below, so the value it
+// introduces is never trusted.
+static bool is_token_name(const uint8_t* name, int32_t len)
+{
+    for (int32_t k = 0; k < len; ++k)
+    {
+        if (!token_char[name[k]])
+            return false;
+    }
+    return true;
+}
+
+// Non-token bytes are dropped so a mangled name cannot evade the match.
+static bool is_credential_header(const uint8_t* name, int32_t len)
+{
+    static const char* const credential_names[] = {
+        "authorization", "cookie", "proxy-authorization", "set-cookie",
+        "x-api-key", "x-auth-token"
+    };
+    static constexpr int32_t longest_name = 19;
+
+    if (len <= 0)
+        return false;
+
+    std::string lower;
+    for (int32_t k = 0; k < len; ++k)
+    {
+        const uint8_t c = name[k];
+        if (!token_char[c])
+            continue;
+        lower.push_back(static_cast<char>(((c >= 'A') and (c <= 'Z')) ? c + ('a' - 'A') : c));
+        if (static_cast<int32_t>(lower.length()) > longest_name)
+            return false;
+    }
+
+    for (const char* candidate : credential_names)
+    {
+        if (lower == candidate)
+            return true;
+    }
+    return false;
+}
+
+void append_header_detail(std::string& out, const uint8_t* data, int32_t len, int32_t max_append)
+{
+    int32_t name_len = 0;
+    while (name_len < len and data[name_len] != ':')
+        ++name_len;
+
+    // A line keeps CR/LF only when obs-fold spliced continuations into it, so the
+    // bytes past the first colon may hold further name/value pairs.
+    int32_t fold_pos = 0;
+    while (fold_pos < len and !is_cr_lf[data[fold_pos]])
+        ++fold_pos;
+
+    if (name_len == len or fold_pos < name_len)
+    {
+        out.append(REDACTED);
+        return;
+    }
+
+    if (fold_pos == len and is_token_name(data, name_len) and
+        !is_credential_header(data, name_len))
+    {
+        append_escaped(out, data, len, max_append);
+        return;
+    }
+
+    int32_t prefix_len = name_len + 1;
+    while (prefix_len < len and is_sp_tab[data[prefix_len]])
+        ++prefix_len;
+
+    const int32_t prefix_budget = max_append - static_cast<int32_t>(sizeof(REDACTED)) + 1;
+    append_escaped(out, data, prefix_len, std::max(prefix_budget, 0));
+    out.append(REDACTED);
+}
+
 static const char* get_http_event_reason_msg(RequestLineInvalidReasonCode event)
 {
     switch (event)
@@ -587,6 +666,29 @@ static void compute_detail_119_301(const HttpBufferSource& src, HttpTmpBufferCac
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
 
+static void compute_detail_119_304(const HttpBufferSource&, HttpTmpBufferCache& tmp_cache,
+    HttpTmpBuffer& slot, const HttpBufferInfo&)
+{
+    // EVENT_UNSAFE_CHARACTERS_IN_HEADER
+    // Unsafe Header: <escaped header bytes>
+    static constexpr int32_t max_unsafe_header_log_len = 256;
+    const Field& raw_header = tmp_cache.unsafe_header;
+
+    if (raw_header.length() <= 0)
+        slot.text = "No header detail available";
+    else
+    {
+        slot.text = "Unsafe Header: ";
+        const int32_t detail_budget =
+            max_unsafe_header_log_len - static_cast<int32_t>(slot.text.length());
+        append_header_detail(slot.text, raw_header.start(), raw_header.length(),
+            std::max(detail_budget, 0));
+    }
+
+    slot.field.set(static_cast<int32_t>(slot.text.length()),
+        reinterpret_cast<const uint8_t*>(slot.text.c_str()));
+}
+
 // ---------------------------------------------------------------------------
 // Descriptor table and shared materializer
 // ---------------------------------------------------------------------------
@@ -618,6 +720,7 @@ static const TmpBufferDescriptor tmp_buffer_desc[HTTP_TMP_BUFFER_CNT] =
     { compute_detail_119_299,       true  }, // DETAIL_119_299
     { compute_detail_119_300,       true  }, // DETAIL_119_300
     { compute_detail_119_301,       false }, // DETAIL_119_301
+    { compute_detail_119_304,       false }, // DETAIL_119_304
 };
 
 static const Field& materialize(const HttpBufferSource& src, const HttpBufferInfo& buf)

@@ -230,6 +230,25 @@ time; callers that finish a section or an IPS logging context must clear the
 context-owned cache before another event can reuse the same temporary-buffer
 slots.
 
+119:304 reports the offending header line through the DETAIL_119_304 slot, with
+the bytes stashed on HttpTmpBufferCache::unsafe_header. As it composes that
+detail, append_header_detail() replaces the value of a credential-bearing
+header with "<redacted>", so the policy is applied once at the output boundary
+rather than on the parse path. The names recognized are authorization, cookie,
+proxy-authorization, set-cookie, x-api-key and x-auth-token, matched after
+lowercasing the field name and dropping non-token bytes so that a mangled name
+cannot evade the check. Dropping alone is not enough -- Cookie@X drops to
+cookiex and misses the list -- so a field name holding any non-token byte has
+its value redacted without consulting the list at all. That also withholds the
+value whenever the unsafe character is the one in the name, where the name is
+the finding and the value adds nothing to it. Obsolete line folding splices
+continuation lines into one header line, so a credential can sit behind an
+ordinary field name; a folded line therefore has its whole value replaced
+regardless of the name, and when the fold precedes the first colon the name is
+replaced too. Only the event detail is covered -- the Unified2Packet record
+logged with the event still carries the raw header bytes, as it does for every
+event.
+
 ===== Capture timing (cutter-originated snapshot writes)
 
 Compute request_size and request_line_length from the current cutter/request
