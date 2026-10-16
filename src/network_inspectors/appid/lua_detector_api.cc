@@ -3821,6 +3821,7 @@ LuaServiceDetector::LuaServiceDetector(AppIdDiscovery* sdm, const std::string& d
     custom_detector = is_custom;
     minimum_matches = min_match;
     proto = protocol;
+
     handler->register_detector(name, this, proto);
 }
 
@@ -3889,6 +3890,7 @@ LuaClientDetector::LuaClientDetector(AppIdDiscovery* cdm, const std::string& det
     custom_detector = is_custom;
     minimum_matches = min_match;
     proto = protocol;
+
     handler->register_detector(name, this, proto);
 }
 

@@ -341,10 +341,7 @@ int MdnsServiceDetector::reference_pointer(const char* start_ptr, const char* en
         *resp_endptr = name_parser;
     }
     else
-    {
         return -1;
-    }
-
 
     if (*user_name_len > 0)
         return 1;
@@ -389,17 +386,13 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
             uint16_t offset = ((name_parser[0] & DNS_COMPRESSION_OFFSET_MASK) << SHIFT_BITS) | (unsigned char)name_parser[1];
             
             if (offset >= (packet_end - (const char*)pkt->data) || offset < RECORD_OFFSET)
-            {
                 break;
-            }
 
             const char* compressed_ptr = (const char*)pkt->data + offset;
             if (compressed_ptr < packet_end and compressed_ptr >= (const char*)pkt->data)
             {
                 if (visited_ptrs.find(compressed_ptr) != visited_ptrs.end())
-                {
                     break;
-                }
                 visited_ptrs.insert(compressed_ptr);
                 name_parser = compressed_ptr;
                 continue;
@@ -436,13 +429,9 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
                 }
 
                 if (!is_printable_string(device_name))
-                {
                     device_name.clear();
-                }
                 else
-                {
                     device_name = clean_mdns_string(device_name);
-                }
                 
                 first_label = false;
             }
@@ -459,9 +448,7 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
 
     const uint8_t* txt_data = (const uint8_t*)rdata_start;
     if (rdata_start + data_len > packet_end)
-    {
         return;
-    }
     const uint8_t* txt_end = txt_data + data_len;
     
     while (txt_data < txt_end)
@@ -469,9 +456,7 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
         uint8_t txt_len = *txt_data++;
         
         if (txt_len == 0 || txt_data + txt_len > txt_end)
-        {
             break;
-        }
         
         std::string txt_string((const char*)txt_data, txt_len);
         txt_data += txt_len;
@@ -527,7 +512,6 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
     int authority_count = (short)(answers[2]<< SHIFT_BITS | (answers[3] ));
     int additional_count = (short)(answers[4]<< SHIFT_BITS | (answers[5] ));
     std::map<std::pair<std::string, std::string>, std::vector<std::pair<std::string, std::string>>> device_info_map;
-
 
     if ( query_val_int == 0)
     {
@@ -686,6 +670,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
         DeviceInfoEvent event(pkt, device_info_map);
         DataBus::publish(get_deviceinfo_pub_id(), DeviceInfoEventIds::DEVICEINFO, event);
     }
+
     return 1;
 }
 

@@ -41,20 +41,20 @@ enum DeviceInfoFieldType : uint8_t
     DEVICEINFO_FIELD_MANUFACTURER = 0, 
     DEVICEINFO_FIELD_MODEL = 1,
     DEVICEINFO_FIELD_DEVICENAME = 2,
-    DEVICEINFO_FIELD_OS = 3,
+    DEVICEINFO_FIELD_VERSION = 3,
     DEVICEINFO_FIELD_MAX = 4,
 };
 
 const uint8_t DEVICEINFO_MASK_MANUFACTURER = 0x01;
 const uint8_t DEVICEINFO_MASK_MODEL = 0x02;
 const uint8_t DEVICEINFO_MASK_DEVICENAME = 0x04;
-const uint8_t DEVICEINFO_MASK_OS = 0x08;
+const uint8_t DEVICEINFO_MASK_VERSION = 0x08;
 
 const uint8_t DEVICEINFO_FIELD_TO_MASK[DEVICEINFO_FIELD_MAX] = {
     DEVICEINFO_MASK_MANUFACTURER,
     DEVICEINFO_MASK_MODEL,
     DEVICEINFO_MASK_DEVICENAME,
-    DEVICEINFO_MASK_OS
+    DEVICEINFO_MASK_VERSION
 };
 
 class SO_PUBLIC DeviceInfoRowFingerprint : public FpFingerprint
@@ -63,8 +63,9 @@ public:
     uint8_t field_mask = 0;
     std::string patterns[DEVICEINFO_FIELD_MAX];
     std::string values[DEVICEINFO_FIELD_MAX];
-    std::string os_prefix;
-    std::string os_postfix;
+    std::string cpe_prefix;
+    std::string cpe_version;
+    std::string cpe_postfix;
     uint8_t mac_addr[3] = {0};
     bool mac_addr_set = false;
 
@@ -90,11 +91,11 @@ public:
     std::string model;
     std::string devicename_pattern;
     std::string devicename;
-    std::string os_pattern;
-    std::string os_value;
+    std::string version_pattern;
+    std::string version_value;
     std::string mac_addr;
-    std::string os_prefix;
-    std::string os_postfix;
+    std::string cpe_prefix;
+    std::string cpe_postfix;
 };
 
 class SO_PUBLIC DeviceInfoFpProcessor

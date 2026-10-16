@@ -1,4 +1,5 @@
 set (RNA_INCLUDES
+    deviceinfo_stash.h
     rna_cpe_os.h
     rna_fingerprint.h
     rna_fingerprint_deviceinfo.h

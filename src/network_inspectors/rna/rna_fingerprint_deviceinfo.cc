@@ -24,6 +24,7 @@
 
 #include "rna_fingerprint_deviceinfo.h"
 
+#include <algorithm>
 #include <cstring>
 #include <sstream>
 
@@ -36,6 +37,7 @@
 #include "rna_logger.h"
 #include "rna_logger_common.h"
 #include "rna_module.h"
+#include "deviceinfo_stash.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -131,9 +133,10 @@ void DeviceInfoFpProcessor::push(const DeviceInfoRawFingerprint& raw_fp)
     row.set_field(DEVICEINFO_FIELD_MANUFACTURER, raw_fp.manufacturer_pattern, raw_fp.manufacturer);
     row.set_field(DEVICEINFO_FIELD_MODEL, raw_fp.model_pattern, raw_fp.model);
     row.set_field(DEVICEINFO_FIELD_DEVICENAME, raw_fp.devicename_pattern, raw_fp.devicename);
-    row.set_field(DEVICEINFO_FIELD_OS, raw_fp.os_pattern, raw_fp.os_value);
-    row.os_prefix = raw_fp.os_prefix;
-    row.os_postfix = raw_fp.os_postfix;
+    row.set_field(DEVICEINFO_FIELD_VERSION, raw_fp.version_pattern, raw_fp.version_value);
+    row.cpe_prefix = raw_fp.cpe_prefix;
+    row.cpe_version = raw_fp.version_value;
+    row.cpe_postfix = raw_fp.cpe_postfix;
     row.set_mac(raw_fp.mac_addr);
 
     proto_fp.rows.push_back(std::move(row));
@@ -310,8 +313,37 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
             info.has_hardware = (row->field_mask & (DEVICEINFO_MASK_MODEL | DEVICEINFO_MASK_MANUFACTURER)) &&
                 !info.hardware_info.empty() && is_printable_string(info.hardware_info.c_str());
 
-            if (row->field_mask & DEVICEINFO_MASK_OS)
-                info.os_cpe = row->os_prefix + info.field_values[DEVICEINFO_FIELD_OS] + row->os_postfix;
+            if (row->field_mask & DEVICEINFO_MASK_VERSION)
+                info.os_cpe = row->cpe_prefix + info.field_values[DEVICEINFO_FIELD_VERSION] + row->cpe_postfix;
+
+            if (!(row->field_mask & DEVICEINFO_MASK_VERSION) &&
+                (!info.row->cpe_prefix.empty() || !info.row->cpe_postfix.empty()))
+            {
+                const std::string hw_cpe = info.row->cpe_prefix +
+                    info.row->cpe_version + info.row->cpe_postfix;
+                if (!hw_cpe.empty())
+                {
+                    StashGenericObject* stash_obj = nullptr;
+                    DeviceInfoStash* di_stash = nullptr;
+                    if (pkt->flow->get_attr(STASH_DEVICEINFO, stash_obj))
+                        di_stash = static_cast<DeviceInfoStash*>(stash_obj);
+                    if (!di_stash)
+                    {
+                        di_stash = new DeviceInfoStash();
+                        pkt->flow->set_attr(STASH_DEVICEINFO, di_stash);
+                    }
+
+                    std::vector<std::string>& stashed = di_stash->deviceinfo;
+                    if (std::find(stashed.begin(), stashed.end(), hw_cpe) == stashed.end())
+                    {
+                        stashed.emplace_back(hw_cpe);
+#ifdef REG_TEST
+                        debug_logf(rna_trace, pkt, "DeviceInfo: stashed hardware CPE for fingerprint %u, cpe='%s'\n",
+                            info.row->fpid, hw_cpe.c_str());
+#endif
+                    }
+                }
+            }
 
             if (!rt->add_deviceinfo_fingerprint(row->fpid))
                 continue;
@@ -339,7 +371,8 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
         bool os_logged = false;
         for (const MatchedRowInfo& info : matched_rows)
         {
-            if (!os_logged && (info.row->field_mask & DEVICEINFO_MASK_OS) && !info.os_cpe.empty())
+            if (!os_logged &&
+                (info.row->field_mask & DEVICEINFO_MASK_VERSION) && !info.os_cpe.empty())
             {
                 const std::string& hw_for_os = info.hardware_info.empty() ? preferred_hardware_info : info.hardware_info;
                 const char* hw_for_os_c = is_printable_string(hw_for_os.c_str()) ? hw_for_os.c_str() : nullptr;
@@ -528,7 +561,7 @@ TEST_CASE("get_rows_field_mask", "[rna_fingerprint_deviceinfo]")
     rawfp.service_type = "_test._tcp.local";
     rawfp.manufacturer_pattern = "mfg=";
     rawfp.model_pattern = "mdl=";
-    rawfp.os_pattern = "os=";
+    rawfp.version_pattern = "os=";
     processor.push(rawfp);
     processor.make_mpse(true);
 
@@ -537,7 +570,7 @@ TEST_CASE("get_rows_field_mask", "[rna_fingerprint_deviceinfo]")
     CHECK(rows.size() == 1);
     CHECK(rows[0]->has_field(DEVICEINFO_FIELD_MANUFACTURER));
     CHECK(rows[0]->has_field(DEVICEINFO_FIELD_MODEL));
-    CHECK(rows[0]->has_field(DEVICEINFO_FIELD_OS));
+    CHECK(rows[0]->has_field(DEVICEINFO_FIELD_VERSION));
     CHECK_FALSE(rows[0]->has_field(DEVICEINFO_FIELD_DEVICENAME));
     CHECK(rows[0]->field_mask == 0b1011);
 }

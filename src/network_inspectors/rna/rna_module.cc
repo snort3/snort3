@@ -367,20 +367,20 @@ static const Parameter rna_fp_params[] =
     { "devicename", Parameter::PT_STRING, nullptr, nullptr,
       "deviceinfo devicename value" },
 
-    { "os_pattern", Parameter::PT_STRING, nullptr, nullptr,
-      "deviceinfo os pattern" },
+    { "version_pattern", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo version pattern" },
 
-    { "os_value", Parameter::PT_STRING, nullptr, nullptr,
-      "deviceinfo os value" },
+    { "version_value", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo version value" },
 
     { "mac_addr", Parameter::PT_STRING, nullptr, nullptr,
       "deviceinfo mac address" },
 
-    { "os_prefix", Parameter::PT_STRING, nullptr, nullptr,
-      "deviceinfo os prefix" },
+    { "cpe_prefix", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo cpe prefix" },
 
-    { "os_postfix", Parameter::PT_STRING, nullptr, nullptr,
-      "deviceinfo os postfix" },
+    { "cpe_postfix", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo cpe postfix" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -517,11 +517,11 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
         deviceinfo_fingerprint.model.clear();
         deviceinfo_fingerprint.devicename_pattern.clear();
         deviceinfo_fingerprint.devicename.clear();
-        deviceinfo_fingerprint.os_pattern.clear();
-        deviceinfo_fingerprint.os_value.clear();
+        deviceinfo_fingerprint.version_pattern.clear();
+        deviceinfo_fingerprint.version_value.clear();
         deviceinfo_fingerprint.mac_addr.clear();
-        deviceinfo_fingerprint.os_prefix.clear();
-        deviceinfo_fingerprint.os_postfix.clear();
+        deviceinfo_fingerprint.cpe_prefix.clear();
+        deviceinfo_fingerprint.cpe_postfix.clear();
         if (!mod_conf->deviceinfo_processor)
             mod_conf->deviceinfo_processor = new DeviceInfoFpProcessor;
     }
@@ -626,16 +626,16 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             deviceinfo_fingerprint.devicename_pattern = v.get_string();
         else if (v.is("devicename"))
             deviceinfo_fingerprint.devicename = v.get_string();
-        else if (v.is("os_pattern"))
-            deviceinfo_fingerprint.os_pattern = v.get_string();
-        else if (v.is("os_value"))
-            deviceinfo_fingerprint.os_value = v.get_string();
+        else if (v.is("version_pattern"))
+            deviceinfo_fingerprint.version_pattern = v.get_string();
+        else if (v.is("version_value"))
+            deviceinfo_fingerprint.version_value = v.get_string();
         else if (v.is("mac_addr"))
             deviceinfo_fingerprint.mac_addr = v.get_string();
-        else if (v.is("os_prefix"))
-            deviceinfo_fingerprint.os_prefix = v.get_string();
-        else if (v.is("os_postfix"))
-            deviceinfo_fingerprint.os_postfix = v.get_string();
+        else if (v.is("cpe_prefix"))
+            deviceinfo_fingerprint.cpe_prefix = v.get_string();
+        else if (v.is("cpe_postfix"))
+            deviceinfo_fingerprint.cpe_postfix = v.get_string();
         else
             return false;
     }
