@@ -24,6 +24,7 @@
 // ip datagram reassembly
 
 #include <cstdint>
+#include <vector>
 
 struct FragEngine;
 struct FragTracker;
@@ -36,6 +37,10 @@ struct SnortConfig;
 
 class Defrag
 {
+#ifdef UNIT_TEST
+    friend class DefragTestPeer;
+#endif
+
 public:
     Defrag(FragEngine&);
 
@@ -58,12 +63,16 @@ private:
         uint16_t slide, uint16_t trunc, uint16_t frag_offset,
         Fragment* left, Fragment** retFrag);
 
-    static int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
+    int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
     static int expired(snort::Packet*, FragTracker*, const FragEngine*);
+
+    uint32_t& live_nodes();
+    bool frag_node_limit_reached(uint32_t need = 1);
 
 private:
     FragEngine& engine;
     uint8_t layers;
+    std::vector<uint32_t> live;  // nodes held per packet thread; the node pegs can be reset
 };
 
 #endif

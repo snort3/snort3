@@ -74,6 +74,8 @@
 #include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
+#include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq_config.h"
 #include "profiler/profiler_defs.h"
@@ -85,6 +87,10 @@
 
 #include "ip_session.h"
 #include "stream_ip.h"
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
 
 using namespace snort;
 
@@ -118,10 +124,10 @@ using namespace snort;
 
 struct Fragment
 {
-    Fragment(uint16_t flen, const uint8_t* fptr, int ord)
+    Fragment(uint32_t& count, uint16_t flen, const uint8_t* fptr, int ord) : live(count)
     { init(flen, fptr, ord); }
 
-    Fragment(const Fragment* other, int ord)
+    Fragment(uint32_t& count, const Fragment* other, int ord) : live(count)
     {
         init(other->flen, other->fptr, ord);
         data = fptr + (other->data - other->fptr);
@@ -130,10 +136,14 @@ struct Fragment
         last = other->last;
     }
 
+    Fragment(const Fragment&) = delete;
+    Fragment& operator=(const Fragment&) = delete;
+
     ~Fragment()
     {
         delete[] fptr;
         ip_stats.nodes_released++;
+        live--;
     }
 
     uint8_t* data = nullptr;    /* ptr to adjusted start position */
@@ -150,6 +160,8 @@ struct Fragment
     char last = 0;
 
 private:
+    uint32_t& live;  // the count this node was charged to
+
     inline void init(uint16_t new_flen, const uint8_t* new_fptr, int new_ord)
     {
         assert(new_flen > 0);
@@ -161,6 +173,7 @@ private:
         memcpy(fptr, new_fptr, new_flen);
 
         ip_stats.nodes_created++;
+        live++;
     }
 };
 
@@ -851,7 +864,24 @@ static void release_tracker(FragTracker* ft)
 // Defrag methods
 //-------------------------------------------------------------------------
 
-Defrag::Defrag(FragEngine& e) : engine(e), layers(DEFAULT_LAYERMAX) { }
+Defrag::Defrag(FragEngine& e) :
+    engine(e), layers(DEFAULT_LAYERMAX), live(ThreadConfig::get_instance_max(), 0)
+{ }
+
+uint32_t& Defrag::live_nodes()
+{ return live[get_instance_id()]; }
+
+// refuse and count a fragment needing more nodes than max_frags leaves free
+bool Defrag::frag_node_limit_reached(uint32_t need)
+{
+    const uint32_t held = live_nodes();
+
+    if ( held < engine.max_frags and need <= engine.max_frags - held )
+        return false;
+
+    ip_stats.discards++;
+    return true;
+}
 
 bool Defrag::configure(const SnortConfig* sc)
 {
@@ -1392,6 +1422,10 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                 }
                 else
                 {
+                    // refuse before trimming a buffered fragment
+                    if ( frag_node_limit_reached() )
+                        return FRAG_INSERT_FAILED;
+
                     left->size -= (uint16_t)overlap;
                     ft->frag_bytes -= (uint16_t)overlap;
                 }
@@ -1505,6 +1539,10 @@ left_overlap_last:
                 }
                 else
                 {
+                    // refuse before trimming a buffered fragment
+                    if ( frag_node_limit_reached() )
+                        return FRAG_INSERT_FAILED;
+
                     right->offset += (uint16_t)overlap;
                     right->data += (uint16_t)overlap;
                     right->size -= (uint16_t)overlap;
@@ -1810,6 +1848,10 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
         return 0;
     }
 
+    // leave the tracker unclaimed so a later fragment can start it
+    if ( frag_node_limit_reached() )
+        return 0;
+
     *ft = {};
 
     if ( p->is_ip4() )
@@ -1858,7 +1900,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
     /* initialize the fragment list */
     ft->fraglist = nullptr;
 
-    f = new Fragment(fragLength, fragStart, ft->ordinal++);
+    f = new Fragment(live_nodes(), fragLength, fragStart, ft->ordinal++);
 
     f->size = fragLength;
     f->offset = frag_off;
@@ -1977,7 +2019,10 @@ int Defrag::add_frag_node(
         return FRAG_INSERT_ANOMALY;
     }
 
-    newfrag = new Fragment(fragLength, fragStart, ft->ordinal++);
+    if ( frag_node_limit_reached() )
+        return FRAG_INSERT_FAILED;
+
+    newfrag = new Fragment(live_nodes(), fragLength, fragStart, ft->ordinal++);
 
     /*
      * twiddle the frag values for overlaps
@@ -2028,7 +2073,11 @@ int Defrag::add_frag_node(
  */
 int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
 {
-    Fragment* newfrag = new Fragment(left, ft->ordinal++);
+    // the split is followed by the new fragment's own node
+    if ( frag_node_limit_reached(2) )
+        return FRAG_INSERT_FAILED;
+
+    Fragment* newfrag = new Fragment(live_nodes(), left, ft->ordinal++);
 
     add_node(ft, left, newfrag);
 
@@ -2086,3 +2135,105 @@ inline int Defrag::expired(Packet* p, FragTracker* ft, const FragEngine* fe)
 
     return false;
 }
+
+#ifdef UNIT_TEST
+
+// reaches the two private insert paths without needing a decoded packet
+class DefragTestPeer
+{
+public:
+    DefragTestPeer(FragEngine& fe) : defrag(fe) { }
+
+    int add(FragTracker* ft, FragEngine* fe, const uint8_t* buf, uint16_t len,
+        uint16_t offset, Fragment* left, Fragment** ret)
+    { return defrag.add_frag_node(ft, fe, buf, len, 0, len, 0, 0, offset, left, ret); }
+
+    int dup(FragTracker* ft, Fragment* left, Fragment** ret)
+    { return defrag.dup_frag_node(ft, left, ret); }
+
+private:
+    Defrag defrag;
+};
+
+// Regression for fragment nodes tracked past the configured max_frags
+TEST_CASE("stream_ip max_frags bounds live nodes", "[defrag]")
+{
+    const uint8_t payload[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    const uint32_t limit = 4;
+
+    FragEngine fe;
+    fe.max_frags = limit;
+
+    DefragTestPeer peer(fe);
+    FragTracker ft = {};
+    ft.engine = &fe;  // new_tracker() sets this before any insert runs
+    const PegCount discards_before = ip_stats.discards;
+
+    SECTION("add_frag_node refuses a node once the limit is reached")
+    {
+        Fragment* left = nullptr;
+        unsigned admitted = 0;
+
+        for ( unsigned i = 0; i < 2 * limit; i++ )
+        {
+            Fragment* ret = nullptr;
+
+            if ( peer.add(&ft, &fe, payload, sizeof(payload),
+                static_cast<uint16_t>(i * sizeof(payload)), left, &ret) == FRAG_INSERT_OK )
+            {
+                admitted++;
+                left = ret;
+            }
+        }
+
+        CHECK(admitted == limit);
+        CHECK(ft.fraglist_count == static_cast<int>(limit));
+        CHECK(ip_stats.discards - discards_before == limit);
+    }
+
+    SECTION("dup_frag_node keeps a node for the fragment that follows the split")
+    {
+        Fragment* left = nullptr;
+
+        for ( unsigned i = 0; i < limit - 2; i++ )
+        {
+            Fragment* ret = nullptr;
+            peer.add(&ft, &fe, payload, sizeof(payload),
+                static_cast<uint16_t>(i * sizeof(payload)), left, &ret);
+            left = ret;
+        }
+
+        Fragment* dup = nullptr;
+        CHECK(peer.dup(&ft, ft.fraglist, &dup) == FRAG_INSERT_OK);
+        CHECK(ft.fraglist_count == static_cast<int>(limit - 1));
+
+        CHECK(peer.dup(&ft, ft.fraglist, &dup) == FRAG_INSERT_FAILED);
+        CHECK(ft.fraglist_count == static_cast<int>(limit - 1));
+    }
+
+    SECTION("each stream_ip instance has its own node budget")
+    {
+        FragEngine other_fe;
+        other_fe.max_frags = limit;
+
+        DefragTestPeer other(other_fe);
+        FragTracker other_ft = {};
+        other_ft.engine = &other_fe;
+        Fragment* ret = nullptr;
+
+        for ( unsigned i = 0; i <= limit; i++ )
+            peer.add(&ft, &fe, payload, sizeof(payload), 0, nullptr, &ret);
+
+        REQUIRE(ft.fraglist_count == static_cast<int>(limit));
+        CHECK(other.add(&other_ft, &other_fe, payload, sizeof(payload), 0, nullptr, &ret) ==
+            FRAG_INSERT_OK);
+
+        delete_tracker(&ft);
+        CHECK(peer.add(&ft, &fe, payload, sizeof(payload), 0, nullptr, &ret) == FRAG_INSERT_OK);
+        delete_tracker(&other_ft);
+    }
+
+    delete_tracker(&ft);
+}
+
+#endif
