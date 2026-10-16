@@ -54,6 +54,25 @@ add_cpputest( http_msg_head_shared_find_next_header_test
 
 add_cpputest( http_event_test )
 
+FLEX ( pdf_tokenizer
+    ${CMAKE_SOURCE_DIR}/src/js_norm/pdf_tokenizer.l
+    ${CMAKE_BINARY_DIR}/src/js_norm/pdf_tokenizer.cc
+)
+
+if ( HAVE_SAFEC )
+    set(HTTP_JS_NORM_TEST_LIBS ${SAFEC_LIBRARIES})
+endif ()
+
+add_cpputest( http_js_norm_attr_test
+    SOURCES
+        ${pdf_tokenizer_OUTPUTS}
+        ../http_field.cc
+        ../http_str_to_code.cc
+        ../http_tables.cc
+        ../../../helpers/streambuf.cc
+    LIBS ${HTTP_JS_NORM_TEST_LIBS}
+)
+
 add_cpputest( http_context_data_test
     SOURCES
         ../http_context_data.cc

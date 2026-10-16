@@ -41,6 +41,8 @@ enum AttrId { AID_OPEN, AID_SLASH, AID_GT, AID_SRC, AID_JS, AID_NON_JS, AID_ECMA
 struct MatchContext
 {
     const uint8_t* next = nullptr;
+    // one past the last byte of the buffer given to the attribute search
+    const uint8_t* end = nullptr;
     bool is_javascript = true;
     bool is_external = false;
     bool is_shortened = false;
@@ -149,12 +151,12 @@ static int match_attr(void* pid, void*, int index, void* sctx, void*)
 {
     MatchContext* ctx = (MatchContext*)sctx;
     AttrId id = (AttrId)(uintptr_t)pid;
-    const char* c;
+    const uint8_t* c;
 
     switch (id)
     {
     case AID_SLASH:
-        if (*(ctx->next + index) == '>')
+        if (ctx->next + index < ctx->end and *(ctx->next + index) == '>')
         {
             ctx->is_shortened = true;
             ctx->next += index;
@@ -171,9 +173,9 @@ static int match_attr(void* pid, void*, int index, void* sctx, void*)
         return 1;
 
     case AID_SRC:
-        c = (const char*)ctx->next + index;
-        while (*c == ' ') c++;
-        ctx->is_external = ctx->is_external || *c == '=';
+        c = ctx->next + index;
+        while (c < ctx->end and *c == ' ') c++;
+        ctx->is_external = ctx->is_external or (c < ctx->end and *c == '=');
         return 0;
 
     case AID_JS:
@@ -333,7 +335,7 @@ bool HttpInlineJSNorm::pre_proc()
                 return false;
             }
 
-            MatchContext sctx = {src_ptr, true, false, false};
+            MatchContext sctx = {src_ptr, src_end, true, false, false};
 
             if (!mpse_attr->find((const char*)src_ptr, src_end - src_ptr, match_attr, false, &sctx)
                 || src_ptr == sctx.next || sctx.next >= src_end)
