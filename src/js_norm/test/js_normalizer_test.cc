@@ -1826,6 +1826,222 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     }
 }
 
+TEST_CASE("script closing tag with a trailing delimiter", "[JSNormalizer]")
+{
+    SECTION("script data - space")
+    {
+        test_normalization_noident(
+            "var a = 1;\n</script >\nvar c = 3;\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(20)});
+    }
+    SECTION("script data - carriage return")
+    {
+        test_normalization_noident(
+            "var a = 1;\n</script\r>\nvar c = 3;\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(20)});
+    }
+    SECTION("script data - line feed without a closing bracket")
+    {
+        test_normalization_noident(
+            "var a = 1;\n</script\nvar c = 3;\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(20)});
+    }
+    SECTION("multi-line comment - space")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script >\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - tab")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script\t>\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - line feed")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script\n>\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - form feed")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script\f>\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - carriage return")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script\r>\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - solidus")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script/>\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - attribute")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script foo=bar>\nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("multi-line comment - line feeds without a closing bracket")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script\n\n\n\n\n\n\n\n\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("single-line comment - space")
+    {
+        test_normalization_noident(
+            "var a = 1;\n//</script >\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(22)});
+    }
+    SECTION("single-line comment - solidus")
+    {
+        test_normalization_noident(
+            "var a = 1;\n//</script/>\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(22)});
+    }
+    SECTION("single-line comment - line feed")
+    {
+        test_normalization_noident(
+            "var a = 1;\n//</script\n>\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(22)});
+    }
+    SECTION("single-line comment - attribute")
+    {
+        test_normalization_noident(
+            "var a = 1;\n//</script foo=bar>\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(22)});
+    }
+    SECTION("HTML comment - space")
+    {
+        test_normalization_noident(
+            "var a = 1;\n<!--</script >\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(24)});
+    }
+    SECTION("string literal - space")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = '</script >';\nvar b = 2;\r\n", "var a=1;var str='",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(31)});
+    }
+    SECTION("double-quoted string literal - tab")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = \"</script\t\";\nvar b = 2;\r\n", "var a=1;var str=\"",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(31)});
+    }
+    SECTION("template literal - form feed")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = `</script\f`;\nvar b = 2;\r\n", "var a=1;var str=`",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(31)});
+    }
+    SECTION("regex literal - space")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar re = /a</script /;\nvar b = 2;\r\n", "var a=1;var re=/a",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(31)});
+    }
+    SECTION("char code - single-line comment - line feed")
+    {
+        test_normalization_noident(
+            "var a = String.fromCharCode(65, //</script\n66);\n", "var a='A",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(43)});
+    }
+    SECTION("char code - multi-line comment - space")
+    {
+        test_normalization_noident(
+            "var a = String.fromCharCode(65, /*</script */66);\n", "var a='A",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(43)});
+    }
+    SECTION("script data - mixed case tag name")
+    {
+        test_normalization_noident(
+            "var a = 1;\n</ScRiPt\t>\nvar c = 3;\n", "var a=1;",
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(20)});
+    }
+    SECTION("tag name continues - not a closing tag")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = '</scriptx>';\nvar b = 2;\r\n",
+            "var a=1;var str='</scriptx>';var b=2;");
+    }
+    SECTION("vertical tab - not a closing tag")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = '</script\v>';\nvar b = 2;\r\n",
+            "var a=1;var str='</script\v>';var b=2;");
+    }
+    SECTION("delimiter without a closing bracket")
+    {
+        test_normalization_noident(
+            "var a = 1;\n/*</script \nsomething*/\nvar b = 2;\r\n", "var a=1;",
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(22)});
+    }
+    SECTION("external script - single-line comment - line feed")
+    {
+        test_normalization_noident(
+            "var a = 1;\n//</script\nvar b = 2; // >\n", "var a=1;var b=2;",
+            {normalize_as_external(true)});
+    }
+    SECTION("external script - multi-line comment - line feed")
+    {
+        test_normalization_noident(
+            "var a = 1 /*</script\n*/ b = 2;\n", "var a=1;b=2;",
+            {normalize_as_external(true)});
+    }
+    SECTION("external script - string literal - carriage return")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = '</script\r';\n", "var a=1;var str='</script",
+            {normalize_as_external(true), return_code(JSTokenizer::BAD_TOKEN)});
+    }
+    SECTION("external script - char code - line feed in comment")
+    {
+        test_normalization_noident(
+            "var a = String.fromCharCode(65, //</script\n66);\n", "var a='AB';",
+            {normalize_as_external(true)});
+    }
+    SECTION("external script - single-line comment - carriage return")
+    {
+        test_normalization_noident(
+            "var a = 1;\n//</script\rvar b = 2; // >\n", "var a=1;var b=2;",
+            {normalize_as_external(true)});
+    }
+    SECTION("external script - double-quoted string literal - line feed")
+    {
+        test_normalization_noident(
+            "var a = 1;\nvar str = \"</script\n\";\n", "var a=1;var str=\"</script",
+            {normalize_as_external(true), return_code(JSTokenizer::BAD_TOKEN)});
+    }
+    SECTION("external script - code - space")
+    {
+        test_normalization_noident("var a = 5 </script >/", "var a=5</script >/",
+            {normalize_as_external(true), check_closing_tag(false)});
+    }
+    SECTION("external script - single-line comment text - line feed")
+    {
+        test_normalization_noident("var a = 1; // abc </script\nb = 2;\n", "var a=1;b=2;",
+            {normalize_as_external(true)});
+    }
+    SECTION("external script - single-line comment text - carriage return")
+    {
+        test_normalization_noident("var a = 1; // abc </script\rb = 2;\n", "var a=1;b=2;",
+            {normalize_as_external(true)});
+    }
+    SECTION("external script - single-line comment text without the end tag")
+    {
+        test_normalization_noident("var a = 1; // a/script\nb = 2;\n", "var a=1;b=2;",
+            {normalize_as_external(true)});
+    }
+}
+
 TEST_CASE("opening tag sequence", "[JSNormalizer]")
 {
     SECTION("incomplete")
@@ -2825,6 +3041,224 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
 
         norm.test_normalization_combined({dat1, dat2, dat3}, exp,
             {return_code(JSTokenizer::SCRIPT_ENDED)});
+    }
+    SECTION("</script | foo=bar>")
+    {
+        const char dat1[] = "</script";
+        const char dat2[] = " foo=bar>";
+        const char exp1[] = "</script";
+        const char exp2[] = "";
+        const char exp[] = "";
+
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(1)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(1)});
+    }
+    SECTION("/*</script | LF>")
+    {
+        const char dat1[] = "/*</script";
+        const char dat2[] = "\n>";
+        const char exp1[] = "";
+        const char exp2[] = "";
+        const char exp[] = "";
+
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(1)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(1)});
+    }
+    SECTION("//</script | />")
+    {
+        const char dat1[] = "//</script";
+        const char dat2[] = "/>";
+        const char exp1[] = "";
+        const char exp2[] = "";
+        const char exp[] = "";
+
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(1)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::SCRIPT_ENDED), expected_cursor_pos(1)});
+    }
+    SECTION("str='</script | CR>'")
+    {
+        const char dat1[] = "var str ='</script";
+        const char dat2[] = "\r>';";
+        const char exp1[] = "var str='</script";
+        const char exp2[] = "";
+        const char exp[] = "var str='";
+
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(1)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::CLOSING_TAG), expected_cursor_pos(1)});
+    }
+    SECTION("str='</script | x>' - not a closing tag")
+    {
+        const char dat1[] = "var str ='</script";
+        const char dat2[] = "x>';";
+        const char exp1[] = "var str='</script";
+        const char exp2[] = "/scriptx>';";
+        const char exp[] = "var str='</scriptx>';";
+
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {return_code(JSTokenizer::SCRIPT_CONTINUE)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {return_code(JSTokenizer::SCRIPT_CONTINUE)});
+    }
+    SECTION("external //</script LF b | = 2;")
+    {
+        const char dat1[] = "var a = 1; //</script\nb";
+        const char dat2[] = " = 2;\n";
+        const char exp1[] = "var a=1;b";
+        const char exp2[] = "=2;";
+        const char exp[] = "var a=1;b=2;";
+
+        norm.test_normalization(
+            {
+                {dat1, exp1},
+                {dat2, exp2},
+            },
+            {normalize_as_external(true)});
+
+        norm.test_normalization_combined({dat1, dat2}, exp,
+            {normalize_as_external(true)});
+    }
+    SECTION("external //</script LF b | = 2; - tail starts inside the tag")
+    {
+        const char dat1[] = "var a = 1; //</script\nb";
+        const char dat2[] = " = 2;\n";
+        const char exp[] = "var a=1;b=2;";
+        auto conf = norm.derive({normalize_as_external(true), max_token_buf_size(5)});
+
+        JSTokenizerTester tester(conf);
+        tester.do_pdu(dat1);
+        tester.check_output("var a=1;b");
+        tester.run_checks({temporary_buffer("ipt\nb")});
+        tester.do_pdu(dat2);
+        tester.check_output("=2;");
+
+        conf.test_normalization_combined({dat1, dat2}, exp);
+    }
+    SECTION("external str='</script/';b | = 2; - tail starts inside the tag")
+    {
+        const char dat1[] = "var s = '</script/';b";
+        const char dat2[] = " = 2;";
+        const char exp[] = "var s='</script/';b=2;";
+        auto conf = norm.derive({normalize_as_external(true), max_token_buf_size(6)});
+
+        JSTokenizerTester tester(conf);
+        tester.do_pdu(dat1);
+        tester.check_output("var s='</script/';b");
+        tester.run_checks({temporary_buffer("pt/';b")});
+        tester.do_pdu(dat2);
+        tester.check_output("=2;");
+
+        conf.test_normalization_combined({dat1, dat2}, exp);
+    }
+    SECTION("external //</script LF | b | c = 2;")
+    {
+        norm.test_normalization_combined({"var a = 1; //</script\n", "b", "c = 2;\n"},
+            "var a=1;bc=2;", {normalize_as_external(true)});
+    }
+    SECTION("external /*</script */ | b | c = 2; - tail starts inside the tag")
+    {
+        norm.test_normalization_combined({"var a = 1; /*</script */", "b", "c = 2;\n"},
+            "var a=1;bc=2;", {normalize_as_external(true), max_token_buf_size(5)});
+    }
+    SECTION("external str='</script> | x | y';")
+    {
+        norm.test_normalization_combined({"var s = '</script>", "x", "y';\n"},
+            "var s='</script>xy';", {normalize_as_external(true)});
+    }
+    SECTION("external str='</script SP | x | y';")
+    {
+        norm.test_normalization_combined({"var s = '</script ", "x", "y';\n"},
+            "var s='</script xy';", {normalize_as_external(true)});
+    }
+    SECTION("external a = 5 </script SP | x | y/;")
+    {
+        norm.test_normalization_combined({"var a = 5 </script ", "x", "y/;\n"},
+            "var a=5</script xy/;", {normalize_as_external(true)});
+    }
+    SECTION("external a = 5 </SCRIPT SP | x | y/;")
+    {
+        norm.test_normalization_combined({"var a = 5 </SCRIPT ", "x", "y/;\n"},
+            "var a=5</SCRIPT xy/;", {normalize_as_external(true)});
+    }
+    SECTION("external a = 5 </script/ | x | y;")
+    {
+        norm.test_normalization_combined({"var a = 5 </script/", "x", "y;\n"},
+            "var a=5</script/ xy;", {normalize_as_external(true)});
+    }
+    SECTION("external a = 1; </s | c | ript>x/;")
+    {
+        norm.test_normalization_combined({"a = 1; </s", "c", "ript>x/;\nb = 2;\n"},
+            "a=1;</script>x/;b=2;", {normalize_as_external(true)});
+    }
+    SECTION("external a = 5 </scr | ipt x/;")
+    {
+        norm.test_normalization_combined({"var a = 5 </scr", "ipt x/;\nb = 2;\n"},
+            "var a=5</script x/;b=2;", {normalize_as_external(true), check_closing_tag(false)});
+    }
+    SECTION("external str='</s | cript x';")
+    {
+        norm.test_normalization_combined({"var s = '</s", "cript x';b = 2;\n"},
+            "var s='</script x';b=2;", {normalize_as_external(true)});
+    }
+    SECTION("external // z | z </script x LF")
+    {
+        norm.test_normalization_combined({"var a = 1; // z", "z </script x\nb = 2;\n"},
+            "var a=1;b=2;", {normalize_as_external(true)});
+    }
+    SECTION("external re = /x</script SP | y | z/;")
+    {
+        norm.test_normalization_combined({"var a = /x</script ", "y", "z/;\n"},
+            "var a=/x</s cript yz/;", {normalize_as_external(true)});
+    }
+    SECTION("external re = /x</script LF/; | b | = 2; - tail starts before the tag")
+    {
+        norm.test_normalization_combined({"a = /x</script\n/;", "b", " = 2;\n"},
+            "a=/x</s cript;/;b = 2;",
+            {normalize_as_external(true), max_token_buf_size(12), return_code(JSTokenizer::BAD_TOKEN)});
+    }
+    SECTION("external /*</script SP ... */b | = 2; - tail starts inside the tag")
+    {
+        norm.test_normalization_combined(
+            {"var a = 1; /*</script " + std::string(248, 'x') + " */b", " = 2;\n"},
+            "var a=1;b=2;", {normalize_as_external(true)});
+    }
+    SECTION("external //</script HT ... LF b | = 2; - tail starts inside the tag")
+    {
+        norm.test_normalization_combined(
+            {"var a = 1; //</script\t" + std::string(250, 'x') + "\nb", " = 2;\n"},
+            "var a=1;b=2;", {normalize_as_external(true)});
     }
 }
 

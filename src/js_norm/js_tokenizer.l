@@ -53,6 +53,9 @@ using namespace jsn;
 
 #define YY_USER_ACTION                                      \
     {                                                       \
+        if (ext_script)                                     \
+            ctag_trim();                                    \
+                                                            \
         debug_logf(5, js_trace, TRACE_PROC, nullptr,        \
             "pattern #%d, sc %d\n", yy_act, YY_START);      \
                                                             \
@@ -916,18 +919,23 @@ LS                  \xE2\x80\xA8
 PS                  \xE2\x80\xA9
 LINE_TERMINATORS    {LF}|{CR}|{LS}|{PS}
 
+/* HTML script end tag, without the leading '<' */
+/* according to https://html.spec.whatwg.org/multipage/parsing.html#script-data-end-tag-name-state */
+/* CR is included since the HTML input stream turns it into LF */
+HTML_TAG_SCRIPT_CLOSE_TAIL    (?i:\/script)[\x9\xA\xC\xD\x20\x2f\x3e]
+
 /* comments */
 /* according to https://ecma-international.org/ecma-262/5.1/#sec-7.4 */
 LINE_COMMENT_START   "//"
 LINE_COMMENT_END1    [^<\xA\xD]*\xA
 LINE_COMMENT_END2    [^<\xA\xD]*\xD
 LINE_COMMENT_END3    [^<\xA\xD]*"<"(?i:script)
-LINE_COMMENT_END4    [^<\xA\xD]*"<"(?i:\/script>)
+LINE_COMMENT_END4    [^<\xA\xD]*"<"{HTML_TAG_SCRIPT_CLOSE_TAIL}
 LINE_COMMENT_SKIP    [^<\xA\xD]*"<"?
 BLOCK_COMMENT_START  "/*"
 BLOCK_COMMENT_END1   [^<*\xA\xD]*"*/"
 BLOCK_COMMENT_END2   [^<*\xA\xD]*"<"(?i:script)
-BLOCK_COMMENT_END3   [^<*\xA\xD]*"<"(?i:\/script>)
+BLOCK_COMMENT_END3   [^<*\xA\xD]*"<"{HTML_TAG_SCRIPT_CLOSE_TAIL}
 BLOCK_COMMENT_LINE1  [^<*\xA\xD]*\xA
 BLOCK_COMMENT_LINE2  [^<*\xA\xD]*\xD
 BLOCK_COMMENT_SKIP   [^<*\xA\xD]*[<*]?
@@ -1033,7 +1041,7 @@ LITERAL                       {LITERAL_NULL}|{LITERAL_THIS}|{LITERAL_BOOLEAN}|{L
 
 HTML_COMMENT_OPEN         "<!--"
 HTML_TAG_SCRIPT_OPEN      "<"(?i:script)[\x9\xA\xC\x20\x2f\x3e]
-HTML_TAG_SCRIPT_CLOSE     "<"(?i:\/script>)
+HTML_TAG_SCRIPT_CLOSE     "<"{HTML_TAG_SCRIPT_CLOSE_TAIL}
 
 /* from 0x000 to 0x10FFFD to match undefined tokens */
 /* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
@@ -1118,7 +1126,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
     {LITERAL_DQ_STRING_START}                 { EXEC(literal_dq_string_start()) }
 <dqstr,unesc_dqstr>{LITERAL_DQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
 <dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_OPEN}     { ECHO; }
-<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { EXEC(ctag_in_literal()) }
 <dqstr,unesc_dqstr>\\{CR}{LF}                 { /* skip */ }
 <dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
 <dqstr,unesc_dqstr>\\{CR}                     { /* skip */ }
@@ -1140,7 +1148,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
     {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
 <sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_OPEN}     { ECHO; }
-<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { EXEC(ctag_in_literal()) }
 <sqstr,unesc_sqstr>\\{CR}{LF}                 { /* skip */ }
 <sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
 <sqstr,unesc_sqstr>\\{CR}                     { /* skip */ }
@@ -1163,7 +1171,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <tmpll,unesc_tmpll>(\\\\){0,16}{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
 <tmpll,unesc_tmpll>(\\\\){0,16}{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
 <tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_OPEN}                    { if (!ext_script) { opening_tag_seen = true; } ECHO; }
-<tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
+<tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { EXEC(ctag_in_literal()) }
 <tmpll,unesc_tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
 <tmpll>{UNICODE_ESCAPE_SEQUENCE}                             |
 <tmpll>{HEX_ESCAPE_SEQUENCE}                                 { escaped_unicode_utf_8(); }
@@ -2323,8 +2331,11 @@ JSTokenizer::JSRet JSTokenizer::html_closing_script_tag()
         return global_scope() ? SCRIPT_ENDED : ENDED_IN_INNER_SCOPE;
     else
     {
-        closing_tag_seen = true;
-        states_correct(1);
+        if (yyleng > 1)
+        {
+            closing_tag_seen = true;
+            states_correct(1);
+        }
         operator_comparison();
         return EOS;
     }
@@ -3090,8 +3101,32 @@ void JSTokenizer::explicit_otag()
 void JSTokenizer::ctag_in_regex()
 {
     // out of '</script>', consume only the leading '<' and renormalize the rest
-    states_correct(1);
+    if (yyleng > 1)
+        states_correct(1);
     ECHO;
+}
+
+JSTokenizer::JSRet JSTokenizer::ctag_in_literal()
+{
+    if (!ext_script)
+        return CLOSING_TAG;
+
+    // the '<' left by ctag_trim() is lexed as any other literal character
+    if (yyleng == 1)
+        dealias_append();
+    ECHO;
+    return EOS;
+}
+
+void JSTokenizer::ctag_trim()
+{
+    // an external script has no end tag, so '</script' with a delimiter other than '>'
+    // is matched up to '<' only, as if the end tag patterns did not accept that delimiter
+    if (yyleng < 9 or yytext[yyleng - 9] != '<' or yytext[yyleng - 8] != '/'
+        or yytext[yyleng - 1] == '>' or strncasecmp(yytext + yyleng - 7, "script", 6))
+        return;
+
+    yyless(yyleng - 8);
 }
 
 JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)

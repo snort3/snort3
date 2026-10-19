@@ -60,6 +60,13 @@ TEST_CASE("De-aliasing - basic", "[JSNormalizer]")
             "var_0000=console['log'];console['log'](\"2 + 2\");"
         );
 
+    SECTION("square bracket accessor - external script - end tag text")
+        default_config.test_normalization(
+            "a = console['</script x']; a;",
+            "var_0000=console['</script x'];console['</script x'];",
+            {normalize_as_external(true)}
+        );
+
     SECTION("function call")
         test_normalization(
             "a = eval('console.log(\\\'foo\\\')'); a;",

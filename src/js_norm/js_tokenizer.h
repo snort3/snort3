@@ -25,7 +25,7 @@
 #include <stack>
 #include <vector>
 
-// The longest pattern has 9 characters " < / s c r i p t > ",
+// The longest pattern has 9 characters " < / s c r i p t > " (or another delimiter instead of '>'),
 // 8 of them can reside in 1st chunk
 // Each character in the identifier forms its own group (pattern matching case),
 // i.e. in the current implementation IDENTIFIER has " . " rule.
@@ -318,6 +318,8 @@ private:
     void char_code_no_match();
     void explicit_otag();
     void ctag_in_regex();
+    JSRet ctag_in_literal();
+    void ctag_trim();
 
     static const char* p_scope_codes[];
 

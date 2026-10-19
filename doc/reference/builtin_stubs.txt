@@ -2750,9 +2750,10 @@ encountered, this alert is raised. This alert is raised by the enhanced JavaScri
 
 154:5
 
-This alert is raised when </script> end-tag is encountered inside a JavaScript comment
-or literal, which is a syntax error, as the last comment or literal is not closed before
-script end. This alert is raised by the enhanced JavaScript normalizer.
+This alert is raised when a script end-tag (</script followed by a tab, line break, form
+feed, space, / or >) is encountered inside a JavaScript comment or literal, which is a syntax
+error, as the last comment or literal is not closed before script end. This alert is raised by
+the enhanced JavaScript normalizer.
 
 154:6
 
