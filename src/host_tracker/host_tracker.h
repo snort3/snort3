@@ -494,6 +494,9 @@ private:
     HostApplication* find_service_no_lock(Port, IpProtocol, AppId);
     void update_ha_no_lock(HostApplication& dst, HostApplication& src);
 
+    // Drops vendor / version info learned for the service's previous identity
+    void reset_service_info_no_lock(HostApplication&);
+
     HostApplication* find_and_add_service_no_lock(Port, IpProtocol, uint32_t lseen,
         bool& is_new, AppId, uint16_t max_services = 0);
 

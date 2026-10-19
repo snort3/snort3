@@ -356,6 +356,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
         {
             s.appid = appid;
             s.inferred_appid = inferred_appid;
+            reset_service_info_no_lock(s);
             if ( added )
                 *added = true;
         }
@@ -364,6 +365,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
         {
             if ( added )
                 *added = true;
+            reset_service_info_no_lock(s);
             s.visibility = true;
             num_visible_services++;
         }
@@ -460,6 +462,7 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
         {
             s.appid = app.appid;
             s.inferred_appid = app.inferred_appid;
+            reset_service_info_no_lock(s);
             if ( added )
                 *added = true;
         }
@@ -468,6 +471,7 @@ bool HostTracker::add_service(const HostApplication& app, bool* added)
         {
             if ( added )
                 *added = true;
+            reset_service_info_no_lock(s);
             s.visibility = true;
             num_visible_services++;
         }
@@ -556,6 +560,7 @@ HostApplication* HostTracker::find_and_add_service_no_lock(Port port, IpProtocol
             if ( (appid != APP_ID_NONE and s.appid != appid) or !s.visibility )
             {
                 s.appid = appid;
+                reset_service_info_no_lock(s);
                 is_new = true;
                 s.hits = 1;
                 if ( !s.visibility )
@@ -596,6 +601,7 @@ HostApplication* HostTracker::find_and_add_service_no_lock(Port port, IpProtocol
         available->user[0] = '\0';
         available->user_login = 0;
         available->banner_updated = false;
+        reset_service_info_no_lock(*available);
         available->visibility = true;
         return available;
     }
@@ -657,6 +663,12 @@ void HostTracker::update_ha_no_lock(HostApplication& dst, HostApplication& src)
             dst.info.emplace_back(i.version, i.vendor);
 
     dst.hits = src.hits;
+}
+
+void HostTracker::reset_service_info_no_lock(HostApplication& ha)
+{
+    // clear() keeps the capacity, so the host cache memory accounting is unchanged
+    ha.info.clear();
 }
 
 bool HostTracker::update_service_info(HostApplication& ha, const char* vendor,
