@@ -351,6 +351,7 @@ DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData* ssd,
     ftracker->is_smb2 = false;
     ftracker->file_name = nullptr;
     ftracker->file_name_size = 0;
+    ftracker->file_name_unicode = false;
     ftracker->file_name_hash = 0;
     if (is_ipc)
     {
@@ -529,6 +530,7 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
         ftracker->file_name_size = 0;
         ftracker->file_name_hash = 0;
     }
+    ftracker->file_name_unicode = false;
 
     if (ftracker->is_ipc)
     {
@@ -620,6 +622,7 @@ void DCE2_SmbFreeRequestTrackerFileName(DCE2_SmbRequestTracker* rtracker)
     }
 
     rtracker->file_name_size = 0;
+    rtracker->file_name_unicode = false;
 }
 
 void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
@@ -1362,41 +1365,54 @@ void DCE2_SmbInitDeletePdu()
     *del_req_fmt = SMB_FMT__ASCII;
 }
 
-static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
+static uint32_t DCE2_SmbBuildDeletePdu(const DCE2_SmbFileTracker* ftracker)
 {
-    Packet* inject_pkt = DetectionEngine::get_current_wire_packet();
-    Packet* p = DetectionEngine::get_current_packet();
-
-    if ( !inject_pkt || inject_pkt->flow != p->flow )
-        return;
+    if (!ftracker || !ftracker->file_name)
+        return 0;
 
     NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(dce2_smb_delete_pdu);
     SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(*nb_hdr));
     SmbDeleteReq* del_req = reinterpret_cast<SmbDeleteReq*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(*smb_hdr));
     char* del_filename = reinterpret_cast<char*>(reinterpret_cast<uint8_t*>(del_req) + sizeof(*del_req) + 1);
-    FileCharEncoding encoding = get_character_encoding(ftracker->file_name,
-        ftracker->file_name_size);
-    uint16_t file_name_len;
+    const bool unicode = ftracker->file_name_unicode;
+    const size_t stored_len = ftracker->file_name_size;
+    if (unicode && stored_len < UTF_16_LE_BOM_LEN)
+        return 0;
 
-    if (encoding == SNORT_CHAR_ENCODING_UTF_16LE)
-    {
-        file_name_len = ftracker->file_name_size - UTF_16_LE_BOM_LEN + 2;
-        uint16_t smb_flg2 = 0xC001;
-        smb_hdr->smb_flg2 = SmbHtons(&smb_flg2);
-    }
-    else
-    {
-        file_name_len = ftracker->file_name_size + 1;
-    }
+    // Stored Unicode names have a BOM and two-byte terminator; ASCII names
+    // have no prefix and a one-byte terminator. Neither size includes its terminator.
+    const char* source = ftracker->file_name + (unicode ? UTF_16_LE_BOM_LEN : 0);
+    const size_t file_name_len = stored_len + (unicode ? 0 : 1);
+    const size_t smb_len = sizeof(*smb_hdr) + sizeof(*del_req) + 1 + file_name_len;
+    const size_t byte_count = 1 + file_name_len;
+    if (smb_len > UINT16_MAX || byte_count > UINT16_MAX
+        || sizeof(*nb_hdr) + smb_len > sizeof(dce2_smb_delete_pdu))
+        return 0;
 
-    nb_hdr->length = htons(sizeof(*smb_hdr) + sizeof(*del_req) + 1 + file_name_len);
-    uint32_t len = ntohs(nb_hdr->length) + sizeof(*nb_hdr);
+    uint16_t smb_flg2 = unicode ? 0xC001 : 0x4001;
+    smb_hdr->smb_flg2 = SmbHtons(&smb_flg2);
+    nb_hdr->length = htons(static_cast<uint16_t>(smb_len));
+    const uint32_t len = sizeof(*nb_hdr) + smb_len;
     smb_hdr->smb_tid = SmbHtons(&ftracker->tid_v1);
     smb_hdr->smb_uid = SmbHtons(&ftracker->uid_v1);
-    del_req->smb_bcc = 1 + file_name_len;
-    memcpy(del_filename, ftracker->file_name + UTF_16_LE_BOM_LEN, file_name_len);
+    uint16_t smb_bcc = static_cast<uint16_t>(byte_count);
+    del_req->smb_bcc = SmbHtons(&smb_bcc);
+    memcpy(del_filename, source, file_name_len);
 
-    p->active->inject_data(inject_pkt, 0, reinterpret_cast<uint8_t*>(nb_hdr), len);
+    return len;
+}
+
+static void DCE2_SmbInjectDeletePdu(const DCE2_SmbFileTracker* ftracker)
+{
+    Packet* inject_pkt = DetectionEngine::get_current_wire_packet();
+    Packet* p = DetectionEngine::get_current_packet();
+
+    if (!inject_pkt || inject_pkt->flow != p->flow)
+        return;
+
+    const uint32_t len = DCE2_SmbBuildDeletePdu(ftracker);
+    if (len)
+        p->active->inject_data(inject_pkt, 0, dce2_smb_delete_pdu, len);
 }
 
 static FileVerdict DCE2_SmbLookupFileVerdict()
@@ -1919,8 +1935,91 @@ void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker* ftracker,
 {
     ftracker->file_name = cur_rtracker->file_name;
     ftracker->file_name_size = ftracker->file_name ? cur_rtracker->file_name_size : 0;
+    ftracker->file_name_unicode = ftracker->file_name && cur_rtracker->file_name_unicode;
     ftracker->file_name_hash = ftracker->file_name_size ?
         str_to_hash((const uint8_t*)ftracker->file_name, ftracker->file_name_size) : 0;
     cur_rtracker->file_name = nullptr;
     cur_rtracker->file_name_size = 0;
+    cur_rtracker->file_name_unicode = false;
 }
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+
+#include <memory>
+#include <vector>
+
+// Check the generated DELETE bytes directly, including names whose first bytes
+// look like a Unicode prefix despite an ASCII request header.
+static void DCE2_SmbCheckDeleteName(const uint8_t* name, uint32_t name_len, bool unicode,
+    const uint8_t* expected, size_t expected_len)
+{
+    DCE2_SmbRequestTracker request{};
+    request.file_name_unicode = unicode;
+    request.file_name = DCE2_SmbGetFileName(name, name_len, unicode, &request.file_name_size);
+    REQUIRE(request.file_name != nullptr);
+    std::unique_ptr<char, decltype(&snort_free)> owned(request.file_name, snort_free);
+
+    DCE2_SmbFileTracker file{};
+    file.tid_v1 = 0x1234;
+    file.uid_v1 = 0x5678;
+    DCE2_Update_Ftracker_from_ReqTracker(&file, &request);
+    CHECK(request.file_name == nullptr);
+    CHECK(request.file_name_unicode == false);
+    CHECK(file.file_name_unicode == unicode);
+
+    const uint32_t len = DCE2_SmbBuildDeletePdu(&file);
+    REQUIRE(len != 0);
+    const auto* nb_hdr = reinterpret_cast<const NbssHdr*>(dce2_smb_delete_pdu);
+    const auto* smb_hdr = reinterpret_cast<const SmbNtHdr*>(dce2_smb_delete_pdu + sizeof(*nb_hdr));
+    const auto* del_req = reinterpret_cast<const SmbDeleteReq*>(
+        reinterpret_cast<const uint8_t*>(smb_hdr) + sizeof(*smb_hdr));
+    const auto* copied_name = reinterpret_cast<const uint8_t*>(del_req) + sizeof(*del_req) + 1;
+
+    CHECK(ntohs(nb_hdr->length) + sizeof(*nb_hdr) == len);
+    const bool injected_unicode = SmbUnicode(smb_hdr);
+    CHECK(injected_unicode == unicode);
+    CHECK(snort::alignedNtohs(&smb_hdr->smb_tid) == file.tid_v1);
+    CHECK(snort::alignedNtohs(&smb_hdr->smb_uid) == file.uid_v1);
+    CHECK(snort::alignedNtohs(&del_req->smb_bcc) == expected_len + 1);
+    CHECK(*(copied_name - 1) == SMB_FMT__ASCII);
+    CHECK(memcmp(copied_name, expected, expected_len) == 0);
+}
+
+TEST_CASE("SMB DELETE retains an ASCII filename that starts with a Unicode BOM", "[dce_smb]")
+{
+    DCE2_SmbInitDeletePdu();
+    const uint8_t name[] = { 0xff, 0xfe, '.', 'E', 'X', 'E', 0 };
+    DCE2_SmbCheckDeleteName(name, sizeof(name), false, name, sizeof(name));
+}
+
+TEST_CASE("SMB DELETE uses the filename's original encoding on successive injections", "[dce_smb]")
+{
+    DCE2_SmbInitDeletePdu();
+    const uint8_t unicode_name[] = { 'A', 0, 0, 0 };
+    DCE2_SmbCheckDeleteName(unicode_name, sizeof(unicode_name), true,
+        unicode_name, sizeof(unicode_name));
+
+    const uint8_t ascii_name[] = { 'B', 0 };
+    DCE2_SmbCheckDeleteName(ascii_name, sizeof(ascii_name), false,
+        ascii_name, sizeof(ascii_name));
+}
+
+TEST_CASE("SMB DELETE skips missing and oversized filenames", "[dce_smb]")
+{
+    DCE2_SmbInitDeletePdu();
+    DCE2_SmbFileTracker file{};
+    CHECK(DCE2_SmbBuildDeletePdu(&file) == 0);
+
+    const size_t fixed_size = sizeof(NbssHdr) + sizeof(SmbNtHdr) + sizeof(SmbDeleteReq) + 1;
+    std::vector<char> oversized(sizeof(dce2_smb_delete_pdu) - fixed_size + 1, 'A');
+    oversized.back() = 0;
+    file.file_name = oversized.data();
+    file.file_name_size = oversized.size() - 1;
+    CHECK(DCE2_SmbBuildDeletePdu(&file) == 0);
+
+    file.file_name_unicode = true;
+    file.file_name_size = 1;
+    CHECK(DCE2_SmbBuildDeletePdu(&file) == 0);
+}
+#endif

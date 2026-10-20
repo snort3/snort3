@@ -293,6 +293,7 @@ static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData* ssd,
 
     DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
 
+    ssd->cur_rtracker->file_name_unicode = unicode;
     ssd->cur_rtracker->file_name =
         DCE2_SmbGetFileName(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
 
@@ -963,6 +964,7 @@ static DCE2_Ret DCE2_SmbTrans2Open2Req(DCE2_SmbSsnData* ssd,
 
     DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
 
+    ssd->cur_rtracker->file_name_unicode = unicode;
     ssd->cur_rtracker->file_name =
         DCE2_SmbGetFileName(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
 

@@ -363,6 +363,8 @@ struct DCE2_SmbFileTracker
     bool is_smb2;
     char* file_name;
     uint16_t file_name_size;
+    // Encoding selected when DCE2_SmbGetFileName allocated file_name.
+    bool file_name_unicode;
     uint64_t file_name_hash;
 
     // Monotonic recency stamp for deterministic MRU-first fapi selection
@@ -474,6 +476,8 @@ struct DCE2_SmbRequestTracker
     // the file tracker upon response.
     char* file_name;
     uint16_t file_name_size;
+    // Kept with the name until it moves to the file tracker.
+    bool file_name_unicode;
     uint64_t file_size;
     uint64_t file_offset;
     bool sequential_only;
