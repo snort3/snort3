@@ -148,6 +148,44 @@ TEST(Olefile_ole, decompression_flag_0)
     delete olefile;
 }
 
+TEST(Olefile_ole, decompression_flag_0_larger_than_window)
+{
+    uint8_t ole_data[VBA_COMPRESSION_WINDOW * 2];
+    memset(ole_data, 'A', sizeof(ole_data));
+    uint8_t* buf = nullptr;
+    uint32_t len = sizeof(ole_data);
+    uint32_t buf_len = 0;
+    ole_data[0] = 0x01;
+    ole_data[1] = 0xff;
+    ole_data[2] = 0x3f;
+    OleFile* olefile = new OleFile(nullptr, 0);
+    olefile->decompression(ole_data, len, buf, buf_len);
+    CHECK(buf == nullptr);
+    delete olefile;
+}
+
+TEST(Olefile_ole, decompression_full_window)
+{
+    // compressed chunk of literal tokens only, filling the whole window
+    const uint32_t groups = VBA_COMPRESSION_WINDOW / 8;
+    uint8_t ole_data[3 + groups * 9 + 3];
+    memset(ole_data, 'A', sizeof(ole_data));
+    memset(ole_data + sizeof(ole_data) - 3, 0, 3);
+    ole_data[0] = 0x01;
+    ole_data[1] = 0xff;
+    ole_data[2] = 0xbf;
+    for ( uint32_t i = 0; i < groups; i++ )
+        ole_data[3 + i * 9] = 0x00;
+    uint32_t len = sizeof(ole_data);
+    uint8_t* buf = new uint8_t[MAX_VBA_BUFFER_LEN + 1]();
+    uint32_t buf_len = 0;
+    OleFile* olefile = new OleFile(nullptr, 0);
+    olefile->decompression(ole_data, len, buf, buf_len);
+    CHECK(buf_len == VBA_COMPRESSION_WINDOW);
+    delete olefile;
+    delete[] buf;
+}
+
 TEST(Olefile_ole, get_next_fat_sector_failure)
 {
     OleFile* olefile = new OleFile(nullptr, 0);
