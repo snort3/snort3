@@ -142,16 +142,17 @@ class ServiceDNSData : public AppIdFlowData
 public:
     ServiceDNSData() = default;
     ~ServiceDNSData() override;
-    void save_dns_cache(uint16_t size, const uint8_t* data);
+    void save_dns_cache(uint32_t size, const uint8_t* data);
     void free_dns_cache();
 
     DNSState state = DNS_STATE_QUERY;
     uint8_t* cached_data = nullptr;
-    uint16_t cached_len = 0;
+    uint32_t cached_len = 0;
     uint16_t id = 0;
+    bool is_header_validated = false;
 };
 
-void ServiceDNSData::save_dns_cache(uint16_t size, const uint8_t* data)
+void ServiceDNSData::save_dns_cache(uint32_t size, const uint8_t* data)
 {
     if(size > 0)
     {
@@ -343,10 +344,10 @@ APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t
         {
         case 0xC0:
             len_valid = false;
+            if (size - offset < (int)offsetof(DNSLabelPtr, data))
+                return APPID_NOMATCH;
             lbl_ptr = reinterpret_cast<const DNSLabelPtr*>(lbl);
             offset += offsetof(DNSLabelPtr, data);
-            if (offset > size)
-                return APPID_NOMATCH;
             tmp = (uint16_t)(ntohs(lbl_ptr->position) & 0x3FFF);
             if (tmp > size - offsetof(DNSLabel, name))
                 return APPID_NOMATCH;
@@ -359,6 +360,8 @@ APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t
                     len--;    // take off the extra '.' at the end
                 return APPID_SUCCESS;
             }
+            if (lbl->len > size - offset)
+                return APPID_NOMATCH;
             offset += lbl->len;
             if ((len + lbl->len + 1) > MAX_DNS_HOST_NAME_LEN)
             {
@@ -371,17 +374,15 @@ APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t
             len_valid = false;
             if (lbl->len != 0x41)
                 return APPID_NOMATCH;
-            offset += offsetof(DNSLabelBitfield, data);
-            if (offset >= size)
+            if (size - offset <= (int)offsetof(DNSLabelBitfield, data))
                 return APPID_NOMATCH;
+            offset += offsetof(DNSLabelBitfield, data);
             lbl_bit = reinterpret_cast<const DNSLabelBitfield*>(lbl);
-            if (lbl_bit->len)
             {
-                offset += ((lbl_bit->len - 1) / 8) + 1;
-            }
-            else
-            {
-                offset += 32;
+                int skip = lbl_bit->len ? ((lbl_bit->len - 1) / 8) + 1 : 32;
+                if (skip > size - offset)
+                    return APPID_NOMATCH;
+                offset += skip;
             }
             break;
         default:
@@ -454,14 +455,15 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
     ret = dns_validate_label(data, *offset, size, host_len, host_len_valid);
     if (ret == APPID_SUCCESS)
     {
+        if (size - *offset < (int)sizeof(DNSAnswerData))
+            return APPID_NOMATCH;
         const DNSAnswerData* ad = reinterpret_cast<const DNSAnswerData*>(data + *offset);
         *offset += sizeof(DNSAnswerData);
-        if (*offset > size)
-            return APPID_NOMATCH;
         uint16_t r_data_offset = *offset;
-        *offset += ntohs(ad->r_len);
-        if (*offset > size)
+        uint16_t r_len = ntohs(ad->r_len);
+        if (r_len > size - *offset)
             return APPID_NOMATCH;
+        *offset += r_len;
         if (host_reporting)
         {
             uint16_t record_type = ntohs(ad->type);
@@ -693,6 +695,8 @@ udp_done:
     case APPID_SUCCESS:
 success:
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
+        if (args.asd.get_client_id() == APP_ID_NONE)
+            add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
         return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DNS);
 
     case APPID_INVALID_CLIENT:
@@ -707,7 +711,8 @@ nomatch:
 
     case APPID_INPROCESS:
 inprocess:
-        add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
+        if (check_for_metadata(args.change_bits, args.asd.get_dns_session()))
+            add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
         service_inprocess(args.asd, args.pkt, args.dir);
         return APPID_INPROCESS;
 
@@ -759,10 +764,14 @@ int DnsTcpServiceDetector::validate_doq(AppIdDiscoveryArgs& args)
         }
         if (dd->cached_data and dd->cached_len and args.dir == APP_ID_FROM_INITIATOR)
         {
-            reallocated_data = static_cast<uint8_t*>(snort_calloc(dd->cached_len + args.size, sizeof(uint8_t)));
+            uint32_t reassembled_len = dd->cached_len + args.size;
+            if (reassembled_len > UINT16_MAX)
+                goto not_compatible;
+
+            reallocated_data = static_cast<uint8_t*>(snort_calloc(reassembled_len, sizeof(uint8_t)));
             memcpy(reallocated_data, dd->cached_data, dd->cached_len);
             memcpy(reallocated_data + dd->cached_len, args.data, args.size);
-            size = dd->cached_len + args.size;
+            size = (uint16_t)reassembled_len;
             dd->free_dns_cache();
             data = reallocated_data;
         }
@@ -854,25 +863,24 @@ inprocess:
 
 }
 
+bool DnsValidator::check_for_metadata(const AppidChangeBits& change_bits, const AppIdDnsSession* dsession)
+{
+    return change_bits.test(APPID_DNS_REQUEST_HOST_BIT) or
+        change_bits.test(APPID_DNS_RESPONSE_HOST_BIT) or
+        (dsession and dsession->get_record_type() == PATTERN_PTR_REC);
+}
+
 int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int rval;
     uint8_t* reallocated_data = nullptr;
     const uint8_t* data = args.data;
-    uint16_t size = args.size;
+    uint32_t size = args.size;
     ServiceDNSData* dd = static_cast<ServiceDNSData*>(data_get(args.asd));
 
     {
         if (!args.size)
             goto inprocess;
-
-        if (args.size < sizeof(DNSTCPHeader))
-        {
-            if (args.dir == APP_ID_FROM_INITIATOR)
-                goto not_compatible;
-            else
-                goto fail;
-        }
 
         if (!dd)
         {
@@ -882,12 +890,32 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         if (dd->cached_data and dd->cached_len and args.dir == APP_ID_FROM_INITIATOR)
         {
-            reallocated_data = static_cast<uint8_t*>(snort_calloc(dd->cached_len + args.size, sizeof(uint8_t)));
+            uint32_t reassembled_len = dd->cached_len + args.size;
+            if (reassembled_len > sizeof(DNSTCPHeader) + UINT16_MAX)
+                goto not_compatible;
+
+            reallocated_data = static_cast<uint8_t*>(snort_calloc(reassembled_len, sizeof(uint8_t)));
             memcpy(reallocated_data, dd->cached_data, dd->cached_len);
             memcpy(reallocated_data + dd->cached_len, args.data, args.size);
-            size = dd->cached_len + args.size;
+            size = reassembled_len;
             dd->free_dns_cache();
             data = reallocated_data;
+        }
+        else
+            dd->is_header_validated = false;
+
+        const uint8_t* msg = data;
+        uint32_t msg_len = size;
+
+        if (size < sizeof(DNSTCPHeader))
+        {
+            if (args.dir == APP_ID_FROM_INITIATOR)
+            {
+                dd->save_dns_cache(msg_len, msg);
+                goto inprocess;
+            }
+            else
+                goto fail;
         }
 
         const DNSTCPHeader* hdr = reinterpret_cast<const DNSTCPHeader*>(data);
@@ -895,17 +923,7 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         size = size - sizeof(DNSTCPHeader);
         uint16_t tmp = ntohs(hdr->length);
 
-        if (tmp > size and args.dir == APP_ID_FROM_INITIATOR)
-        {
-            dd->save_dns_cache(args.size, args.data);
-            goto inprocess;
-        } else if (tmp > size and args.dir == APP_ID_FROM_RESPONDER) {
-            goto not_compatible;
-        }
-
-        if (tmp < sizeof(DNSHeader) || dns_validate_header(
-            args.dir, reinterpret_cast<const DNSHeader*>(data),
-            args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
+        if (tmp < sizeof(DNSHeader))
         {
             if (args.dir == APP_ID_FROM_INITIATOR)
                 goto not_compatible;
@@ -913,9 +931,33 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto fail;
         }
 
+        if (!dd->is_header_validated and size >= sizeof(DNSHeader))
+        {
+            if (dns_validate_header(args.dir, reinterpret_cast<const DNSHeader*>(data),
+                args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
+            {
+                if (args.dir == APP_ID_FROM_INITIATOR)
+                    goto not_compatible;
+                else
+                    goto fail;
+            }
+            if (args.dir == APP_ID_FROM_INITIATOR)
+                dd->is_header_validated = true;
+        }
+
+        if (tmp > size)
+        {
+            if (args.dir == APP_ID_FROM_INITIATOR)
+            {
+                dd->save_dns_cache(msg_len, msg);
+                goto inprocess;
+            }
+            goto not_compatible;
+        }
+
         // Coverity doesn't realize that validate_packet() checks the packet data for valid values
         // coverity[tainted_scalar]
-        rval = validate_packet(data, size, args.dir,
+        rval = validate_packet(data, (uint16_t)size, args.dir,
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd, args.change_bits);
         if (rval != APPID_SUCCESS)
             goto tcp_done;
@@ -957,6 +999,8 @@ success:
     if (reallocated_data)
         snort_free(reallocated_data);
     args.asd.set_session_flags(APPID_SESSION_CONTINUE);
+    if (args.asd.get_client_id() == APP_ID_NONE)
+            add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
     return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DNS);
 
 not_compatible:
@@ -974,7 +1018,8 @@ fail:
 inprocess:
     if (reallocated_data)
         snort_free(reallocated_data);
-    add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
+    if (check_for_metadata(args.change_bits, args.asd.get_dns_session()))
+        add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 }

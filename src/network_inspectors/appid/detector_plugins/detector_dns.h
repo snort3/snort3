@@ -45,6 +45,7 @@ protected:
         const AppIdSession&);
     static int validate_packet(const uint8_t*, uint16_t, const int, bool, AppIdSession&,
         AppidChangeBits&);
+    static bool check_for_metadata(const AppidChangeBits&, const AppIdDnsSession*);
 };
 
 class DnsTcpServiceDetector : public ServiceDetector, public DnsValidator

@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <vector>
+
 #include "appid_inspector.h"
 #include "appid_session.h"
 #include "detector_plugins_mock.h"
@@ -307,7 +309,124 @@ TEST(detector_dns_doq_tests, doq_validator_stream_intf)
     CHECK_EQUAL(APPID_INPROCESS, result);
 }
 
+TEST(detector_dns_doq_tests, doq_validator_reassembly_exceeds_uint16)
+{
+    OdpContext test_odp_ctxt(test_app_config, nullptr);
+    AppIdModule test_module;
+    AppIdInspector test_inspector(test_module);
+    dns_data.state = DNS_STATE_QUERY;
+    AppIdSession test_asd(IpProtocol::TCP, nullptr, (uint16_t)0, test_inspector, test_odp_ctxt, (uint32_t)0, 0);
+    Flow* flow = new Flow;
+    test_asd.flow = flow;
 
+    std::vector<uint8_t> cached(UINT16_MAX, 0);
+    cached[0] = 0xFF;    // length prefix 0xFFFF
+    cached[1] = 0xFF;
+    dns_data.save_dns_cache(cached.size(), cached.data());
+    uint8_t tail[] = { 0x00, 0x00 };
+
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(tail, sizeof(tail), APP_ID_FROM_INITIATOR, test_asd, nullptr, change_bits);
+    auto result = test_detector->validate_doq(args);
+    delete flow;
+    CHECK_EQUAL(APPID_NOT_COMPATIBLE, result);
+}
+
+class DnsValidatorTest : public DnsValidator
+{
+public:
+    using DnsValidator::dns_validate_label;
+    using DnsValidator::dns_validate_answer;
+};
+
+TEST_GROUP(detector_dns_bounds_tests)
+{
+    std::vector<uint8_t> buf;
+    uint8_t len = 0;
+    bool len_valid = false;
+
+    void setup() override
+    {
+        buf.assign(UINT16_MAX, 0);
+    }
+};
+
+TEST(detector_dns_bounds_tests, label_pointer_valid)
+{
+    const uint8_t data[] = { 0xC0, 0x00 };
+    uint16_t offset = 0;
+    CHECK_EQUAL(APPID_SUCCESS, DnsValidatorTest::dns_validate_label(data, offset, sizeof(data), len, len_valid));
+    CHECK_EQUAL(2, offset);
+}
+
+TEST(detector_dns_bounds_tests, label_pointer_truncated_at_uint16_max)
+{
+    uint16_t offset = UINT16_MAX - 1;
+    buf[offset] = 0xC0;
+    CHECK_EQUAL(APPID_NOMATCH, DnsValidatorTest::dns_validate_label(buf.data(), offset, buf.size(), len, len_valid));
+    CHECK_EQUAL(UINT16_MAX - 1, offset);
+}
+
+TEST(detector_dns_bounds_tests, label_length_past_end_at_uint16_max)
+{
+    uint16_t offset = UINT16_MAX - 5;
+    buf[offset] = 63;
+    CHECK_EQUAL(APPID_NOMATCH, DnsValidatorTest::dns_validate_label(buf.data(), offset, buf.size(), len, len_valid));
+}
+
+TEST(detector_dns_bounds_tests, label_bitfield_past_end_at_uint16_max)
+{
+    uint16_t offset = UINT16_MAX - 5;
+    buf[offset] = 0x41;
+    buf[offset + 1] = 0x00;    // zero length skips 32 bytes
+    CHECK_EQUAL(APPID_NOMATCH, DnsValidatorTest::dns_validate_label(buf.data(), offset, buf.size(), len, len_valid));
+}
+
+TEST(detector_dns_bounds_tests, answer_valid)
+{
+    OdpContext test_odp_ctxt(test_app_config, nullptr);
+    AppIdModule test_module;
+    AppIdInspector test_inspector(test_module);
+    AppIdSession test_asd(IpProtocol::TCP, nullptr, (uint16_t)0, test_inspector, test_odp_ctxt, (uint32_t)0, 0);
+    AppidChangeBits change_bits;
+    const uint8_t data[] = {
+        0x00,                   // root name
+        0x00, 0x01, 0x00, 0x01, // type, class
+        0x00, 0x00, 0x00, 0x3c, // TTL
+        0x00, 0x02,             // RDLENGTH
+        0x7f, 0x01              // RDATA
+    };
+    uint16_t offset = 0;
+    CHECK_EQUAL(APPID_SUCCESS, DnsValidatorTest::dns_validate_answer(data, &offset, sizeof(data),
+        0, 0, false, test_asd, change_bits));
+    CHECK_EQUAL(sizeof(data), offset);
+}
+
+TEST(detector_dns_bounds_tests, answer_fixed_part_truncated_at_uint16_max)
+{
+    OdpContext test_odp_ctxt(test_app_config, nullptr);
+    AppIdModule test_module;
+    AppIdInspector test_inspector(test_module);
+    AppIdSession test_asd(IpProtocol::TCP, nullptr, (uint16_t)0, test_inspector, test_odp_ctxt, (uint32_t)0, 0);
+    AppidChangeBits change_bits;
+    uint16_t offset = UINT16_MAX - 9;    // root name leaves 8 of 10 fixed bytes
+    CHECK_EQUAL(APPID_NOMATCH, DnsValidatorTest::dns_validate_answer(buf.data(), &offset, buf.size(),
+        0, 0, false, test_asd, change_bits));
+}
+
+TEST(detector_dns_bounds_tests, answer_rdlength_past_end_at_uint16_max)
+{
+    OdpContext test_odp_ctxt(test_app_config, nullptr);
+    AppIdModule test_module;
+    AppIdInspector test_inspector(test_module);
+    AppIdSession test_asd(IpProtocol::TCP, nullptr, (uint16_t)0, test_inspector, test_odp_ctxt, (uint32_t)0, 0);
+    AppidChangeBits change_bits;
+    uint16_t offset = UINT16_MAX - 15;
+    buf[offset + 9] = 0xFF;     // RDLENGTH 0xFFFF
+    buf[offset + 10] = 0xFF;
+    CHECK_EQUAL(APPID_NOMATCH, DnsValidatorTest::dns_validate_answer(buf.data(), &offset, buf.size(),
+        0, 0, false, test_asd, change_bits));
+}
 
 int main(int argc, char** argv)
 {
