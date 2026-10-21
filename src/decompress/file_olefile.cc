@@ -24,6 +24,8 @@
 
 #include "file_olefile.h"
 
+#include <algorithm>
+
 DirectoryList :: ~DirectoryList()
 {
     auto it = oleentry.begin();
@@ -663,7 +665,7 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
     unsigned char buffer[VBA_COMPRESSION_WINDOW]={ };
     if (flagCompressed == 0)
     {
-        memcpy(&buffer, data, data_len);
+        memcpy(&buffer, data, std::min(data_len, (uint32_t)VBA_COMPRESSION_WINDOW));
         return;
     }
 
@@ -725,7 +727,7 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
         }
     }
 
-    int32_t decomp_len = strlen((char*)buffer);
+    int32_t decomp_len = strnlen((char*)buffer, VBA_COMPRESSION_WINDOW);
 
     if ((vba_buffer_offset + decomp_len) > MAX_VBA_BUFFER_LEN)
     {
