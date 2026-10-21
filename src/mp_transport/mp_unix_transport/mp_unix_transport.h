@@ -180,6 +180,7 @@ class MPUnixDomainTransport : public MPTransport
     MPUnixDomainTransportConfig* config = nullptr;
 
     std::vector<SideChannelHandle*> side_channels;
+    uint16_t answer_channel_count = 0;
     std::vector<UnixAcceptorHandle*> accept_handlers;
     std::unordered_map<unsigned, SerializeFunctionHandle> event_helpers;
 

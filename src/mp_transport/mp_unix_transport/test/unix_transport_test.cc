@@ -277,6 +277,18 @@ struct MPUnixDomainTransportTestAccess
 {
     static void receive(MPUnixDomainTransport& transport, SCMessage* msg)
     { transport.side_channel_receive_handler(msg); }
+
+    static size_t channel_count(const MPUnixDomainTransport& transport)
+    { return transport.side_channels.size(); }
+
+    static void set_current_process_id(MPUnixDomainTransport& transport, uint16_t id)
+    { transport.mp_current_process_id = id; }
+
+    static void inject_channel(MPUnixDomainTransport& transport, unsigned short channel_id)
+    {
+        auto* side_channel = new SideChannel(ScMsgFormat::BINARY);
+        transport.side_channels.push_back(new SideChannelHandle(side_channel, nullptr, channel_id));
+    }
 };
 }
 
@@ -396,6 +408,50 @@ TEST(unix_transport_test_connectivity_group, get_config)
     CHECK(unix_transport->get_config() == &test_config);
 };
 
+TEST(unix_transport_test_connectivity_group, get_channel_status_skips_out_of_range_channel_id)
+{
+    test_config.max_processes = 2;
+    MPUnixDomainTransportTestAccess::set_current_process_id(*test_transport, 1);
+
+    MPUnixDomainTransportTestAccess::inject_channel(*test_transport, 2);
+    MPUnixDomainTransportTestAccess::inject_channel(*test_transport, 99);
+
+    unsigned size = 0;
+    MPTransportChannelStatusHandle* status = test_transport->get_channel_status(size);
+
+    CHECK(size == 1);
+    CHECK(status[0].id == 2);
+
+    delete[] status;
+};
+
+TEST(unix_transport_test_connectivity_group, get_channel_status_survives_excess_accepted_connections)
+{
+    clear_test_calls();
+    snort_instance_id = 1;
+
+    test_config.unix_domain_socket_path = ".";
+    test_config.max_processes = 2;
+
+    accept_cnt = 3;
+
+    test_transport->init_connection();
+
+    CHECK(test_accept_calls == 3);
+    CHECK(MPUnixDomainTransportTestAccess::channel_count(*test_transport) == 1);
+
+    unsigned size = 0;
+    MPTransportChannelStatusHandle* status = test_transport->get_channel_status(size);
+
+    CHECK(size == 1);
+    CHECK(status[0].id == 2);
+    CHECK(status[0].status == MPTransportChannelStatus::CONNECTED);
+
+    delete[] status;
+
+    test_transport->cleanup();
+};
+
 TEST(unix_transport_test_connectivity_group, set_logging_enabled_disabled)
 {
     auto logging_status = test_transport->is_logging_enabled();
@@ -444,6 +500,44 @@ TEST(unix_transport_test_connectivity_group, init_connection_first_snort_instanc
 
     test_transport->cleanup();
     CHECK(test_close_calls == 2);
+};
+
+TEST(unix_transport_test_connectivity_group, init_connection_rejects_connection_beyond_capacity)
+{
+    clear_test_calls();
+    snort_instance_id = 1;
+
+    test_config.unix_domain_socket_path = ".";
+    test_config.max_processes = 2;
+
+    accept_cnt = 2;
+
+    test_transport->init_connection();
+
+    CHECK(test_accept_calls == 2);
+    CHECK(MPUnixDomainTransportTestAccess::channel_count(*test_transport) == 1);
+    CHECK(test_close_calls == 1);
+
+    test_transport->cleanup();
+    CHECK(test_close_calls == 3);
+};
+
+TEST(unix_transport_test_connectivity_group, init_connection_rejects_excess_incoming_before_outbound_registers)
+{
+    clear_test_calls();
+    snort_instance_id = 2;
+
+    test_config.unix_domain_socket_path = ".";
+    test_config.max_processes = 3;
+
+    accept_cnt = 2;
+
+    test_transport->init_connection();
+
+    CHECK(test_accept_calls == 2);
+    CHECK(MPUnixDomainTransportTestAccess::channel_count(*test_transport) == 2);
+
+    test_transport->cleanup();
 };
 
 TEST(unix_transport_test_connectivity_group, init_connection_second_snort_instance)
