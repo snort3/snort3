@@ -330,6 +330,9 @@ bool DCE2_IsSmb2DurableReconnect(const Smb2CreateRequestHdr* smb_create_hdr, con
         if ((strncmp((const char*)context+name_offset, SMB2_CREATE_DURABLE_RECONNECT_V2, name_length) == 0) or
             (strncmp((const char*)context+name_offset, SMB2_CREATE_DURABLE_RECONNECT, name_length) == 0))
         {
+            if (data_length < sizeof(uint64_t))
+                return false;
+
             file_id = alignedNtohq((const uint64_t*)(((const uint8_t*)context) + data_offset));
             return true;
         }
