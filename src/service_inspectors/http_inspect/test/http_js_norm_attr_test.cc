@@ -48,29 +48,27 @@ namespace snort
 {
 SearchTool::SearchTool(bool, const char*) { }
 SearchTool::~SearchTool() = default;
+// cppcheck-suppress functionStatic
 void SearchTool::add(const char*, unsigned, int, bool, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) { }
+// cppcheck-suppress functionStatic
 void SearchTool::prep() { }
+// cppcheck-suppress functionStatic
 int SearchTool::find(const char*, unsigned, MpseMatch, bool, void*) { return 0; }
-int SearchTool::find(const char*, unsigned, MpseMatch, int&, bool, void*) { return 0; }
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*, const SnortConfig*)
-{ return 0; }
 
-JSNorm::JSNorm(JSNormConfig*, bool, uint32_t) : idn_ctx(nullptr) { }
+JSNorm::JSNorm(JSNormConfig* jsn_config, bool ext_script_type, uint32_t generation_id) :
+    alive(jsn_config != nullptr), pdu_cnt(0), src_ptr(nullptr), src_end(nullptr),
+    idn_ctx(nullptr), jsn_ctx(nullptr), ext_script_type(ext_script_type), config(jsn_config),
+    generation_id(generation_id)
+{ }
 JSNorm::~JSNorm() = default;
 bool JSNorm::pre_proc() { return false; }
 bool JSNorm::post_proc(int) { return false; }
-void JSNorm::normalize(const void*, size_t, const void*&, size_t&) { }
-void JSNorm::flush_data() { }
-bool PDFJSNorm::pre_proc() { return false; }
-bool PDFJSNorm::post_proc(int) { return false; }
 Packet* DetectionEngine::get_current_packet() { return nullptr; }
 int DetectionEngine::queue_event(unsigned, unsigned) { return 0; }
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
 uint8_t TraceApi::get_constraints_generation() { return 0; }
 void TraceApi::filter(const Packet&) { }
 [[noreturn]] void FatalError(const char*, ...) { exit(EXIT_FAILURE); }
-const char* SnortStrnStr(const char*, int, const char*) { return nullptr; }
 int JSNormalizeDecode(const char*, uint16_t, char*, uint16_t, const char**, int*, JSState*,
     uint8_t*) { return 0; }
 }

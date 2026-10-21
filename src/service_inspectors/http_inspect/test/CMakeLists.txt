@@ -70,6 +70,8 @@ add_cpputest( http_js_norm_attr_test
         ../http_str_to_code.cc
         ../http_tables.cc
         ../../../helpers/streambuf.cc
+        ../../../js_norm/js_pdf_norm.cc
+        ../../../utils/util_cstring.cc
     LIBS ${HTTP_JS_NORM_TEST_LIBS}
 )
 
