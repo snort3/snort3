@@ -25,12 +25,17 @@
 #include <libml.h>
 #endif
 
+#include <stdint.h>
+
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "framework/inspector.h"
 #include "framework/module.h"
+#include "hash/fnv.h"
 #include "hash/lru_cache_local.h"
 #include "search_engines/search_tool.h"
 
@@ -83,7 +88,19 @@ struct SnortMLContext
 {
     libml::BinaryClassifierSet classifiers;
     std::unique_ptr<SnortMLCache> cache;
+    uint64_t model_set_id = 0;  // mixed into cache key to isolate verdicts per model set
 };
+
+inline uint64_t snort_ml_model_set_fingerprint(const std::vector<std::string>& models)
+{
+    uint64_t fp = FNV_BASIS;
+    for (const std::string& m : models)
+    {
+        uint64_t one = fnv1a(m.data(), m.size());
+        fp = (fp ^ one) * FNV_PRIME;
+    }
+    return fp;
+}
 
 struct SnortMLEngineConfig
 {

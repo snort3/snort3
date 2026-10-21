@@ -51,8 +51,11 @@ static SnortMLContext* create_context(const SnortMLEngineConfig& conf)
     if (!ctx->classifiers.build(conf.http_param_models))
     {
         ErrorMessage("Could not build classifiers.\n");
-        return ctx;
+        delete ctx;
+        return nullptr;
     }
+
+    ctx->model_set_id = snort_ml_model_set_fingerprint(conf.http_param_models);
 
     if (conf.cache_memcap > 0)
     {
@@ -334,8 +337,10 @@ bool SnortMLEngine::scan(const char* buf, const size_t len, float& out) const
     float res = 0;
     bool is_new = true;
 
+    const uint64_t key = fnv1a(buf, len) ^ snort_ml_ctx->model_set_id;
+
     float& result = (snort_ml_ctx->cache) ?
-        snort_ml_ctx->cache->find_else_create(fnv1a(buf, len), &is_new) : res;
+        snort_ml_ctx->cache->find_else_create(key, &is_new) : res;
 
     if (is_new)
     {
@@ -413,9 +418,9 @@ const BaseApi* nin_snort_ml_engine[] =
 
 #include "catch/snort_catch.h"
 
-#include <memory.h>
+#include <cstring>
 
-TEST_CASE("SnortML tuner name", "[snort_ml_module]")
+TEST_CASE("SnortML tuner name", "[snort_ml_engine]")
 {
     SnortMLEngineConfig conf;
     conf.http_param_models = { "model" };
@@ -424,4 +429,43 @@ TEST_CASE("SnortML tuner name", "[snort_ml_module]")
     REQUIRE(strcmp(tuner.name(), "SnortMLReloadTuner") == 0);
 }
 
+TEST_CASE("SnortML create_context returns null on build failure", "[snort_ml_engine]")
+{
+    SnortMLEngineConfig conf;
+    conf.http_param_models = { "error" };
+
+    SnortMLContext* ctx = create_context(conf);
+
+    REQUIRE(ctx == nullptr);
+}
+
+TEST_CASE("SnortML create_context succeeds with valid model", "[snort_ml_engine]")
+{
+    SnortMLEngineConfig conf;
+    conf.http_param_models = { "needle" };
+
+    SnortMLContext* ctx = create_context(conf);
+
+    REQUIRE(ctx != nullptr);
+    REQUIRE(ctx->model_set_id != 0);
+    REQUIRE_FALSE(ctx->cache);
+
+    delete ctx;
+}
+
+TEST_CASE("SnortML create_context allocates cache when memcap > 0", "[snort_ml_engine]")
+{
+    SnortMLEngineConfig conf;
+    conf.http_param_models = { "needle" };
+    conf.cache_memcap = 4096;
+
+    SnortMLContext* ctx = create_context(conf);
+
+    REQUIRE(ctx != nullptr);
+    REQUIRE(ctx->cache);
+
+    delete ctx;
+}
+
 #endif
+
