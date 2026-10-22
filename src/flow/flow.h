@@ -27,6 +27,7 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
+#include <algorithm>
 #include <atomic>
 #include <bitset>
 #include <list>
@@ -315,7 +316,7 @@ public:
         flow_state = fs;
         if (fs > FlowState::INSPECT)
         {
-            inspected_packet_count = flowstats.client_pkts + flowstats.server_pkts;
+            inspected_packet_count = std::min(flowstats.client_pkts + flowstats.server_pkts, static_cast<uint64_t>(UINT16_MAX));
         }
     }
 
@@ -453,7 +454,10 @@ public:
     { idle_timeout = timeout; }
 
     uint16_t get_inspected_packet_count() const
-    { return inspected_packet_count ? inspected_packet_count : (flowstats.client_pkts + flowstats.server_pkts); }
+    {
+        return inspected_packet_count ? inspected_packet_count
+                                      : (std::min(flowstats.client_pkts + flowstats.server_pkts, static_cast<uint64_t>(UINT16_MAX)));
+    }
 
     void add_inspection_duration(const uint64_t& duration)
     {
