@@ -80,6 +80,25 @@ public:
     void advance_cursor(uint16_t bytes)
     { cursor += bytes; }
 
+    // cursor is relative to offset, so discarding the front rebases it
+    void trim_front(uint16_t bytes)
+    {
+        assert(bytes <= length);
+        offset += bytes;
+        length -= bytes;
+        cursor = ( cursor > bytes ) ? cursor - bytes : 0;
+        if ( cursor > length )
+            cursor = length;
+    }
+
+    void trim_back(uint16_t bytes)
+    {
+        assert(bytes <= length);
+        length -= bytes;
+        if ( cursor > length )
+            cursor = length;
+    }
+
     unsigned unscanned() const
     {
         assert(cursor <= length);

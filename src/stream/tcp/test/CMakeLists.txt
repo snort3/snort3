@@ -7,3 +7,8 @@
 #         ../../../protocols/tcp_options.cc
 #         ../../../main/snort_debug.cc
 # )
+
+add_cpputest( tcp_overlap_resolver_test
+    SOURCES
+        ../tcp_overlap_resolver.cc
+)
