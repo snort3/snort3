@@ -25,6 +25,10 @@
 
 #include "lua_detector_flow_api.h"
 
+#include <atomic>
+
+#include "main/snort_config.h"
+
 #include "appid_api.h"
 #include "appid_inspector.h"
 #include "lua_detector_api.h"
@@ -216,7 +220,7 @@ static int clear_detector_flow_flag(lua_State* L)
     return 0;
 }
 
-/**Design: For simplicity reason I am passing flowkey (20 bytes) to lua detectors.
+/**Design: For simplicity reason I am passing an opaque flow key to lua detectors.
  * The key is used to index into local lua table and get any flow specific data that a detector needs.
  * This approach avoids embedding lua detector data into core engine flow data structure.
  *
@@ -228,7 +232,7 @@ static int clear_detector_flow_flag(lua_State* L)
  * @param Lua_State* - Lua state variable.
  * @param detectorflow/stack - UserData<DetectorFlow> object
  * @return int - Number of elements on stack, which is 1 if successful, 0 otherwise.
- * @return flowKey/stack - A 20 byte flow key
+ * @return flowKey/stack - An opaque flow key
  */
 static int get_detector_flow_key(lua_State* L)
 {
@@ -236,7 +240,20 @@ static int get_detector_flow_key(lua_State* L)
     // Verify detector user data and that we are in packet context
     assert(pLuaData.ptr);
 
-    lua_pushstring(L, pLuaData->asd->get_api_session_id());
+    if (SnortConfig::get_conf()->read_mode())
+    {
+        // Each offline Analyzer has a fresh thread. Allocate its namespace independently of
+        // Snort's 16-bit run counter, which can repeat while a Lua manager is still reused.
+        static std::atomic<uint64_t> next_namespace { 0 };
+        static THREAD_LOCAL uint64_t run_namespace = 0;
+        if (!run_namespace)
+            run_namespace = next_namespace.fetch_add(1, std::memory_order_relaxed) + 1;
+        const auto namespace_id = std::to_string(run_namespace);
+        lua_pushfstring(L, "%s:%s", namespace_id.c_str(),
+            pLuaData->asd->get_api_session_id());
+    }
+    else
+        lua_pushstring(L, pLuaData->asd->get_api_session_id());
 
     return 1;
 }
@@ -302,4 +319,3 @@ int register_detector_flow_api(lua_State* L)
     lua_pop(L, 1);                      /* drop metatable */
     return 1;                           /* return methods on the stack */
 }
-

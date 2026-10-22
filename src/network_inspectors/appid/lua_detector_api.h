@@ -80,6 +80,7 @@ struct LuaDetectorParameters
 class LuaStateDescriptor
 {
 public:
+    bool disabled = false;
     LuaDetectorParameters ldp;
     DetectorPackageInfo package_info;
     AppId service_id = APP_ID_UNKNOWN;

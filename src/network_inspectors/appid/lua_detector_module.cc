@@ -277,6 +277,40 @@ LuaObject* LuaDetectorManager::get_cb_detector(AppId app_id)
     return nullptr;
 }
 
+static inline bool reset_lua_tracker(lua_State* L, const char* module_name,
+    const char* reset_function_name)
+{
+    lua_getfield(L, -1, module_name);
+    if (!lua_istable(L, -1))
+    {
+        lua_pop(L, 1);
+        return true;
+    }
+
+    lua_getfield(L, -1, reset_function_name);
+    if (!lua_isfunction(L, -1))
+    {
+        lua_pop(L, 2);
+        return true;
+    }
+
+    if (lua_pcall(L, 0, 0, 0))
+    {
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL,
+            "Error - appid: resetting Lua tracker state: %s\n", lua_tostring(L, -1));
+        lua_pop(L, 2);
+        return false;
+    }
+    lua_pop(L, 1);
+    return true;
+}
+
+static inline bool reset_lua_tracker_state(lua_State* L)
+{
+    return reset_lua_tracker(L, "hostServiceTrackerModule", "clearHostServiceTracker")
+        and reset_lua_tracker(L, "flowTrackerModule", "clearFlowTracker");
+}
+
 /**calculates Number of flow and host tracker entries for Lua detectors, given amount
  * of memory allocated to RNA (fraction of total system memory) and number of detectors
  * loaded in database. Calculations are based on CAICCI detector and observing memory
@@ -499,11 +533,18 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
         lua_settop(L, 0);
     }
 
+    // A packet-thread manager can outlive an offline Analyzer. DetectorInit rebuilds this map.
+    cb_detectors.clear();
     uint32_t lua_tracker_size = compute_lua_tracker_size(MAX_MEMORY_FOR_LUA_DETECTORS, allocated_objects.size());
     list<LuaObject*>::iterator lo = allocated_objects.begin();
     while (lo != allocated_objects.end())
     {
         LuaStateDescriptor* lsd = (*lo)->validate_lua_state(false);
+        if (lsd->disabled)
+        {
+            ++lo;
+            continue;
+        }
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
         if (!lua_istable(L, -1))
         {
@@ -515,6 +556,20 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
             lua_settop(L, 0);
             delete *lo;
             lo = allocated_objects.erase(lo);
+            continue;
+        }
+        // DetectorCommon is bundled into each detector environment, so clear that detector's
+        // packet-derived state before DetectorInit reactivates it for a new Analyzer.
+        if (!reset_lua_tracker_state(L))
+        {
+            // Detector tables can still be referenced by discovery and callbacks. Keep the
+            // object alive, but stop invoking this environment until a detector reload.
+            lsd->disabled = true;
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL,
+                "Error - appid: disabling Lua detector %s after tracker reset failure\n",
+                lsd->package_info.name.c_str());
+            lua_settop(L, 0);
+            ++lo;
             continue;
         }
         lua_getfield(L, -1, lsd->package_info.initFunctionName.c_str());

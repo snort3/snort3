@@ -1897,6 +1897,9 @@ static int detector_register_service_callback(lua_State* L)
 static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
     AppIdSession& asd, const Packet& p, LuaObject& ud, AppidChangeBits& change_bits)
 {
+    if (ud.lsd.disabled)
+        return APPID_NOMATCH;
+
     if (!data)
     {
         return -10;
@@ -1963,7 +1966,9 @@ void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDir
         entry->flags & APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK)
     {
         LuaObject* ud = odp_thread_local_ctxt->get_cb_detector(app_id);
-        assert(ud);
+        // Shared callback flags can outlive a detector disabled in this packet manager.
+        if (!ud)
+            return;
 
         if (ud->is_running())
             return;
@@ -3734,6 +3739,12 @@ int register_detector(lua_State* L)
 int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 {
     auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
+    if (disabled)
+    {
+        if (my_lua_state)
+            lua_settop(my_lua_state, 0);
+        return APPID_NOMATCH;
+    }
     if (!my_lua_state)
     {
         APPID_LOG(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: no LUA state\n", package_info.name.c_str());
