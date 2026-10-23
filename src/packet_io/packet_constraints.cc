@@ -123,8 +123,12 @@ bool PacketConstraints::flow_match(const Flow& f) const
     if ( !match )
         return false;
 
-    if ( (set_bits & SetBits::IP_PROTO) and
-        (IpProtocol(f.ip_proto) != ip_proto) )
+    // the session sets ip_proto when it processes its first packet, which
+    // is after the flow can be filtered, and icmp and ip sessions never set
+    // it, so fall back to the protocol in the flow key
+    const uint8_t proto = f.ip_proto ? f.ip_proto : f.key->ip_protocol;
+
+    if ( (set_bits & SetBits::IP_PROTO) and (IpProtocol(proto) != ip_proto) )
         return false;
 
     return match_constraints(*this, f.client_ip, f.server_ip, f.client_port,
@@ -139,6 +143,8 @@ bool PacketConstraints::flow_match(const Flow& f) const
 #ifdef UNIT_TEST
 
 #include <catch/snort_catch.h>
+
+#include "flow/flow.h"
 
 TEST_CASE("Packet constraints comparison", "[framework]")
 {
@@ -285,6 +291,39 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.dst_ip = dip;
 
         CHECK( true == match_constraints(cs, sip, dip, sport, dport, 0) );
+    }
+}
+
+TEST_CASE("Packet constraints flow matching", "[framework]")
+{
+    PacketConstraints cs;
+    cs.set_bits = PacketConstraints::SetBits::IP_PROTO;
+
+    FlowKey key {};
+    key.ip_protocol = (uint8_t)IpProtocol::ICMPV4;
+
+    Flow flow;
+    flow.key = &key;
+
+    SECTION("ip_proto not set by the session")
+    {
+        cs.ip_proto = IpProtocol::ICMPV4;
+        CHECK( true == cs.flow_match(flow) );
+
+        cs.ip_proto = IpProtocol::TCP;
+        CHECK( false == cs.flow_match(flow) );
+    }
+
+    SECTION("ip_proto set by the session")
+    {
+        key.ip_protocol = (uint8_t)IpProtocol::UDP;
+        flow.ip_proto = (uint8_t)IpProtocol::TCP;
+
+        cs.ip_proto = IpProtocol::TCP;
+        CHECK( true == cs.flow_match(flow) );
+
+        cs.ip_proto = IpProtocol::UDP;
+        CHECK( false == cs.flow_match(flow) );
     }
 }
 
