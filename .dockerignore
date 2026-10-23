@@ -1,0 +1,70 @@
+# .dockerignore — keep the build context small and fast
+#
+# Docker sends the entire build context directory to the daemon before
+# building. Excluding large / unnecessary files speeds up every build.
+
+# ── Version control ───────────────────────────────────────────────────────────
+.git
+.gitignore
+.gitmodules
+.github
+
+# ── CI / tooling ─────────────────────────────────────────────────────────────
+.travis.yml
+.circleci
+Jenkinsfile
+*.sh.bak
+
+# ── Build artefacts (local cmake / make output) ───────────────────────────────
+build/
+build-*/
+*.o
+*.a
+*.so
+*.lo
+*.la
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+
+# ── Documentation ────────────────────────────────────────────────────────────
+doc/
+docs/
+*.md
+*.rst
+*.pdf
+*.png
+*.mmd
+DOCKER.md
+LICENSE
+COPYING
+ChangeLog
+AUTHORS
+THANKS
+README*
+
+# ── Test artefacts ────────────────────────────────────────────────────────────
+test_issue*
+run_sigterm_test.py
+test_sigterm.sh
+issue*_analysis.md
+*_validation_summary.md
+trivy-reports/
+
+# ── IDE / editor files ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Snort pre-built tree (if present from a local build) ─────────────────────
+snort3/
