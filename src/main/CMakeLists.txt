@@ -24,7 +24,7 @@ endif ( ENABLE_SHELL )
 add_subdirectory(test)
 
 if ( HAVE_NUMA )
-    set ( NUMA_SOURCES numa.h numa.cc)
+    set ( NUMA_SOURCES numa_snort.h numa.cc)
 endif( HAVE_NUMA )
 
 add_library (main OBJECT

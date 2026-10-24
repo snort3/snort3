@@ -26,7 +26,7 @@
 #include "main/thread.h"
 
 #ifdef HAVE_NUMA
-#include "numa.h"
+#include "numa_snort.h"
 #endif
 
 struct CpuSet;
