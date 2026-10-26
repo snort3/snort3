@@ -1256,6 +1256,8 @@ static void snort_main()
 
     // Packet-thread shutdown may leave work after the main loop's last service pass.
     house_keeping(false);
+    // Final periodic callbacks may queue orphan commands after housekeeping's initial reap.
+    reap_commands();
 
     delete pig_poke;
     delete[] pigs;
