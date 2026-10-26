@@ -730,7 +730,7 @@ static uint16_t CheckRRTypeTXTVuln(
 
     while (dnsSessionData->curr_txt.name_state != DNS_RESP_STATE_RR_NAME_COMPLETE)
     {
-        if (dnsSessionData->bytes_seen_curr_rec == dnsSessionData->curr_rr.length)
+        if (dnsSessionData->bytes_seen_curr_rec >= dnsSessionData->curr_rr.length)
         {
             /* Done with the name */
             dnsSessionData->curr_txt.name_state = DNS_RESP_STATE_RR_NAME_COMPLETE;
@@ -786,6 +786,14 @@ static uint16_t CheckRRTypeTXTVuln(
             }
         /* Fall through */
         case DNS_RESP_STATE_RR_NAME:
+        {
+            uint16_t rec_remain =
+                (dnsSessionData->bytes_seen_curr_rec < dnsSessionData->curr_rr.length)
+                    ? (uint16_t)(dnsSessionData->curr_rr.length -
+                                 dnsSessionData->bytes_seen_curr_rec)
+                    : 0;
+            if (bytes_required > rec_remain)
+                bytes_required = rec_remain;
             if (bytes_required <= bytes_unused)
             {
                 bytes_unused -= bytes_required;
@@ -804,6 +812,7 @@ static uint16_t CheckRRTypeTXTVuln(
                 return 0;
             }
             break;
+        }
         }
 
         /* Go to the next portion of the name */
@@ -873,8 +882,12 @@ static uint16_t ParseDNSRData(
     case DNS_RR_TYPE_AAAA:
         if (dnsSessionData->publish_response())
         {
-            dnsSessionData->dns_events.add_fqdn(dnsSessionData->cur_fqdn_event, dnsSessionData->curr_rr.ttl);
-            dnsSessionData->dns_events.add_ip(DnsResponseIp(data, dnsSessionData->curr_rr.type));
+            uint16_t need = (dnsSessionData->curr_rr.type == DNS_RR_TYPE_A) ? 4 : 16;
+            if (dnsSessionData->curr_rr.length == need and bytes_unused >= need)
+            {
+                dnsSessionData->dns_events.add_fqdn(dnsSessionData->cur_fqdn_event, dnsSessionData->curr_rr.ttl);
+                dnsSessionData->dns_events.add_ip(DnsResponseIp(data, dnsSessionData->curr_rr.type));
+            }
         }
 
         bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
@@ -1149,7 +1162,7 @@ SfIp DnsResponseIp::get_ip()
             break;
     }
 
-    if (family and strlen((const char*)data))
+    if (family and data)
         ip.set(data, family);
 
     return ip;
