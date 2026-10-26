@@ -36,6 +36,13 @@ using namespace HttpEnums;
 using namespace snort;
 using namespace std;
 
+namespace
+{
+constexpr int32_t VERS_LEN = static_cast<int32_t>(sizeof("HTTP/1.1")) - 1;
+constexpr int32_t VERS_LEAD_WS_LEN = static_cast<int32_t>(sizeof(" HTTP/1.1")) - 1;
+constexpr int32_t MIN_REQ_LINE_LEN = VERS_LEAD_WS_LEN + 1;
+}
+
 HttpMsgRequest::HttpMsgRequest(const uint8_t* buffer, const uint16_t buf_size,
     HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
     const HttpParaList* params_) :
@@ -56,7 +63,7 @@ bool HttpMsgRequest::detection_required() const
 {
     if (params->partial_depth_header != 0)
         return true;
-    return version_id == HttpEnums::VERS_0_9;
+    return version_id == VERS_0_9;
 }
 
 void HttpMsgRequest::raise_deferred_scan_events()
@@ -73,6 +80,14 @@ void HttpMsgRequest::raise_deferred_scan_events()
         session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_SIZE_TOO_LONG);
 }
 
+int32_t HttpMsgRequest::start_line_end() const
+{
+    int32_t end = start_line.length();
+    while (end > 0 and is_sp_tab[start_line.start()[end - 1]])
+        end--;
+    return end;
+}
+
 void HttpMsgRequest::parse_start_line()
 {
     if (session_data->partial_flush[source_id])
@@ -83,17 +98,19 @@ void HttpMsgRequest::parse_start_line()
     if (has_raw_control_character(start_line))
         create_event_request_line_not_valid(NON_RFC_CHAR);
 
-    if (start_line.length() > 0 and
-        is_sp_tab[start_line.start()[start_line.length() - 1]])
+    const int32_t effective_end = start_line_end();
+    if (effective_end < start_line.length())
         create_event_request_line_not_valid(BAD_REQUEST_TERMINATION);
 
     // Version field
-    if ((start_line.length() < 10) || !is_sp_tab[start_line.start()[start_line.length()-9]] ||
-        memcmp(start_line.start() + start_line.length() - 8, "HTTP/", 5))
+    if ((effective_end < MIN_REQ_LINE_LEN) or
+        !is_sp_tab[start_line.start()[effective_end - VERS_LEAD_WS_LEN]] or
+        memcmp(start_line.start() + effective_end - VERS_LEN, "HTTP/", 5))
     {
         // Something is wrong with this message. Check for lower case letters in HTTP-name.
-        if ((start_line.length() >= 10) && is_sp_tab[start_line.start()[start_line.length()-9]] &&
-            http_name_nocase_ok(start_line.start() + start_line.length() - 8))
+        if ((effective_end >= MIN_REQ_LINE_LEN) and
+            is_sp_tab[start_line.start()[effective_end - VERS_LEAD_WS_LEN]] and
+            http_name_nocase_ok(start_line.start() + effective_end - VERS_LEN))
         {
             add_infraction(INF_VERSION_NOT_UPPERCASE);
             create_event_request_line_not_valid(VERSION_NOT_UPPERCASE);
@@ -109,13 +126,13 @@ void HttpMsgRequest::parse_start_line()
         {
             add_infraction(INF_BAD_REQ_LINE);
             create_event_request_line_not_valid(VERSION_MALFORMED);
-            session_data->events[source_id]->create_event(HttpEnums::EVENT_BAD_REQ_LINE);
-            session_data->events[source_id]->create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
+            create_event(EVENT_BAD_REQ_LINE);
+            create_event(EVENT_LOSS_OF_SYNC);
             return;
         }
     }
 
-    version.set(8, start_line.start() + (start_line.length() - 8));
+    version.set(VERS_LEN, start_line.start() + effective_end - VERS_LEN);
     derive_version_id();
 
     HttpModule::increment_peg_counts(PEG_REQUEST);
@@ -131,7 +148,8 @@ void HttpMsgRequest::parse_start_line()
     first_end--;
 
     int32_t last_begin; // first whitespace in clump of whitespace before version
-    for (last_begin = start_line.length() - 10; is_sp_tab[start_line.start()[last_begin]];
+    for (last_begin = effective_end - MIN_REQ_LINE_LEN;
+        is_sp_tab[start_line.start()[last_begin]];
         last_begin--);
     last_begin++;
 
@@ -297,8 +315,12 @@ void HttpMsgRequest::gen_events()
 
     const bool zero_nine = *transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ;
 
+    const int32_t effective_end = zero_nine ? start_line.length() : start_line_end();
+    if (!zero_nine and effective_end < MIN_REQ_LINE_LEN)
+        return;
+
     if ((start_line.start()[method.length()] == '\t') ||
-       (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
+        (!zero_nine && (start_line.start()[effective_end - VERS_LEAD_WS_LEN] == '\t')))
     {
         add_infraction(INF_REQUEST_TAB);
         create_event(EVENT_APACHE_WS);
@@ -306,7 +328,7 @@ void HttpMsgRequest::gen_events()
 
     // Look for white space issues in and around the URI.
     // Supposed to be <method><space><URI><space><version> or 0.9 format GET<space><URI>
-    const int32_t version_start = !zero_nine ? start_line.length() - 9 : start_line.length();
+    const int32_t version_start = !zero_nine ? effective_end - VERS_LEAD_WS_LEN : effective_end;
     for (int32_t k = method.length() + 1; k < version_start; k++)
     {
         if (is_sp_tab[start_line.start()[k]])
