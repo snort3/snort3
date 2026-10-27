@@ -22,6 +22,13 @@ Compared to just doing a full inspection, a partial inspection followed by a ful
 will not miss anything. The benefits of partial inspection are in addition to the benefits of a
 full inspection.
 
+The converse is that a partial inspection followed by a full inspection may see the same thing
+more than once. Because each inspection is cumulative, a violation in data already covered by a
+partial inspection is detected again by every later inspection of the same message section,
+partial or full. This applies to every kind of message section, not only headers. It is an
+accepted side effect of partial inspection that one violation may result in multiple events being
+raised and/or being counted multiple times.
+
 Header inspections, partial or not, are done on the latest reassembled buffer. The result of
 a previous partial inspection is ignored by deleting the previous header from HttpTransaction.
 Partial header inspections ignore truncated fields at the end of the header fragment.

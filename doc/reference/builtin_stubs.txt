@@ -1330,6 +1330,11 @@ An HTTP request or response header contains a name byte outside the HTTP token c
 set, a bare control character in a value (TAB is allowed), or obsolete line folding.
 Trailers are not included.
 
+119:305
+
+A message header line is malformed: it has no colon separator, no field name, no field
+value, or is a multi-line header.
+
 121:1
 
 Invalid flag set on HTTP/2 frame header

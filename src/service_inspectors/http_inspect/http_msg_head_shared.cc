@@ -36,7 +36,7 @@ using namespace HttpEnums;
 using namespace snort;
 
 HttpMsgHeadShared::HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
-    HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
+    SourceId source_id_, bool buf_owner, Flow* flow_,
     const HttpParaList* params_): HttpMsgSection(buffer, buf_size, session_data_, source_id_,
     buf_owner, flow_, params_), own_msg_buffer(buf_owner)
 { }
@@ -168,6 +168,57 @@ void HttpMsgHeadShared::parse_header_block()
         raise_unsafe_header(header_line[unsafe_value_index]);
 }
 
+struct HttpMsgHeadShared::HeaderLineScan
+{
+    explicit HeaderLineScan(HttpMsgHeadShared& section)
+        : section(section), enabled(section.get_inspection_section() == PS_HEADER)
+    { }
+
+    void update(uint8_t octet)
+    {
+        if (!enabled)
+            return;
+
+        if (has_colon)
+        {
+            has_value = has_value or !is_sp_tab[octet];
+            // Values allow HTAB and RFC 9110 obs-text. CR and LF never reach here.
+            unsafe_value = unsafe_value or (octet < 0x20 and octet != '\t') or octet == 0x7f;
+        }
+        else if (octet == ':')
+            has_colon = true;
+        else
+            has_name = has_name or !is_sp_tab[octet];
+    }
+
+    void finish(const uint8_t* line, int32_t line_length)
+    {
+        if (!enabled)
+            return;
+
+        const bool malformed = (multiline and !section.session_data->for_httpx) or !has_colon or
+            !has_name or !has_value;
+        if (!multiline and !malformed)
+            return;
+
+        const Field raw_line(line_length, line);
+
+        if (multiline)
+            section.raise_unsafe_header(raw_line);
+
+        if (malformed)
+            section.raise_malformed_header(raw_line);
+    }
+
+    HttpMsgHeadShared& section;
+    const bool enabled;
+    bool has_colon = false;
+    bool multiline = false;
+    bool has_name = false;
+    bool has_value = false;
+    bool unsafe_value = false;
+};
+
 // The header section produced by the splitter is of the form:
 //
 // [CRs]<header 1><separators><header 2><separators> ... <header N>
@@ -196,58 +247,47 @@ void HttpMsgHeadShared::parse_header_block()
 int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t length,
     int32_t& num_seps, bool& unsafe_value)
 {
-    int32_t k = 0;
+    int32_t pos = 0;
     // Splitter guarantees buffer will not end on CR or LF.
-    for (; is_cr_lf[buffer[k]]; k++);
-    num_seps = k;
+    for (; is_cr_lf[buffer[pos]]; pos++);
+    num_seps = pos;
 
-    // Header names reject non-token bytes; values allow HTAB and RFC 9110 obs-text.
-    bool value_started = buffer[k] == ':';
-    bool has_unsafe_value = false;
-    bool wrapped = false;
-    for (k++; k < length; k++)
+    HeaderLineScan scan(*this);
+
+    for (; pos < length; pos++)
     {
-        const uint8_t c = buffer[k];
-        if (value_started)
-        {
-            if ((c < 0x20 && c != '\t' && !is_cr_lf[c]) || c == 0x7f)
-                has_unsafe_value = true;
-        }
-        else if (c == ':')
-            value_started = true;
-
-        if (is_cr_lf[buffer[k]])
+        if (is_cr_lf[buffer[pos]])
         {
             // Check for wrapping
-            if ((k + 2 < length && buffer[k] == '\r' && buffer[k + 1] == '\n' &&
-                    !is_sp_tab[buffer[k + 2]]) ||
-                (k + 1 < length && buffer[k] == '\n' &&
-                    !is_sp_tab[buffer[k + 1]]) ||
-                (k + 1 < length && buffer[k] == '\r' &&
-                    !is_sp_tab_lf[buffer[k + 1]]))
+            if ((pos + 2 < length && buffer[pos] == '\r' && buffer[pos + 1] == '\n' &&
+                    !is_sp_tab[buffer[pos + 2]]) ||
+                (pos + 1 < length && buffer[pos] == '\n' &&
+                    !is_sp_tab[buffer[pos + 1]]) ||
+                (pos + 1 < length && buffer[pos] == '\r' &&
+                    !is_sp_tab_lf[buffer[pos + 1]]))
             {
-                const auto len = k - num_seps;
-                if (wrapped && len > 0)
-                    raise_unsafe_header(Field(len, buffer + num_seps));
-                unsafe_value = has_unsafe_value;
-                return len;
+                break;
             }
             else
             {
                 add_infraction(INF_HEADER_WRAPPING);
                 create_event(EVENT_HEADER_WRAPPING);
 
-                wrapped = true;
+                scan.multiline = true;
             }
         }
+        else
+            scan.update(buffer[pos]);
     }
-    if (session_data->partial_flush[source_id] && session_data->num_excess[source_id] == 0)
+    if (pos == length && session_data->partial_flush[source_id] &&
+        session_data->num_excess[source_id] == 0)
         return 0;
 
-    const auto len = length - num_seps;
-    if (wrapped && len > 0)
-        raise_unsafe_header(Field(len, buffer + num_seps));
-    unsafe_value = has_unsafe_value;
+    const int32_t len = pos - num_seps;
+
+    scan.finish(buffer + num_seps, len);
+    unsafe_value = scan.unsafe_value;
+
     return len;
 }
 
@@ -500,6 +540,21 @@ const Field& HttpMsgHeadShared::get_content_disposition_filename()
         extract_filename_from_content_disposition();
 
     return content_disposition_filename;
+}
+
+void HttpMsgHeadShared::raise_malformed_header(const Field& malformed_line)
+{
+    HttpTmpBufferCache& tmp_cache = HttpContextData::get_tmp_buffers();
+
+    if (tmp_cache.malformed_header.length() != STAT_NOT_COMPUTE)
+        return;
+
+    HttpModule::increment_peg_counts(PEG_MALFORMED_HEADERS);
+
+    assert(malformed_line.length() > 0);
+    tmp_cache.malformed_header.set(malformed_line);
+
+    create_event(EVENT_MALFORMED_HEADER);
 }
 
 #if defined(REG_TEST) || defined(UNIT_TEST)

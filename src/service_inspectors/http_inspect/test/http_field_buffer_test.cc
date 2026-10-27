@@ -198,6 +198,7 @@ TEST(http_field_buffer_wire_domain_test, reports_only_snapshot_supported_tmp_buf
     CHECK(is_wire_reportable_buffer(DETAIL_119_300));
     CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_301));
     CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_304));
+    CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_305));
 }
 
 TEST(http_field_buffer_wire_domain_test, materializes_numeric_request_facts_from_snapshot)
@@ -240,11 +241,14 @@ TEST(http_field_buffer_wire_domain_test, returns_field_null_for_snapshot_unsuppo
         nullptr, nullptr, &snap);
     const Field& detail_301 = get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_301),
         nullptr, nullptr, &snap);
+    const Field& detail_305 = get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_305),
+        nullptr, nullptr, &snap);
 
     POINTERS_EQUAL(&Field::FIELD_NULL, &classic);
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_20);
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_287);
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_301);
+    POINTERS_EQUAL(&Field::FIELD_NULL, &detail_305);
 }
 
 // method/user_agent/referer are never captured off the wire snapshot -- HttpHeaderCutter never
@@ -321,7 +325,7 @@ TEST(http_field_buffer_wire_domain_test, context_clear_resets_cached_wire_slots)
 
     CHECK_EQUAL(300, read_u32(get_http_tmp_buffer(
         HttpBufferInfo(HTTP_BUFFER_REQUEST_SIZE), nullptr, nullptr, &first)));
-    const unsigned detail_index = DETAIL_119_299 - HTTP_FIRST_TMP_BUFFER;
+    constexpr auto detail_index = get_tmp_buffer_index<DETAIL_119_299>();
     CHECK(get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_299),
         nullptr, &first, nullptr).length() > 0);
     HttpTmpBuffer* const detail_slot =

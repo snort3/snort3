@@ -369,6 +369,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_REQUEST_LINE_NOT_VALID,     "invalid HTTP request line format" },
     { EVENT_HEADER_INVALID_CL_OR_TE,    "invalid Content-Length or Transfer-Encoding header" },
     { EVENT_UNSAFE_CHARACTERS_IN_HEADER, "unsafe character present in HTTP header" },
+    { EVENT_MALFORMED_HEADER,           "malformed HTTP header present" },
     { 0, nullptr }
 };
 
@@ -422,6 +423,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "max_publish_depth_hits", "total number of times the maximum publish depth was exceeded" },
     { CountType::SUM, "header_count_exceeded", "total number of HTTP messages with header count exceeding the configured maximum" },
     { CountType::SUM, "unsafe_header_char", "total number of HTTP request/response header blocks flagged for unsafe characters" },
+    { CountType::SUM, "malformed_headers", "total number of HTTP messages with malformed headers" },
     { CountType::END, nullptr, nullptr }
 };
 

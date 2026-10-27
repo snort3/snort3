@@ -92,6 +92,8 @@ protected:
 #endif
 
 private:
+    struct HeaderLineScan;
+
     static const int MAX = HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS;
 
     void parse_header_block();
@@ -101,6 +103,8 @@ private:
     void create_norm_head_list();
     void derive_header_name_id(int index);
     const Field& get_classic_raw_header();
+
+    void raise_malformed_header(const Field& malformed_line);
 
     void raise_unsafe_header(const Field& raw_header);
 

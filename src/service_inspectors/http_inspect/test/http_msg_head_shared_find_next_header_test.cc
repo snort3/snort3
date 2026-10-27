@@ -24,9 +24,8 @@
 #include "config.h"
 #endif
 
-#include <algorithm>
+#include <bitset>
 #include <string>
-#include <vector>
 
 #include "service_inspectors/http_inspect/http_cache_data.h"
 #include "service_inspectors/http_inspect/http_context_data.h"
@@ -166,16 +165,11 @@ HttpTmpBufferCache& HttpContextData::get_tmp_buffers()
     return test_tmp_buffers;
 }
 
-static std::vector<int> test_events;
+static std::bitset<EVENT__MAX_VALUE> test_events;
 
 void HttpMsgSection::create_event(int event_id)
 {
-    test_events.push_back(event_id);
-}
-
-static bool test_event_was_created(int event_id)
-{
-    return std::find(test_events.begin(), test_events.end(), event_id) != test_events.end();
+    test_events.set(event_id);
 }
 
 bool HttpMsgSection::run_detection(snort::Packet*) { return false; }
@@ -275,9 +269,6 @@ public:
 
         for (auto& slot : test_tmp_buffers.tmp_bufs)
             slot.reset();
-
-        // clear() keeps the vector's capacity, which CppUTest reports as a leak.
-        std::vector<int>().swap(test_events);
     }
 };
 
@@ -301,7 +292,7 @@ struct FindNextHeaderCase
 static void run_test_case(const FindNextHeaderCase& test_case, HttpMsgHeadTest& msg, HttpFlowData* flow_data)
 {
     test_infractions = HttpInfractions();
-    test_events.clear();
+    test_events.reset();
     HttpMsgHeadSharedTestPeer::reset_unsafe_header_state();
     HttpUnitTestSetup::set_partial_flush(flow_data, SRC_CLIENT,
         test_case.partial_flush,
@@ -318,12 +309,14 @@ static void run_test_case(const FindNextHeaderCase& test_case, HttpMsgHeadTest& 
     CHECK_EQUAL_TEXT(test_case.exp_wrap_inf,
         test_infractions & HttpInfractions(INF_HEADER_WRAPPING),
         test_case.name);
-    CHECK_EQUAL_TEXT(test_case.exp_wrap_evt,
-        test_event_was_created(EVENT_HEADER_WRAPPING),
-        test_case.name);
-    CHECK_EQUAL_TEXT(test_case.exp_unsafe_evt,
-        test_event_was_created(EVENT_UNSAFE_CHARACTERS_IN_HEADER),
-        test_case.name);
+
+    std::bitset<EVENT__MAX_VALUE> exp_events;
+    if (test_case.exp_wrap_evt)
+        exp_events.set(EVENT_HEADER_WRAPPING).set(EVENT_MALFORMED_HEADER);
+    if (test_case.exp_unsafe_evt)
+        exp_events.set(EVENT_UNSAFE_CHARACTERS_IN_HEADER);
+
+    CHECK_TEXT(exp_events == test_events, test_case.name);
     CHECK_EQUAL_TEXT(test_case.exp_unsafe_value, unsafe_value, test_case.name);
 }
 
@@ -357,7 +350,7 @@ TEST(find_next_header, unsafe_value_cases)
 {
     constexpr uint8_t value_ctl[] = { 'H', ':', 0x01, '\r', 'x' };
     constexpr uint8_t value_del[] = { 'H', ':', 0x7f, '\r', 'x' };
-    constexpr uint8_t value_tab[] = { 'H', ':', '\t', '\r', 'x' };
+    constexpr uint8_t value_tab[] = { 'H', ':', '\t', '1', '\r', 'x' };
     constexpr uint8_t value_obs_text[] = { 'H', ':', 0x80, '\r', 'x' };
     constexpr uint8_t ctl_before_colon[] = { 'H', 0x01, ':', '1', '\r', 'x' };
 
@@ -367,7 +360,7 @@ TEST(find_next_header, unsafe_value_cases)
         { "delete_byte_in_value_is_unsafe", value_del,
             sizeof(value_del), 0, 3, false, false, false, 0, false, true },
         { "horizontal_tab_in_value_is_allowed", value_tab,
-            sizeof(value_tab), 0, 3, false, false, false, 0, false, false },
+            sizeof(value_tab), 0, 4, false, false, false, 0, false, false },
         { "obsolete_text_in_value_is_allowed", value_obs_text,
             sizeof(value_obs_text), 0, 3, false, false, false, 0, false, false },
         { "control_byte_before_colon_is_not_a_value", ctl_before_colon,

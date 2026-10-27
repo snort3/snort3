@@ -34,6 +34,14 @@ static constexpr unsigned HTTP_FIRST_TMP_BUFFER = HttpEnums::HTTP__BUFFER_MAX + 
 static constexpr unsigned HTTP_TMP_BUFFER_CNT =
     HttpEnums::HTTP__TMP_BUFFER_MAX - HttpEnums::HTTP__BUFFER_MAX;
 
+template<unsigned BUFFER_TYPE>
+constexpr unsigned get_tmp_buffer_index()
+{
+    constexpr unsigned index = BUFFER_TYPE - HTTP_FIRST_TMP_BUFFER;
+    static_assert(index < HTTP_TMP_BUFFER_CNT);
+    return index;
+}
+
 struct HttpTmpBuffer
 {
     void clear()
@@ -59,6 +67,7 @@ struct HttpTmpBufferCache
         }
         decoded_path.reset();
         unsafe_header.reset();
+        malformed_header.reset();
     }
 
     std::array<std::unique_ptr<HttpTmpBuffer>, HTTP_TMP_BUFFER_CNT> tmp_bufs;
@@ -68,6 +77,9 @@ struct HttpTmpBufferCache
 
     // Raw header line used to materialize DETAIL_119_304.
     Field unsafe_header;
+
+    // Raw header line used to materialize DETAIL_119_305.
+    Field malformed_header;
 };
 
 #endif

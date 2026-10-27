@@ -268,8 +268,7 @@ void HttpMsgHeader::gen_events()
 {
     auto raise_cl_or_te = [this] (Detail301ReasonCode code)
     {
-        static constexpr unsigned slot_index = DETAIL_119_301 - HTTP_FIRST_TMP_BUFFER;
-        static_assert(slot_index < HTTP_TMP_BUFFER_CNT);
+        constexpr auto slot_index = get_tmp_buffer_index<DETAIL_119_301>();
 
         HttpTmpBufferCache& tmp_cache = HttpContextData::get_tmp_buffers();
         auto& slot_ptr = tmp_cache.tmp_bufs[slot_index];

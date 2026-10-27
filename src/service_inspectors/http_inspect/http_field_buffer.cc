@@ -689,6 +689,29 @@ static void compute_detail_119_304(const HttpBufferSource&, HttpTmpBufferCache& 
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
 
+static void compute_detail_119_305(const HttpBufferSource&, HttpTmpBufferCache& tmp_cache,
+    HttpTmpBuffer& slot, const HttpBufferInfo&)
+{
+    // EVENT_MALFORMED_HEADER
+    // Malformed Header: <escaped header bytes>
+    constexpr int32_t MAX_MALFORMED_HEADER_LOG_LEN = 256;
+    const Field& header_line = tmp_cache.malformed_header;
+
+    if (header_line.length() <= 0)
+        slot.text = "No header detail available";
+    else
+    {
+        slot.text = "Malformed Header: ";
+        const int32_t detail_budget =
+            MAX_MALFORMED_HEADER_LOG_LEN - static_cast<int32_t>(slot.text.length());
+        append_header_detail(slot.text, header_line.start(), header_line.length(),
+            std::max(detail_budget, 0));
+    }
+
+    slot.field.set(static_cast<int32_t>(slot.text.length()),
+        reinterpret_cast<const uint8_t*>(slot.text.c_str()));
+}
+
 // ---------------------------------------------------------------------------
 // Descriptor table and shared materializer
 // ---------------------------------------------------------------------------
@@ -721,6 +744,7 @@ static const TmpBufferDescriptor tmp_buffer_desc[HTTP_TMP_BUFFER_CNT] =
     { compute_detail_119_300,       true  }, // DETAIL_119_300
     { compute_detail_119_301,       false }, // DETAIL_119_301
     { compute_detail_119_304,       false }, // DETAIL_119_304
+    { compute_detail_119_305,       false }, // DETAIL_119_305
 };
 
 static const Field& materialize(const HttpBufferSource& src, const HttpBufferInfo& buf)
