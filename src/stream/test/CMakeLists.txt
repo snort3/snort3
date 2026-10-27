@@ -10,3 +10,9 @@ add_cpputest( stream_ha_test
     SOURCES
     ../base/stream_ha.cc
 )
+
+add_cpputest( user_session_test
+    SOURCES
+    ../user/user_session.cc
+    ../stream_splitter.cc
+)

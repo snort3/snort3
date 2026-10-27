@@ -529,11 +529,13 @@ void TcpStreamTracker::purge_queue_and_fallback(
     tsd.set_packet_inorder(SEQ_GT(tsd.get_end_seq(), base));
     set_order(OUT_OF_SEQUENCE);
 
-    // Asymmetric recovery may already have counted the fallback; it still needs a fresh Atom.
-    if ( session->flow->is_direction_aborted(!client_tracker) )
-        set_splitter(new AtomSplitter(!client_tracker));
-    else
+    // Asymmetric recovery may already have counted the fallback; reuse Atom when it is retained.
+    if ( !session->flow->is_direction_aborted(!client_tracker) )
         fallback();
+    else if ( splitter && splitter->restart() )
+        reassembler->reset_paf();
+    else
+        set_splitter(new AtomSplitter(!client_tracker));
 
     stream_log(packet, "stream_tcp: Reassembly queue remained over the %s limit after recovery; "
         "purged queue contents (segments=%u, bytes=%u) and reset the %s tracker to the Atom "
@@ -1038,13 +1040,16 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
 void TcpStreamTracker::kickstart_asymmetric_flow(
     const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes)
 {
-    seglist.skip_holes(tsd.get_pkt());
-
+    // Prepare the splitter before skip_holes() reassembles unscanned pre-hole data.
     if ( reassembler->is_splitter_paf() )
         fallback();
     else
+    {
+        splitter->restart();
         reassembler->reset_paf();
+    }
 
+    seglist.skip_holes(tsd.get_pkt());
     reassembler->eval_asymmetric_flush(tsd.get_pkt());
 
     const uint32_t queued_bytes = seglist.get_seg_bytes_total();

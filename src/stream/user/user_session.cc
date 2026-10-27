@@ -176,10 +176,12 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
         return -1;
 
     std::list<UserSegment*>::iterator it;
+    unsigned scan_total = 0;
 
     for ( it = seg_list.begin(); it != seg_list.end(); ++it)
     {
         UserSegment* us = *it;
+        scan_total += us->get_len();
 
         if ( !us->unused() )
             continue;
@@ -191,12 +193,10 @@ int UserTracker::scan(Packet* p, uint32_t& flags)
 
         int32_t flush_amt = paf_check(
             splitter, &paf_state, p, us->get_unused_data(), len,
-            total, paf_state.seq, &flags);
+            scan_total, paf_state.seq, &flags);
 
         if ( flush_amt >= 0 )
         {
-            us->use(flush_amt);
-
             if ( !splitter->is_paf() && total > (unsigned)flush_amt )
             {
                 paf_jump(&paf_state, total - flush_amt);
@@ -224,13 +224,10 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
         unsigned len = us->get_len();
         unsigned bytes_copied = 0;
 
-        if ( len + bytes_flushed > flush_amt )
-            len = flush_amt - bytes_flushed;
-
-        if ( len + bytes_flushed == flush_amt )
+        if ( len + bytes_flushed >= flush_amt )
         {
+            len = flush_amt - bytes_flushed;
             rflags |= (flags & PKT_PDU_TAIL);
-            len = flush_amt;
         }
 
         trace_logf(stream_user_trace, TRACE_USER_SEGMENTS, p,
@@ -254,6 +251,7 @@ void UserTracker::flush(Packet* p, unsigned flush_amt, uint32_t flags)
         else
         {
             us->shift(bytes_copied);
+            us->reset();
         }
     }
 }
