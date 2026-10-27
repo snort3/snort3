@@ -127,7 +127,8 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     if ((service_id != APP_ID_HTTP2 and service_id != APP_ID_HTTP3) or
         (service_id == APP_ID_HTTP3 and session->get_api().get_hsessions_size() == 0))
     {
-        AppId app_ids[APP_PROTOID_MAX];
+        // the stream api call doesn't set the referred id, so it stays APP_ID_NONE
+        AppId app_ids[APP_PROTOID_MAX] = { };
 
         // id order on stream api call is: service, client, payload, misc
         session->get_api().get_first_stream_app_ids(app_ids[APP_PROTOID_SERVICE], app_ids[APP_PROTOID_CLIENT],
