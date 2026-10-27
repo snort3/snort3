@@ -130,6 +130,43 @@ For example:
     var a = console.log
     a("hello") // will be substituted to 'console.log("hello")'
 
+A binding introduced by a destructuring pattern, or by a default initializer, is
+tracked the same way as a simple assignment.
+
+For example:
+
+    var [a] = [console.log]      // a is substituted with 'console.log'
+    var {b} = {b:console.log}    // so is b
+    var {x:c} = {x:console.log}  // so is c
+    function f(d = console.log)  // so is d, inside f
+
+The pattern decides which of the supplied values is bound: an object pattern
+takes the property it names, an array pattern takes the first element. A default
+is used only when the initializer supplies no value for that name.
+
+For example:
+
+    var {a} = {b:console.log,a:unescape}  // a is substituted with 'unescape'
+    var [a = console.log] = [unescape]    // so is a, the default is not used
+    var {a = unescape} = {}               // here the default is used
+
+Only the literal the pattern selects out of is tracked. A right-hand side that
+is not that literal, and a value that is itself a literal, are not substituted.
+
+For example:
+
+    var {fromCharCode:a} = String  // a is not substituted
+    var [a] = [[unescape]]         // neither is a here, its value is an array
+
+A pattern that binds more than one name is not tracked, since that requires the
+names to be matched to the values by position.
+
+For example:
+
+    var [a,b] = [console.log,unescape]  // neither a nor b is substituted
+    var {a,b} = {a:console.log,b:unescape}
+    var [a = console.log,b] = [unescape,0]
+
 For class names and constructors in the list, when the class is used with the
 keyword 'new', created object will be tracked, and its properties will be kept intact.
 Identifier of the object itself, however, will be brought to unified form.

@@ -39,6 +39,150 @@ For example:
     a.foo.bar() // will be normalized as 'console.log.foo.bar()'. When variable is 'de-aliased',
                 // following identifiers are not normalized, just like identifiers from ident_ignore
 
+A binding pattern, and the literal that supplies the value it binds, do not change
+the binding, so the tracker looks through them. The closing symbol of a group that
+was already open when the binding was seen ends the initializer, the way ';' and ','
+do, which also covers a default initializer. In an object the name before a ':' is a
+property, so the binding and its value are what follow the colon.
+
+For example:
+
+    var [a] = [console.log]      // tracked, same as 'var a = console.log'
+    var {x:b} = {x:console.log}  // tracked, 'x' is a property name
+    function f(c = console.log)  // tracked, inside f
+
+A pattern selects which of the supplied values binds: an object pattern selects the
+property keyed by the name it binds, or by the name in front of the ':' when the
+pattern renames; an array pattern selects the first element. A literal that supplies
+its values the other way round is not looked through, and a value the pattern did not
+select is not the bound one:
+
+    var {a} = {b:console.log,a:unescape}  // tracked as unescape, not console.log
+    var {a} = {b:unescape}                // not tracked, no property is keyed 'a'
+
+Reading a value the pattern did not select discards that value alone, not the pattern
+that selects nor the name it binds. An object keeps matching keys to the end, since a
+later property under the same key is the one that binds:
+
+    var {a} = {a:console.log,a:unescape}  // tracked as unescape, the last 'a'
+    var [a] = [unescape,console.log]      // tracked as unescape, the first element
+
+The literal is looked through only where the pattern selects out of it. A right-hand
+side that is not that literal, and a value that is itself a literal, select nothing;
+so does a pattern already rejected for binding more than one name:
+
+    var {fromCharCode:a} = String  // not tracked, the binding is a property of String
+    var [a] = [[unescape]]         // not tracked, the value is an array
+
+A destructuring default is provisional until the initializer has been selected from. A
+selected value overrides it, and so does one the tracker cannot carry, since the engine
+only applies the default where the selected position supplies nothing at all:
+
+    var [a = console.log] = [unescape]  // tracked as unescape
+    var {a = unescape} = {}             // tracked as unescape, no property is keyed 'a'
+    var [a = unescape] = [,]            // tracked as unescape, the element is missing
+    var [a = unescape] = [0]            // not tracked, the element supplies 0
+
+A selected value stays provisional until the initializer ends, so an accessor, a call
+or an operator past the literal discards it, and a declaration inside the literal
+leaves it pending rather than recording it under its own name:
+
+    var [a] = [unescape].slice(0)             // not tracked, the array is not the value
+    var {a} = {a:unescape,b:function(){var c=0;}}  // tracked, 'c' does not take it over
+
+A pattern binds one name only. A ',' inside the pattern means the names would have to
+be matched to the values by position, which the tracker does not do, so that pattern
+binds nothing - whether or not an earlier name carries a default:
+
+    var [a,b] = [console.log,unescape]       // not tracked
+    var [a = console.log,b] = [unescape,0]   // not tracked either
+
+The group that supplies the value is a scope of its own, and an alias is registered
+with the scope that is current. So the selected value is held until that group's scope
+is gone, where a nested scope cannot register it, and a group that is not a pattern
+records its binding before its own scope is popped, which keeps a local binding local:
+
+    var {a} = {a:console.log,b:0}                     // tracked, recorded at '}'
+    var {a} = {a:unescape,b:function(){0;}}           // the nested ';' does not record it
+    function f() { var a = console.log }              // not visible outside f
+
+Only the name in front of a ':' is a property. Past the colon an identifier that is
+not itself tracked ends the binding, as it does in a simple assignment:
+
+    var {a} = {a:o.log}  // not tracked, 'o' is unknown
+
+A key belongs to the property it opens: the colon that follows it consumes it, so a
+further colon in the same property is inside its value and keys nothing. A property
+whose key is not an identifier is not known to supply nothing either, so no default
+stands for it and the binding declines rather than guessing. A property that reaches
+its end with its key unconsumed is shorthand, keyed and valued by the same name:
+
+    var {a} = {a:1?unescape:console.log}  // not tracked, the value is a condition
+    var {a = console.log} = {'a':b}       // not tracked, the key cannot be read
+    var {unescape:a} = {unescape}         // tracked, shorthand supplies 'unescape'
+
+A value nested in the supplying literal is skipped, and the pending binding belongs
+to the literal rather than to the scope that value closes in. A block or a function
+body declares names of its own, so the binding does not reach into one:
+
+    var {a} = {b:{x:0},a:unescape}  // tracked, the nested object is skipped
+
+The binding is what replaces the alias the name already carries, so the name keeps it
+for the whole initializer and loses it where the initializer ends. That is also where
+'undefined' differs from every other supplied value: it is the one the engine replaces
+with the default:
+
+    var a = unescape; var [a = 0] = [a]  // tracked, '[a]' still reads unescape
+    var [a = unescape] = [undefined]     // tracked, undefined takes the default
+    var [a = unescape] = [null]          // not tracked, null is a value
+
+A default needs the selected position to be known empty, so it is the default itself
+that records eligibility - a later element lowers the state without saying anything
+about the position the pattern selected. A position is known empty only when nothing
+in the supplier could have filled it, so a spread that reaches that position, a key the
+tracker cannot read, and a key the prototype chain carries all decline the default
+instead of standing in for absence. An own property is the whole answer, so one
+supplying 'undefined' keeps the default eligible under a prototype key; without an own
+property, a prototype the literal sets of its own declines the default the same way the
+built-in chain does. A matching property later in the literal replaces whatever an
+earlier one supplied and is judged on its own merits, whether or not its value can be
+carried, and a property defined through an accessor or a method supplies nothing that
+can be read - including one whose key is quoted or computed, which this tracker does not
+read and so cannot tell apart from the selected key:
+
+    var [a = unescape] = [,0]                 // tracked, the hole selects the default
+    var {a = console.log} = {...o}            // not tracked, the spread may supply 'a'
+    var {toString:a = unescape} = {}          // not tracked, Object.prototype has it
+    var {toString:a = unescape} = {toString:undefined}   // tracked, the own one is empty
+    var {a = unescape} = {__proto__:{a:0}}    // not tracked, the prototype may have it
+    var {a = unescape} = {a:0,a:undefined}    // tracked, the last definition is empty
+    var {a} = {a:unescape,get a(){return console.log;}}  // not tracked, the accessor wins
+    var {a} = {a:unescape,'a'(){}}            // not tracked, the quoted key may be 'a'
+    var a = 0; var {a:b} = {a:unescape,a}     // not tracked, the shorthand supplies 0
+
+The object the supplier spreads is not a property of the supplier, so neither its name
+nor its value settles the binding; an explicit property after it still does. An array
+supplies by position and a spread only appends, so a spread reaches the selected element
+only when it stands in that element's own place:
+
+    var [a] = [unescape,...o]                 // tracked, the spread appends past 'a'
+    var [a = unescape] = [,...o]              // tracked, the hole selects the default
+    var [a] = [...[unescape]]                 // not tracked, the spread supplies element 0
+
+Pattern tracking does not survive the end of a script: a script that ends inside a
+pattern or inside the literal supplying it leaves nothing for the next one, which is a
+program of its own.
+
+The supplier closing is not the end of the initializer: a postfix on it can still take
+the value away, so a selected value and an eligible default both stay provisional until
+the initializer itself ends. Past the pattern's own '=' a colon belongs to that default's
+value rather than renaming what the pattern binds. A constructor yields an instance,
+which carries none of the statics a tracked name is, so a supplier declines it:
+
+    var [a = console.log] = [].concat([u])  // not tracked, the call may supply it
+    var {a = 0?x:y} = {a:unescape}          // tracked, 'a' is still the bound name
+    var [a] = [new String]                  // not tracked, an instance has no statics
+
 When an object is created using a 'new' keyword, and the class/constructor is found in ident_ignore
 list, the object will be tracked, and although its own identifier will be converted to normal form
 its property and function calls will be kept intact, as with ignored identifiers. 

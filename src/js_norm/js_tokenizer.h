@@ -21,6 +21,7 @@
 #define JS_TOKENIZER_H
 
 #include <array>
+#include <bitset>
 #include <sstream>
 #include <stack>
 #include <vector>
@@ -102,7 +103,8 @@ private:
         Scope(ScopeType t) :
             type(t), meta_type(ScopeMetaType::NOT_SET), func_call_type(FuncType::NOT_FUNC),
             ident_norm(true), block_param(false), do_loop(false), encoding(0), char_code_str(false),
-            in_object(false)
+            in_object(false), dealias_wrapper(false), dealias_supplier(false),
+            dealias_rejected(false), dealias_nested(false)
         {}
 
         ScopeType type;
@@ -114,6 +116,10 @@ private:
         uint32_t encoding;
         bool char_code_str;
         bool in_object;
+        bool dealias_wrapper;   // a binding pattern, or the literal supplying it
+        bool dealias_supplier;  // the literal, not the pattern
+        bool dealias_rejected;  // the pattern binds names not matched to values
+        bool dealias_nested;    // a value nested in the supplying literal
     };
 
     enum ASIGroup
@@ -143,6 +149,26 @@ private:
         ALIAS_EQUALS,     // var a =
         ALIAS_NEW,        // var a = new
         ALIAS_VALUE       // var a = eval
+    };
+
+    enum AliasFlag
+    {
+        ALIAS_BINDING_PATTERN = 0, // the name is bound through a pattern
+        ALIAS_PATTERN_OPEN,        // that pattern has not closed yet
+        ALIAS_EXPECT_BINDING,      // the next name is the one a key binds
+        ALIAS_GROUP_ENDED,         // the supplying literal just closed
+        ALIAS_PATTERN_ENDED,       // the pattern just closed
+        ALIAS_VALUE_PARKED,        // the selected value waits until the initializer ends
+        ALIAS_KEY_MATCHED,         // the current position is the selected one
+        ALIAS_VALUE_DROPPED,       // the selected value cannot be carried
+        ALIAS_REBIND,              // the binding retires the name's old alias
+        ALIAS_KEY_CONSUMED,        // a colon took the property's key
+        ALIAS_KEY_OWN_UNDEFINED,   // the selected key holds an own undefined
+        ALIAS_KEY_UNREADABLE,      // the property is defined through code
+        ALIAS_PROTO_UNRESOLVED,    // the literal sets a prototype not read here
+        ALIAS_SPREAD_OPERAND,      // a spread operand is being read
+        ALIAS_PATTERN_DEFAULT,     // past the pattern's own '='
+        ALIAS_FLAG_MAX
     };
 
     template <class T>
@@ -263,6 +289,27 @@ private:
     void dealias_equals(bool complex);
     void dealias_append();
     void dealias_finalize();
+    void dealias_comma();
+    bool dealias_group_open(ScopeType);
+    void dealias_group_pushed(bool wrapper, bool supplier, bool nested);
+    void dealias_group_close();
+    void dealias_group_closed();
+    void dealias_pattern_close();
+    void dealias_value_select();
+    void dealias_value_discard();
+    void dealias_key_unread();
+    void dealias_undefined();
+    void dealias_invalidate();
+    void dealias_colon();
+    void dealias_spread();
+    void dealias_parenthesis();
+    bool dealias_group_ends_binding();
+    bool dealias_value_held();
+    bool dealias_needs_supplier();
+    bool dealias_in_pattern_default();
+    bool dealias_key_inherited();
+    bool in_dealias_object();
+    bool in_dealias_supplier();
 
     //rule handlers
     JSRet html_closing_script_tag();
@@ -282,6 +329,7 @@ private:
     JSRet close_bracket();
     JSRet punctuator_prefix();
     void dot_accessor();
+    void punctuator_spread();
     JSRet punctuator_arrow();
     JSRet punctuator_semicolon();
     void punctuator_colon();
@@ -330,7 +378,14 @@ private:
     std::stringstream aliased;
     std::string alias;
     std::string last_dealiased;
+    std::string alias_pattern_key;  // key the pattern selects, empty for a position
+    std::string alias_seen_key;
+    std::string alias_default;
+    std::string alias_selected;
     AliasState alias_state = ALIAS_NONE;
+    std::bitset<ALIAS_FLAG_MAX> alias_flags;
+    size_t alias_scope_depth = 0;
+    size_t alias_parked_depth = 0;
     bool prefix_increment = false;
     bool dealias_stored = false;
     bool alias_limit_reached = false;

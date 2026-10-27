@@ -977,6 +977,7 @@ CLOSE_PARENTHESIS              ")"
 OPEN_BRACKET                   "["
 CLOSE_BRACKET                  "]"
 DOT_ACCESSOR                   "."
+PUNCTUATOR_SPREAD              "..."
 PUNCTUATOR_PREFIX              "~"|"!"
 PUNCTUATOR_SEMICOLON           ";"
 PUNCTUATOR_COLON               ":"
@@ -1213,6 +1214,7 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 {CLOSE_BRACKET}                                       { EXEC(close_bracket()) }
 
 {PUNCTUATOR_PREFIX}                 { EXEC(punctuator_prefix()) }
+{PUNCTUATOR_SPREAD}                 { punctuator_spread(); }
 {DOT_ACCESSOR}                      { dot_accessor(); }
 {PUNCTUATOR_ARROW}                  { EXEC(punctuator_arrow()) }
 {PUNCTUATOR_SEMICOLON}              { EXEC(punctuator_semicolon()) }
@@ -1727,6 +1729,13 @@ void JSTokenizer::states_reset()
 
     scope_stack = std::stack<Scope>();
     scope_stack.emplace(GLOBAL);
+    alias_scope_depth = scope_stack.size();
+    alias_parked_depth = 0;
+    alias_flags.reset();
+    alias_pattern_key.clear();
+    alias_seen_key.clear();
+    alias_default.clear();
+    alias_selected.clear();
 
     BEGIN(regst);
 }
@@ -1888,7 +1897,12 @@ void JSTokenizer::states_adjust()
     case KEYWORD_FUNCTION: set_meta_type(ScopeMetaType::NOT_SET); break;
     case KEYWORD_BLOCK: p_scope_pop(meta_type()); set_meta_type(ScopeMetaType::NOT_SET); break;
     case KEYWORD_CLASS: set_meta_type(ScopeMetaType::NOT_SET); break;
-    case OPERATOR_ASSIGNMENT: alias_state = ALIAS_NONE; break;
+    // rolling the '=' back takes the re-binding and the default it announced
+    case OPERATOR_ASSIGNMENT:
+        alias_state = ALIAS_NONE;
+        alias_flags[ALIAS_REBIND] = false;
+        alias_flags[ALIAS_PATTERN_DEFAULT] = false;
+        break;
     case IDENTIFIER:
         if (alias_state == ALIAS_DEFINITION) alias_state = ALIAS_NONE;
         break;
@@ -2200,14 +2214,26 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
 {
     auto lexeme = YYText();
 
+    // the spread operand keys no position of the literal and supplies no value
+    // to it, so the name it is spread from settles nothing about the binding
+    if (alias_flags[ALIAS_SPREAD_OPERAND])
+        return;
+
     switch (alias_state)
     {
     case ALIAS_NONE:
-        if (assignment_start)
+        // a supplying literal declares no name, and neither a held value nor
+        // a rejected pattern leaves one to bind
+        if ((assignment_start or alias_flags[ALIAS_EXPECT_BINDING]) and
+            !alias_flags[ALIAS_VALUE_PARKED] and !in_dealias_supplier() and
+            !scope_cur().dealias_rejected)
         {
             alias = std::string(YYText());
             aliased.clear();
             aliased.str("");
+            alias_scope_depth = scope_stack.size();
+            alias_flags[ALIAS_BINDING_PATTERN] = scope_cur().dealias_wrapper;
+            alias_flags[ALIAS_PATTERN_OPEN] = alias_flags[ALIAS_BINDING_PATTERN];
             alias_state = ALIAS_DEFINITION;
         }
         break;
@@ -2216,10 +2242,25 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
         dealias_reset();
         break;
     case ALIAS_EQUALS:
+        // an initializer that is not the literal the pattern selects out of
+        // supplies nothing it can select
+        if (dealias_needs_supplier())
+        {
+            dealias_reset();
+            break;
+        }
         alias_state = ALIAS_VALUE;
     // fallthrough
     case ALIAS_VALUE:
     {
+        // the key decides whether the value that follows is the selected one;
+        // captured here so a key completed by a later PDU refreshes it on replay
+        if (scope_cur().dealias_supplier and in_dealias_object() and
+            // a second name where a key is still unconsumed makes the first one
+            // a modifier of an accessor or method, and this one its key
+            (assignment_start or !alias_seen_key.empty()))
+            alias_seen_key = std::string(lexeme);
+
         auto dealias = ident_ctx.alias_lookup(lexeme);
 
         bool use_raw = false;
@@ -2241,7 +2282,9 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
 
         if (append_len)
             aliased << (use_raw ? YYText() : dealias);
-        else
+        // before a ':' the name is still a property, which dealias_colon()
+        // discards in favour of the value that follows the colon
+        else if (!(in_dealias_object() and assignment_start))
             dealias_reset();
         break;
     }
@@ -2253,6 +2296,8 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
             std::string(ident_ctx.substitute(alias.c_str(), false))))
             alias_limit_reached = true;
         alias_state = ALIAS_NONE;
+        // this registration is the re-binding, so nothing is left to retire
+        alias_flags[ALIAS_REBIND] = false;
     }
     }
 }
@@ -2261,6 +2306,9 @@ void JSTokenizer::dealias_equals(bool complex_assignment)
 {
     if (alias_state == ALIAS_DEFINITION || alias_state == ALIAS_PREFIX)
     {
+        // the bound name is settled here, not where it was first seen, so a
+        // name replayed after a PDU split is still expected to be bound
+        alias_flags[ALIAS_EXPECT_BINDING] = false;
         if (complex_assignment)
         {
             if (ident_ctx.alias_lookup(alias.c_str()))
@@ -2272,23 +2320,117 @@ void JSTokenizer::dealias_equals(bool complex_assignment)
             alias_state = ALIAS_NONE;
         }
         else
+        {
             alias_state = ALIAS_EQUALS;
+            alias_flags[ALIAS_REBIND] = true;
+            alias_flags[ALIAS_PATTERN_DEFAULT] = alias_flags[ALIAS_PATTERN_OPEN];
+        }
     }
 }
 
 void JSTokenizer::dealias_reset()
 {
-    if (alias_state != ALIAS_NONE)
+    // a selected value belongs to the literal that supplied it
+    if (dealias_value_held())
+        return;
+
+    // the initializer carries on past the literal that supplied the value
+    if (alias_flags[ALIAS_VALUE_PARKED])
     {
-        if (alias_state == ALIAS_VALUE || alias_state == ALIAS_EQUALS)
-            if (ident_ctx.alias_lookup(alias.c_str()))
-            {
-                if (!ident_ctx.add_alias(alias.c_str(),
-                    std::string(ident_ctx.substitute(alias.c_str(), false))))
-                    alias_limit_reached = true;
-            }
-        alias_state = ALIAS_NONE;
+        alias_flags[ALIAS_VALUE_PARKED] = false;
+        alias_selected.clear();
     }
+    // an unrelated element or property, or a value nested in one, leaves the
+    // pattern and the name armed
+    else if (in_dealias_supplier() and alias_state != ALIAS_NONE)
+    {
+        dealias_value_discard();
+        return;
+    }
+    // a default the tracker cannot carry still leaves its name bound
+    else if (dealias_in_pattern_default())
+    {
+        aliased.clear();
+        aliased.str("");
+        alias_default.clear();
+        alias_state = ALIAS_DEFINITION;
+        return;
+    }
+
+    dealias_invalidate();
+    alias_state = ALIAS_NONE;
+    alias_flags[ALIAS_BINDING_PATTERN] = false;
+    alias_flags[ALIAS_PATTERN_OPEN] = false;
+    alias_flags[ALIAS_EXPECT_BINDING] = false;
+    alias_flags[ALIAS_KEY_MATCHED] = false;
+    alias_flags[ALIAS_VALUE_DROPPED] = false;
+    alias_flags[ALIAS_KEY_CONSUMED] = false;
+    alias_flags[ALIAS_KEY_OWN_UNDEFINED] = false;
+    alias_flags[ALIAS_KEY_UNREADABLE] = false;
+    alias_flags[ALIAS_PROTO_UNRESOLVED] = false;
+    alias_flags[ALIAS_SPREAD_OPERAND] = false;
+    alias_flags[ALIAS_PATTERN_DEFAULT] = false;
+    alias_pattern_key.clear();
+    alias_seen_key.clear();
+    alias_default.clear();
+    alias_selected.clear();
+}
+
+void JSTokenizer::dealias_invalidate()
+{
+    // the binding is what replaces the old alias, so this waits for the whole
+    // initializer: until then the initializer itself still reads the old value
+    if (!alias_flags[ALIAS_REBIND])
+        return;
+
+    alias_flags[ALIAS_REBIND] = false;
+
+    if (!ident_ctx.alias_lookup(alias.c_str()))
+        return;
+
+    if (!ident_ctx.add_alias(alias.c_str(),
+        std::string(ident_ctx.substitute(alias.c_str(), false))))
+        alias_limit_reached = true;
+}
+
+void JSTokenizer::dealias_value_discard()
+{
+    // the selected position does hold a value, so no default applies to it
+    if (alias_flags[ALIAS_KEY_MATCHED])
+        alias_flags[ALIAS_VALUE_DROPPED] = true;
+
+    aliased.clear();
+    aliased.str("");
+    alias_flags[ALIAS_KEY_MATCHED] = false;
+    alias_state = alias_pattern_key.empty() ? ALIAS_NONE : ALIAS_EQUALS;
+}
+
+void JSTokenizer::dealias_key_unread()
+{
+    // a position this tracker cannot read may be the one the pattern selects, so
+    // it is neither known to supply nothing nor known to leave an earlier
+    // selection standing
+    alias_flags[ALIAS_VALUE_DROPPED] = true;
+    alias_flags[ALIAS_VALUE_PARKED] = false;
+    alias_selected.clear();
+}
+
+void JSTokenizer::dealias_undefined()
+{
+    // undefined is the one supplied value a destructuring default replaces, so
+    // the selected position reads as empty rather than as carrying a value
+    if (alias_flags[ALIAS_KEY_MATCHED] and alias_state != ALIAS_NONE and
+        scope_cur().dealias_supplier)
+    {
+        aliased.clear();
+        aliased.str("");
+        // the absence is this literal's own, so nothing above it supplies the key
+        alias_flags[ALIAS_KEY_OWN_UNDEFINED] = true;
+        alias_state = ALIAS_EQUALS;
+        return;
+    }
+
+    dealias_append();
 }
 
 void JSTokenizer::dealias_prefix_reset()
@@ -2314,15 +2456,389 @@ void JSTokenizer::dealias_append()
 
 void JSTokenizer::dealias_finalize()
 {
-    if (alias_state == ALIAS_VALUE)
+    // a parked value belongs to the literal that supplied it, so a nested
+    // scope must not register it where the bound name does not live
+    if (dealias_value_held())
+        return;
+
+    std::string value;
+    if (alias_flags[ALIAS_VALUE_PARKED])
+        value = alias_selected;
+    else if (alias_state == ALIAS_VALUE and aliased.tellp() > 0)
+        value = aliased.str();
+    // the selected position supplied no value, so the default stands there; the
+    // default itself records that, since a later element lowers the state. An
+    // own property is the whole answer; without one the key reads through the
+    // prototype, which has to be known to carry nothing under it
+    else if (!alias_default.empty() and !alias_flags[ALIAS_VALUE_DROPPED] and
+        (alias_flags[ALIAS_KEY_OWN_UNDEFINED] or
+            (!dealias_key_inherited() and !alias_flags[ALIAS_PROTO_UNRESOLVED])))
+        value = alias_default;
+
+    if (!value.empty())
     {
-        if (!ident_ctx.add_alias(alias.c_str(), aliased.str()))
+        if (!ident_ctx.add_alias(alias.c_str(), std::move(value)))
             alias_limit_reached = true;
         //FIXIT-E: add check for the 'sensitive' assignments here.
         alias_state = ALIAS_NONE;
+        // this value is what the name now carries, so nothing is left to retire
+        alias_flags[ALIAS_REBIND] = false;
+    }
+    alias_flags[ALIAS_VALUE_PARKED] = false;
+    dealias_reset();
+}
+
+bool JSTokenizer::in_dealias_object()
+{
+    return scope_cur().dealias_wrapper and scope_cur().type == BRACES;
+}
+
+bool JSTokenizer::in_dealias_supplier()
+{
+    return scope_cur().dealias_supplier or scope_cur().dealias_nested;
+}
+
+bool JSTokenizer::dealias_group_ends_binding()
+{
+    return alias_state != ALIAS_NONE and scope_stack.size() <= alias_scope_depth;
+}
+
+bool JSTokenizer::dealias_value_held()
+{
+    return alias_flags[ALIAS_VALUE_PARKED] and scope_stack.size() >= alias_parked_depth;
+}
+
+bool JSTokenizer::dealias_needs_supplier()
+{
+    return alias_flags[ALIAS_BINDING_PATTERN] and !scope_cur().dealias_wrapper;
+}
+
+bool JSTokenizer::dealias_in_pattern_default()
+{
+    return alias_flags[ALIAS_PATTERN_OPEN] and alias_state != ALIAS_NONE and
+        !scope_cur().dealias_rejected;
+}
+
+bool JSTokenizer::dealias_key_inherited()
+{
+    // Object.prototype carries these, so no own property under one of them is
+    // not the absence a destructuring default stands in for
+    static const char* const inherited[] =
+    {
+        "constructor", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable",
+        "toLocaleString", "toString", "valueOf", "__proto__", "__defineGetter__",
+        "__defineSetter__", "__lookupGetter__", "__lookupSetter__"
+    };
+
+    for (const auto* name : inherited)
+        if (alias_pattern_key == name)
+            return true;
+
+    return false;
+}
+
+bool JSTokenizer::dealias_group_open(ScopeType t)
+{
+    // a group inside either one is a value, not another wrapper
+    if (scope_cur().dealias_wrapper)
+        return false;
+
+    // a binding pattern leaves the binding itself unchanged, so look through it
+    if (alias_state == ALIAS_NONE and token == KEYWORD_VAR_DECL)
+        return true;
+
+    // so does the literal supplying the value, but only when it supplies it the
+    // way the pattern selects: by key for an object, by position for an array
+    return alias_state == ALIAS_EQUALS and alias_flags[ALIAS_BINDING_PATTERN] and
+        (t == BRACKETS) == alias_pattern_key.empty();
+}
+
+void JSTokenizer::dealias_group_pushed(bool wrapper, bool supplier, bool nested)
+{
+    scope_cur().dealias_wrapper = wrapper;
+    scope_cur().dealias_supplier = supplier;
+    // a block or a function body declares names of its own, so the binding
+    // pending in the literal does not reach into it; in_object tells them apart
+    scope_cur().dealias_nested = nested and
+        (scope_cur().type == BRACKETS or scope_cur().in_object);
+
+    if (!supplier)
+        return;
+
+    // an array supplies by position, so its first element is the selected one
+    alias_flags[ALIAS_KEY_MATCHED] = alias_pattern_key.empty();
+    alias_flags[ALIAS_KEY_CONSUMED] = false;
+    alias_flags[ALIAS_KEY_OWN_UNDEFINED] = false;
+    alias_flags[ALIAS_KEY_UNREADABLE] = false;
+    alias_flags[ALIAS_PROTO_UNRESOLVED] = false;
+    alias_flags[ALIAS_SPREAD_OPERAND] = false;
+    alias_seen_key.clear();
+}
+
+void JSTokenizer::dealias_group_close()
+{
+    if (scope_cur().dealias_wrapper)
+    {
+        if (!scope_cur().dealias_supplier)
+        {
+            dealias_pattern_close();
+            return;
+        }
+
+        // the last property or element is the last chance to select
+        dealias_value_select();
+        aliased.clear();
+        aliased.str("");
+        alias_flags[ALIAS_KEY_MATCHED] = false;
+        if (alias_state == ALIAS_VALUE)
+            alias_state = ALIAS_EQUALS;
+        alias_flags[ALIAS_GROUP_ENDED] = true;
+    }
+    // a group already open when the alias was armed is not part of the value,
+    // so its closing symbol ends the initializer the way ';' and ',' do, and
+    // the binding belongs to the scope the closing symbol is still inside
+    else if (dealias_group_ends_binding())
+        dealias_finalize();
+    else
+        dealias_append();
+}
+
+void JSTokenizer::dealias_group_closed()
+{
+    // a pattern is not a scope of its own, so the binding it introduces lives
+    // in the scope the pattern sits in, and ends where that scope's groups do
+    if (alias_flags[ALIAS_PATTERN_ENDED])
+    {
+        alias_flags[ALIAS_PATTERN_ENDED] = false;
+        alias_scope_depth = scope_stack.size();
+    }
+
+    if (alias_flags[ALIAS_GROUP_ENDED])
+    {
+        alias_flags[ALIAS_GROUP_ENDED] = false;
+        // a selected value, and a default still eligible, both stay provisional
+        // until the initializer ends: a postfix on the supplier can take it away
+        if (!alias_flags[ALIAS_VALUE_PARKED] and alias_default.empty())
+            dealias_finalize();
+    }
+}
+
+void JSTokenizer::dealias_pattern_close()
+{
+    alias_flags[ALIAS_PATTERN_OPEN] = false;
+
+    // the pattern keeps the bound name armed for the '=' that follows; a
+    // default is provisional until the initializer has been selected from
+    if (alias_state == ALIAS_EQUALS or alias_state == ALIAS_VALUE)
+    {
+        alias_default = aliased.str();
+        aliased.clear();
+        aliased.str("");
+        alias_state = ALIAS_DEFINITION;
+    }
+
+    if (alias_state != ALIAS_DEFINITION)
+        return;
+
+    // a shorthand property selects the value keyed by the name it binds
+    if (scope_cur().type == BRACES and alias_pattern_key.empty())
+        alias_pattern_key = alias;
+
+    alias_flags[ALIAS_PATTERN_DEFAULT] = false;
+    alias_flags[ALIAS_PATTERN_ENDED] = true;
+}
+
+void JSTokenizer::dealias_value_select()
+{
+    // this is the property boundary, so a spread operand before it has ended
+    alias_flags[ALIAS_SPREAD_OPERAND] = false;
+    const bool unreadable = alias_flags[ALIAS_KEY_UNREADABLE];
+    alias_flags[ALIAS_KEY_UNREADABLE] = false;
+
+    // a shorthand property reaches its end with its key unconsumed: the name it
+    // keys is also the value it supplies, so that position is not empty
+    if (!alias_seen_key.empty())
+    {
+        alias_flags[ALIAS_KEY_MATCHED] = alias_seen_key == alias_pattern_key;
+        if (alias_flags[ALIAS_KEY_MATCHED])
+            alias_flags[ALIAS_VALUE_DROPPED] = true;
+        alias_seen_key.clear();
+    }
+
+    // a matching position replaces what an earlier one supplied, whether or not
+    // its own value is one this tracker can carry
+    if (alias_flags[ALIAS_KEY_MATCHED] and alias_flags[ALIAS_VALUE_PARKED])
+    {
+        alias_flags[ALIAS_VALUE_PARKED] = false;
+        alias_selected.clear();
+    }
+
+    // a property defined through code leaves text of that code behind, which is
+    // not the value it supplies
+    if (!alias_flags[ALIAS_KEY_MATCHED] or unreadable or alias_state != ALIAS_VALUE or
+        aliased.tellp() <= 0)
+        return;
+
+    // this group's scope goes with its closing symbol, so hold the value until
+    // the scope holding the name is back; a later match under the key replaces it
+    alias_selected = aliased.str();
+    alias_flags[ALIAS_VALUE_PARKED] = true;
+    alias_parked_depth = scope_stack.size();
+}
+
+void JSTokenizer::dealias_colon()
+{
+    if (!in_dealias_object())
+    {
+        dealias_reset();
+        return;
+    }
+
+    if (!scope_cur().dealias_supplier)
+    {
+        // past the pattern's own '=' a colon is inside that default's value, so
+        // it discards the default and leaves the bound name alone
+        if (alias_flags[ALIAS_PATTERN_DEFAULT])
+        {
+            aliased.clear();
+            aliased.str("");
+            alias_default.clear();
+            alias_state = ALIAS_DEFINITION;
+        }
+        // in a pattern the name before the colon is the key that selects the
+        // value, and the name it binds follows the colon
+        else if (alias_state == ALIAS_DEFINITION)
+        {
+            alias_pattern_key = alias;
+            alias_state = ALIAS_NONE;
+            alias_flags[ALIAS_EXPECT_BINDING] = true;
+        }
+        else
+            dealias_reset();
+    }
+    else if (alias_state == ALIAS_EQUALS or alias_state == ALIAS_VALUE)
+    {
+        // this property's key is already taken, so this colon is inside its
+        // value and settles nothing about the position
+        if (alias_flags[ALIAS_KEY_CONSUMED])
+        {
+            alias_flags[ALIAS_KEY_MATCHED] = false;
+            alias_seen_key.clear();
+            aliased.clear();
+            aliased.str("");
+            alias_state = ALIAS_EQUALS;
+            return;
+        }
+
+        alias_flags[ALIAS_KEY_CONSUMED] = true;
+
+        // this literal sets a prototype of its own, and what that carries under
+        // the selected key is not read here
+        if (alias_seen_key == "__proto__")
+            alias_flags[ALIAS_PROTO_UNRESOLVED] = true;
+
+        if (alias_seen_key.empty())
+            dealias_key_unread();
+
+        // only the property the pattern keyed supplies the bound value, and a
+        // later property under that key replaces what an earlier one supplied,
+        // on its own merits rather than the earlier one's
+        alias_flags[ALIAS_KEY_MATCHED] = alias_seen_key == alias_pattern_key;
+        if (alias_flags[ALIAS_KEY_MATCHED])
+        {
+            alias_flags[ALIAS_VALUE_PARKED] = false;
+            alias_selected.clear();
+            alias_flags[ALIAS_VALUE_DROPPED] = false;
+            alias_flags[ALIAS_KEY_OWN_UNDEFINED] = false;
+        }
+
+        alias_seen_key.clear();
+        aliased.clear();
+        aliased.str("");
+        alias_state = ALIAS_EQUALS;
     }
     else
         dealias_reset();
+}
+
+void JSTokenizer::dealias_spread()
+{
+    // an object spread may carry the key the pattern selects, so that position
+    // supplies nothing known and an earlier selection is no longer the last
+    // word; an array supplies by position, so a spread past the selected
+    // element cannot change what that element holds
+    if (scope_cur().dealias_supplier)
+    {
+        if (scope_cur().type != BRACKETS or alias_flags[ALIAS_KEY_MATCHED])
+            dealias_key_unread();
+        // what follows is the object being spread, not a property of this one
+        alias_flags[ALIAS_SPREAD_OPERAND] = true;
+        alias_seen_key.clear();
+        aliased.clear();
+        aliased.str("");
+        return;
+    }
+
+    // a rest element binds a fresh object, which is not a value to carry
+    if (scope_cur().dealias_wrapper)
+    {
+        scope_cur().dealias_wrapper = false;
+        scope_cur().dealias_rejected = true;
+        dealias_reset();
+        return;
+    }
+
+    dealias_append();
+}
+
+void JSTokenizer::dealias_parenthesis()
+{
+    // a key the literal has not taken with a colon, and a group opening in its
+    // place, is a property this literal defines through code
+    if (scope_cur().dealias_supplier and in_dealias_object() and
+        !alias_flags[ALIAS_KEY_CONSUMED])
+    {
+        // the key is the name right before the group, so a modifier such as
+        // 'get' left in front of a key this tracker cannot read is not one
+        if (alias_seen_key.empty() or token != IDENTIFIER)
+            dealias_key_unread();
+        else
+            alias_flags[ALIAS_KEY_UNREADABLE] = true;
+    }
+
+    dealias_reset();
+}
+
+void JSTokenizer::dealias_comma()
+{
+    // a pattern that binds more than one name needs the names matched to the
+    // values by position, which is not tracked, so it binds nothing here and
+    // stays rejected for every name and default still to come in it
+    if (scope_cur().dealias_wrapper and !scope_cur().dealias_supplier)
+    {
+        scope_cur().dealias_wrapper = false;
+        scope_cur().dealias_rejected = true;
+        dealias_reset();
+    }
+    else if (scope_cur().dealias_supplier)
+    {
+        dealias_value_select();
+
+        // the next key decides again; the name stays armed so a default still
+        // applies when the selected position held nothing
+        aliased.clear();
+        aliased.str("");
+        alias_seen_key.clear();
+        alias_flags[ALIAS_KEY_MATCHED] = false;
+        alias_flags[ALIAS_KEY_CONSUMED] = false;
+        alias_state = ALIAS_EQUALS;
+    }
+    // a separator inside a value the literal supplies ends that value, not the
+    // initializer the binding belongs to
+    else if (scope_cur().dealias_nested)
+        dealias_value_discard();
+    else
+        dealias_finalize();
 }
 
 JSTokenizer::JSRet JSTokenizer::html_closing_script_tag()
@@ -2516,7 +3032,11 @@ void JSTokenizer::div_assignment_operator()
 
 JSTokenizer::JSRet JSTokenizer::open_brace()
 {
-    dealias_reset();
+    const bool wrapper = dealias_group_open(BRACES);
+    const bool supplier = wrapper and alias_state == ALIAS_EQUALS;
+    const bool nested = !wrapper and in_dealias_supplier();
+    if (!wrapper)
+        dealias_reset();
     EXEC(do_semicolon_insertion(ASI_GROUP_1))
     if (meta_type() == ScopeMetaType::NOT_SET)
     {
@@ -2529,6 +3049,7 @@ JSTokenizer::JSRet JSTokenizer::open_brace()
         }
     }
     EXEC(scope_push(BRACES))
+    dealias_group_pushed(wrapper, supplier, nested);
     if (!brace_depth.empty())
         brace_depth.top()++;
     process_punctuator();
@@ -2538,10 +3059,12 @@ JSTokenizer::JSRet JSTokenizer::open_brace()
 JSTokenizer::JSRet JSTokenizer::close_brace()
 {
     dealias_clear_mutated(false);
+    dealias_group_close();
     EXEC(do_semicolon_insertion(ASI_GROUP_2))
     if (meta_type() != ScopeMetaType::NOT_SET)
         EXEC(p_scope_pop(meta_type()))
     EXEC(scope_pop(BRACES))
+    dealias_group_closed();
     process_closing_brace();
     set_ident_norm(true);
     return EOS;
@@ -2550,7 +3073,7 @@ JSTokenizer::JSRet JSTokenizer::close_brace()
 JSTokenizer::JSRet JSTokenizer::open_parenthesis()
 {
     dealias_clear_mutated(true);
-    dealias_reset();
+    dealias_parenthesis();
     EXEC(do_semicolon_insertion(ASI_GROUP_3))
     FuncType f_call = detect_func_type();
     check_function_nesting(f_call);
@@ -2584,7 +3107,10 @@ JSTokenizer::JSRet JSTokenizer::open_parenthesis()
 JSTokenizer::JSRet JSTokenizer::close_parenthesis()
 {
     dealias_clear_mutated(false);
-    dealias_reset();
+    if (dealias_group_ends_binding())
+        dealias_finalize();
+    else
+        dealias_reset();
 
     FuncType f_call = func_call_type();
     uint32_t flags = encoding();
@@ -2634,10 +3160,15 @@ JSTokenizer::JSRet JSTokenizer::close_parenthesis()
 JSTokenizer::JSRet JSTokenizer::open_bracket()
 {
     dealias_clear_mutated(true);
-    dealias_append();
+    const bool wrapper = dealias_group_open(BRACKETS);
+    const bool supplier = wrapper and alias_state == ALIAS_EQUALS;
+    const bool nested = !wrapper and in_dealias_supplier();
+    if (!wrapper)
+        dealias_append();
     EXEC(do_semicolon_insertion(ASI_GROUP_3))
     EXEC(do_semicolon_insertion(ASI_GROUP_4))
     EXEC(scope_push(BRACKETS))
+    dealias_group_pushed(wrapper, supplier, nested);
     process_punctuator();
     return EOS;
 }
@@ -2645,9 +3176,10 @@ JSTokenizer::JSRet JSTokenizer::open_bracket()
 JSTokenizer::JSRet JSTokenizer::close_bracket()
 {
     dealias_clear_mutated(false);
-    dealias_append();
+    dealias_group_close();
     EXEC(do_semicolon_insertion(ASI_GROUP_4))
     EXEC(scope_pop(BRACKETS))
+    dealias_group_closed();
     ECHO;
     token = CLOSING_BRACKET;
     BEGIN(divop);
@@ -2670,6 +3202,17 @@ void JSTokenizer::dot_accessor()
     ECHO;
     token = DOT;
     BEGIN(regst);
+}
+
+void JSTokenizer::punctuator_spread()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_spread();
+    ECHO;
+    token = PUNCTUATOR;
+    BEGIN(regst);
+    set_ident_norm(true);
 }
 
 JSTokenizer::JSRet JSTokenizer::punctuator_arrow()
@@ -2706,7 +3249,7 @@ void JSTokenizer::punctuator_colon()
 {
     dealias_clear_mutated(false);
     previous_group = ASI_OTHER;
-    dealias_reset();
+    dealias_colon();
     process_punctuator(COLON);
     set_ident_norm(true);
 }
@@ -2751,7 +3294,7 @@ void JSTokenizer::punctuator_comma()
 {
     dealias_clear_mutated(false);
     previous_group = ASI_OTHER;
-    dealias_finalize();
+    dealias_comma();
     process_punctuator();
     set_ident_norm(true);
 }
@@ -2784,7 +3327,16 @@ JSTokenizer::JSRet JSTokenizer::keyword_var_decl()
 
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
     set_ident_norm(true);
-    alias_state = ALIAS_NONE;
+    // a declaration nested in the supplying literal is not where the name lives
+    if (!dealias_value_held())
+    {
+        alias_state = ALIAS_NONE;
+        alias_flags.reset();
+        alias_pattern_key.clear();
+        alias_seen_key.clear();
+        alias_default.clear();
+        alias_selected.clear();
+    }
     EXEC(do_spacing(KEYWORD_VAR_DECL))
     ECHO;
     BEGIN(regst);
@@ -2871,7 +3423,15 @@ JSTokenizer::JSRet JSTokenizer::keyword_new()
     ECHO;
     BEGIN(regst);
 
-    if (alias_state == ALIAS_EQUALS)
+    // a constructor yields an instance, which carries none of the statics a
+    // tracked name is, so the supplying literal declines the value outright
+    if (in_dealias_supplier())
+        dealias_value_discard();
+    // a default the tracker cannot carry still leaves its name bound, and the
+    // value the initializer supplies stands in the default's place
+    else if (dealias_in_pattern_default())
+        dealias_reset();
+    else if (alias_state == ALIAS_EQUALS)
         alias_state = ALIAS_NEW;
     return EOS;
 }
@@ -3002,7 +3562,10 @@ JSTokenizer::JSRet JSTokenizer::general_operator()
 JSTokenizer::JSRet JSTokenizer::general_literal()
 {
     dealias_clear_mutated(false);
-    dealias_append();
+    if (!strcmp(YYText(), "undefined"))
+        dealias_undefined();
+    else
+        dealias_append();
     EXEC(do_semicolon_insertion(ASI_GROUP_7))
     EXEC(do_spacing(LITERAL))
     ECHO;
