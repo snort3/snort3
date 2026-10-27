@@ -75,9 +75,18 @@ void HttpMsgRequest::raise_deferred_scan_events()
         create_event_request_line_not_valid(METHOD_NOT_PRESENT);
 
     if (transaction->has_pending_length_299())
+    {
         session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_LINE_LENGTH_TOO_LONG);
+
+        // 299 is request-line scoped, so unlike 298 no other section competes to count it
+        HttpModule::increment_peg_counts(PEG_MAX_REQUEST_LINE_EXCEEDED);
+    }
     if (transaction->has_pending_size_298())
+    {
         session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_SIZE_TOO_LONG);
+        if (transaction->claim_size_298_count())
+            HttpModule::increment_peg_counts(PEG_MAX_REQUEST_SIZE_EXCEEDED);
+    }
 }
 
 int32_t HttpMsgRequest::start_line_end() const
@@ -373,6 +382,7 @@ void HttpMsgRequest::gen_events()
             {
                 add_infraction(INF_METHOD_NOT_ON_ALLOWED_LIST);
                 create_event(EVENT_DISALLOWED_METHOD);
+                HttpModule::increment_peg_counts(PEG_DISALLOWED_METHOD);
             }
             else
                 known_method = true;
@@ -384,6 +394,7 @@ void HttpMsgRequest::gen_events()
             {
                 add_infraction(INF_METHOD_ON_DISALLOWED_LIST);
                 create_event(EVENT_DISALLOWED_METHOD);
+                HttpModule::increment_peg_counts(PEG_DISALLOWED_METHOD);
                 known_method = true;
             }
         }

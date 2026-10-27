@@ -424,6 +424,10 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "header_count_exceeded", "total number of HTTP messages with header count exceeding the configured maximum" },
     { CountType::SUM, "unsafe_header_char", "total number of HTTP request/response header blocks flagged for unsafe characters" },
     { CountType::SUM, "malformed_headers", "total number of HTTP messages with malformed headers" },
+    { CountType::SUM, "max_request_size_exceeded", "total number of requests exceeding the configured maximum request size" },
+    { CountType::SUM, "max_request_line_exceeded", "total number of requests exceeding the configured maximum request line length" },
+    { CountType::SUM, "disallowed_method", "total number of requests using a disallowed HTTP method" },
+    { CountType::SUM, "request_line_not_valid", "total number of requests with an invalid request line format" },
     { CountType::END, nullptr, nullptr }
 };
 

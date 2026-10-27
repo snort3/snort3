@@ -72,6 +72,10 @@ public:
     { return pending_size_report and pending_size_report->has_298; }
     uint32_t get_pending_size_298() const { return pending_size_report->size_298; }
 
+    // 298 spans sections, so this returns true to exactly one caller per transaction
+    bool claim_size_298_count()
+    { const bool first = !counted_298; counted_298 = true; return first; }
+
     void set_pending_length_299(uint32_t length)
     {
         if (!pending_size_report)
@@ -150,6 +154,7 @@ private:
     HttpInfractions* infractions[2];
 
     std::unique_ptr<HttpPendingSizeReport> pending_size_report;
+    bool counted_298 = false;
 
     enum class TransactionFlag : uint16_t
     {

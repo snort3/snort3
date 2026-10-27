@@ -74,7 +74,7 @@ private:
     void capture_splitter_snapshot(HttpFlowData* session_data, const HttpCutter* cutter,
         HttpEnums::ScanResult cut_result, HttpCommon::SectionType type,
         const snort::Flow* flow, const uint8_t* data, uint32_t cut_length,
-        bool capture_300, bool check_299, bool check_298) const;
+        bool capture_300, bool check_299, bool check_298, bool exhausted) const;
     HttpCutter* get_cutter(HttpCommon::SectionType type, HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;

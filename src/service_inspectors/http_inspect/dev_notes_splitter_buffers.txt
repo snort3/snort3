@@ -301,6 +301,22 @@ text, it copies only the current scan fragment, capped at
 MAX_REQUEST_LINE_LOG_LEN and stopped at CR/LF. It does not stitch bytes across
 multiple cut() calls.
 
+===== Peg counts for 298/299/300
+
+Only a terminal cutter result counts. capture_splitter_snapshot() counts
+SCAN_ABORT and a section exhausted at MAX_OCTETS, which call_cutter() aborts
+from the switch that runs after the capture, so the cutter result there is
+still SCAN_NOT_FOUND. Anything reaching SCAN_FOUND counts in the rebuilt
+section. A non-terminal WireSnapshot goes on to one of the two, so counting
+there counts the request twice. 298 spans the sections of a request, so
+claim_size_298_count() gives the count to one of them; 299 and 300 are scoped
+to a single section and need no arbiter. The abort path on the request line
+must not read transaction[SRC_CLIENT] -- it is null or the previous request's.
+
+A count on the abort path has no matching alert when the abort loses it (see
+Known limitations), and a flow that dies mid request line is not counted at
+all.
+
 ===== Known limitations
 
 When a SCAN_ABORT leaves both directions aborted, none of these buffers can be

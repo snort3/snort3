@@ -29,6 +29,7 @@
 #include "http_common.h"
 #include "http_context_data.h"
 #include "http_enum.h"
+#include "http_module.h"
 #include "http_msg_request.h"
 
 using namespace HttpCommon;
@@ -87,7 +88,11 @@ void HttpMsgHeadShared::analyze()
 
     // Header/trailer 298 is already transaction-scoped, so raise it from eval and log this section.
     if (source_id == SRC_CLIENT and transaction->has_pending_size_298())
+    {
         session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_SIZE_TOO_LONG);
+        if (transaction->claim_size_298_count())
+            HttpModule::increment_peg_counts(PEG_MAX_REQUEST_SIZE_EXCEEDED);
+    }
 }
 
 void HttpMsgHeadShared::create_norm_head_list()

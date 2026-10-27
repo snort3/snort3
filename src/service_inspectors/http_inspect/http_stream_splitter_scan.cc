@@ -221,10 +221,23 @@ static ReportPath classify_report_path(ScanResult cut_result)
     }
 }
 
+static bool section_exhausted(const HttpCutter* cutter, ScanResult cut_result)
+{
+    switch (cut_result)
+    {
+    case SCAN_NOT_FOUND:
+    case SCAN_NOT_FOUND_ACCELERATE:
+    case SCAN_NOT_FOUND_PARTIAL_PUBLISH:
+        return cutter->get_octets_seen() == MAX_OCTETS;
+    default:
+        return false;
+    }
+}
+
 void HttpStreamSplitter::capture_splitter_snapshot(HttpFlowData* session_data,
     const HttpCutter* cutter, ScanResult cut_result, SectionType type, const Flow* flow,
     const uint8_t* data, uint32_t cut_length, bool capture_300, bool check_299,
-    bool check_298) const
+    bool check_298, bool exhausted) const
 {
     uint32_t section_size = cutter->get_octets_seen();
     assert(section_size <= MAX_OCTETS);
@@ -241,27 +254,37 @@ void HttpStreamSplitter::capture_splitter_snapshot(HttpFlowData* session_data,
 
     const ReportPath report_path = classify_report_path(cut_result);
 
-    if (capture_300 and !session_data->events[SRC_CLIENT]->is_event_suppressed(EVENT_REQUEST_LINE_NOT_VALID))
+    // call_cutter() also aborts an exhausted section, in the switch that runs after this
+    const bool terminal = cut_result == SCAN_ABORT or exhausted;
+
+    if (capture_300)
     {
-        HttpContextData::capture_splitter(SplitterSlot::SLOT_300, HttpContextData::CaptureMode::FirstWriteWins,
-            [&](HttpSplitterSnapshot& snap)
+        // a non-terminal result goes on to a section that counts it
+        if (terminal)
+            HttpModule::increment_peg_counts(PEG_REQUEST_LINE_NOT_VALID);
+
+        if (!session_data->events[SRC_CLIENT]->is_event_suppressed(EVENT_REQUEST_LINE_NOT_VALID))
         {
-            const uint32_t fragment_len = current_fragment_len(cut_length);
+            HttpContextData::capture_splitter(SplitterSlot::SLOT_300, HttpContextData::CaptureMode::FirstWriteWins,
+                [&](HttpSplitterSnapshot& snap)
+            {
+                const uint32_t fragment_len = current_fragment_len(cut_length);
 
-            snap.reason_code_detail_300 = cutter->get_request_line_invalid_reason();
-            snap.request_size = compute_request_size(session_data, type, report_section_size);
-            snap.request_line_length = compute_request_line_length(cutter, session_data,
-                report_section_size, data, cut_length);
-            snap.version_id = get_httpx_version_id(session_data->for_httpx, flow);
+                snap.reason_code_detail_300 = cutter->get_request_line_invalid_reason();
+                snap.request_size = compute_request_size(session_data, type, report_section_size);
+                snap.request_line_length = compute_request_line_length(cutter, session_data,
+                    report_section_size, data, cut_length);
+                snap.version_id = get_httpx_version_id(session_data->for_httpx, flow);
 
-            const uint32_t raw_len = std::min(fragment_len,
-                static_cast<uint32_t>(MAX_REQUEST_LINE_LOG_LEN));
-            if (raw_len > 0)
-                snap.set_raw_request_line(data, static_cast<uint16_t>(raw_len));
-        });
+                const uint32_t raw_len = std::min(fragment_len,
+                    static_cast<uint32_t>(MAX_REQUEST_LINE_LOG_LEN));
+                if (raw_len > 0)
+                    snap.set_raw_request_line(data, static_cast<uint16_t>(raw_len));
+            });
 
-        if (report_path == ReportPath::WireSnapshot)
-            session_data->events[SRC_CLIENT]->create_event_if_new(EVENT_REQUEST_LINE_NOT_VALID);
+            if (report_path == ReportPath::WireSnapshot)
+                session_data->events[SRC_CLIENT]->create_event_if_new(EVENT_REQUEST_LINE_NOT_VALID);
+        }
     }
 
     const uint32_t length_upper_bound = session_data->for_httpx ? cut_length : report_section_size;
@@ -274,6 +297,9 @@ void HttpStreamSplitter::capture_splitter_snapshot(HttpFlowData* session_data,
         {
             if (report_path == ReportPath::WireSnapshot)
             {
+                if (terminal)
+                    HttpModule::increment_peg_counts(PEG_MAX_REQUEST_LINE_EXCEEDED);
+
                 if (session_data->events[SRC_CLIENT]->create_event_if_new(
                     HttpEnums::EVENT_REQUEST_LINE_LENGTH_TOO_LONG))
                 {
@@ -305,6 +331,19 @@ void HttpStreamSplitter::capture_splitter_snapshot(HttpFlowData* session_data,
         {
             if (report_path == ReportPath::WireSnapshot)
             {
+                if (terminal)
+                {
+                    // on the request line transaction[SRC_CLIENT] is the previous request's
+                    if (type == SEC_REQUEST)
+                        HttpModule::increment_peg_counts(PEG_MAX_REQUEST_SIZE_EXCEEDED);
+                    else
+                    {
+                        HttpTransaction* const txn = session_data->transaction[SRC_CLIENT];
+                        if (txn == nullptr or txn->claim_size_298_count())
+                            HttpModule::increment_peg_counts(PEG_MAX_REQUEST_SIZE_EXCEEDED);
+                    }
+                }
+
                 if (session_data->events[SRC_CLIENT]->create_event_if_new(
                     HttpEnums::EVENT_REQUEST_SIZE_TOO_LONG))
                 {
@@ -353,6 +392,8 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
         session_data->stretch_section_to_packet[source_id],
         session_data->hx_body_state[source_id]);
 
+    const bool exhausted = section_exhausted(cutter, cut_result);
+
     if (source_id == SRC_CLIENT)
     {
         const bool capture_300 = cutter->queued_request_line_not_valid();
@@ -362,7 +403,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
 
         if (capture_300 or check_299 or check_298)
             capture_splitter_snapshot(session_data, cutter, cut_result, type, flow, data,
-                cut_length, capture_300, check_299, check_298);
+                cut_length, capture_300, check_299, check_298, exhausted);
     }
 
     switch (cut_result)
@@ -370,7 +411,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
     case SCAN_NOT_FOUND:
     case SCAN_NOT_FOUND_ACCELERATE:
     case SCAN_NOT_FOUND_PARTIAL_PUBLISH:
-        if (cutter->get_octets_seen() == MAX_OCTETS)
+        if (exhausted)
         {
             *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
             auto event = HttpEnums::EVENT_HEADERS_TOO_LONG;

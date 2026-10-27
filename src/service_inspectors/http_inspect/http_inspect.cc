@@ -40,6 +40,7 @@
 #include "http_enum.h"
 #include "http_field_buffer.h"
 #include "http_js_norm.h"
+#include "http_module.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
 #include "http_msg_body_cl.h"
@@ -403,6 +404,8 @@ void HttpInspect::signal_request_line_invalid(snort::Flow* flow, HttpCommon::Sou
     HttpEnums::RequestLineInvalidReasonCode reason) const
 {
     const HttpFlowData* const session_data = http_get_flow_data(flow);
+
+    HttpModule::increment_peg_counts(PEG_REQUEST_LINE_NOT_VALID);
 
     if (session_data)
     {

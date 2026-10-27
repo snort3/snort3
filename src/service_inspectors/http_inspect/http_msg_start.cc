@@ -26,6 +26,7 @@
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 
 #include "http_enum.h"
+#include "http_module.h"
 
 using namespace HttpEnums;
 
@@ -47,7 +48,10 @@ void HttpMsgStart::analyze()
 void HttpMsgStart::create_event_request_line_not_valid(RequestLineInvalidReasonCode reason)
 {
     if (request_line_invalid_reason == RequestLineInvalidReasonCode::NONE)
+    {
         request_line_invalid_reason = reason;
+        HttpModule::increment_peg_counts(PEG_REQUEST_LINE_NOT_VALID);
+    }
 
     session_data->events[source_id]->create_event_if_new(EVENT_REQUEST_LINE_NOT_VALID);
 }
