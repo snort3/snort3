@@ -403,6 +403,9 @@ struct InspectorVector
             {
                 const unsigned slot = 1 + get_instance_id();
 
+                // set the default policy, the removed map's policies are freed after the swap
+                set_network_policy(SnortConfig::get_conf()->policy_map->get_network_policy(0));
+
                 for ( auto it = pending_tterm->begin(); it != pending_tterm->end(); )
                 {
                     if ( it->pin->get_api() == incoming_api )

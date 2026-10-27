@@ -169,6 +169,7 @@ struct ReloadCounts
     unsigned tear_down = 0;
     unsigned tinit = 0;
     unsigned tterm = 0;
+    NetworkPolicy* tterm_np = nullptr;
     unsigned survivor_handler_registrations = 0;
     bool last_shutdown = false;
     std::shared_ptr<bool> inspector_alive = std::make_shared<bool>(false);
@@ -245,7 +246,10 @@ public:
     { ++counts->tinit; }
 
     void tterm() override
-    { ++counts->tterm; }
+    {
+        ++counts->tterm;
+        counts->tterm_np = get_network_policy();
+    }
 
     void register_reload_survivor_handlers(ReloadSurvivorSubscriptions&) override
     { ++counts->survivor_handler_registrations; }
@@ -1018,6 +1022,64 @@ TEST(inspector_manager_reload_tests, thread_init_calls_same_api_pending_tterm_bu
 
     InspectorManager::thread_term();
     restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, thread_init_flushes_pending_tterm_under_default_policy)
+{
+    ReloadCounts old_counts;
+    ReloadCounts new_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts, 10, 11, "old_reload_test");
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get(), 10, 11, "old_reload_test");
+    CHECK(old_inspector);
+
+    set_thread_refs(old_inspector, 1);
+    auto reload_sc = start_removal_reload();
+    InspectorManager::thread_term_removed();
+    CHECK_EQUAL(0, old_counts.tterm);
+
+    reload_plugin->instantiate(reload_sc.get(), new_counts, 10, 11, "new_reload_test");
+    InspectorManager::prepare_map();
+
+    NetworkPolicy* default_np = reload_sc->policy_map->get_network_policy(0);
+    NetworkPolicy* stale_np = reload_sc->policy_map->get_user_network(20);
+    CHECK(default_np);
+    CHECK(stale_np);
+    CHECK(default_np != stale_np);
+    set_network_policy(stale_np);
+
+    InspectorManager::thread_init();
+
+    CHECK_EQUAL(1, old_counts.tterm);
+    CHECK_EQUAL(1, new_counts.tinit);
+    POINTERS_EQUAL(default_np, old_counts.tterm_np);
+
+    set_thread_refs(old_inspector, 1);
+    InspectorManager::thread_drain_pending_tterm();
+    CHECK_EQUAL(0, get_thread_refs(old_inspector));
+
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests, thread_init_without_pending_tterm_keeps_current_policy)
+{
+    ReloadCounts counts;
+
+    reload_plugin->instantiate(sc.get(), counts, 10, 11);
+    InspectorManager::prepare_map();
+
+    NetworkPolicy* other_np = sc->policy_map->get_user_network(20);
+    CHECK(other_np);
+    set_network_policy(other_np);
+
+    InspectorManager::thread_init();
+
+    CHECK_EQUAL(1, counts.tinit);
+    POINTERS_EQUAL(other_np, get_network_policy());
+
+    InspectorManager::thread_term();
 }
 
 TEST(inspector_manager_reload_tests, same_name_policy_replacement_acknowledges_called_pending_tterm)
