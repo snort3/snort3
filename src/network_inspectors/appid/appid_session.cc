@@ -1506,7 +1506,7 @@ void AppIdSession::check_shadow_traffic_bits(AppId id, uint32_t& shadow_bits, Ap
 {
    if (id > APP_ID_NONE)
    {
-        uint32_t attributeBits = api.asd->get_odp_ctxt().get_app_info_mgr().getAttributeBits(id);
+        AppInfoAttrsType attributeBits = api.asd->get_odp_ctxt().get_app_info_mgr().getAttributeBits(id);
         if (attributeBits & ATTR_APPENCRYPTEDDNS)
         {
             shadow_bits |= ShadowTraffic_Type_Encrypted_DNS;

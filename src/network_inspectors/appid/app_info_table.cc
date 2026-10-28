@@ -25,6 +25,8 @@
 
 #include "app_info_table.h"
 
+#include <cctype>
+#include <charconv>
 #include <climits>
 #include <fstream>
 #include <string>
@@ -56,13 +58,28 @@ static const char* APP_CONFIG_FILE = "appid.conf";
 static const char* USR_CONFIG_FILE = "userappid.conf";
 const char* APP_MAPPING_FILE = "appMapping.data";
 
-AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, uint32_t attr)
+// Rejects empty, non-numeric, trailing garbage and out-of-range values instead of narrowing
+template<typename T>
+static bool parse_id(const char* token, T& value)
+{
+    const char* end = token + strlen(token);
+    while (token < end and isspace((unsigned char)*token))
+        ++token;
+    while (end > token and isspace((unsigned char)end[-1]))
+        --end;
+
+    const auto [ptr, ec] = std::from_chars(token, end, value);
+    return ec == std::errc() and ptr != token and ptr == end;
+}
+
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppInfoAttrsType attr)
     : appId(id), serviceId(id), clientId(id), payloadId(id), app_name(name), attributes(attr)
 {
     app_name_key = AppInfoManager::strdup_to_lower(name);
 }
 
-AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid, uint32_t attr) :
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid,
+    AppInfoAttrsType attr) :
     appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name), attributes(attr)
 {
     app_name_key = AppInfoManager::strdup_to_lower(name);
@@ -116,11 +133,11 @@ bool AppInfoManager::add_entry_to_app_info_name_table(const char* app_name,
 
 AppId AppInfoManager::get_static_app_info_entry(AppId appid)
 {
-    if (appid > 0 && appid < SF_APPID_BUILDIN_MAX)
+    if (appid > 0 && appid < SF_APPID_BUILTIN_MAX)
         return appid;
     if ((appid >= SF_APPID_CSD_MIN) &&
-        appid < (SF_APPID_CSD_MIN + (SF_APPID_MAX - SF_APPID_BUILDIN_MAX)))
-        return (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN);
+        appid < (SF_APPID_CSD_MIN + (SF_APPID_MAX - SF_APPID_BUILTIN_MAX)))
+        return (SF_APPID_BUILTIN_MAX + appid - SF_APPID_CSD_MIN);
     return 0;
 }
 
@@ -859,10 +876,12 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
     {
         char buf[MAX_TABLE_LINE_LEN];
         const char* CONF_SEPARATORS = "\t\n\r";
+        std::vector<std::pair<AppId, const char*>> peg_apps;
         while (fgets(buf, sizeof(buf), tableFile))
         {
-            AppId app_id;
-            uint32_t client_id, service_id, payload_id, attributes = 0;
+            AppId app_id = 0;
+            uint32_t client_id = 0, service_id = 0, payload_id = 0;
+            AppInfoAttrsType attributes = ATTR_EMPTY;
             char* app_name;
             char* context;
 
@@ -872,7 +891,11 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Could not read id for AppId\n");
                 continue;
             }
-            app_id = strtol(token, nullptr, 10);
+            if (!parse_id(token, app_id))
+            {
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid AppId '%s'\n", token);
+                continue;
+            }
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -889,7 +912,13 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            service_id = strtoul(token, nullptr, 10);
+            if (!parse_id(token, service_id))
+            {
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid service id '%s' for AppId %d\n",
+                    token, app_id);
+                snort_free(app_name);
+                continue;
+            }
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -898,7 +927,13 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            client_id = strtoul(token, nullptr, 10);
+            if (!parse_id(token, client_id))
+            {
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid client id '%s' for AppId %d\n",
+                    token, app_id);
+                snort_free(app_name);
+                continue;
+            }
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -907,7 +942,13 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            payload_id = strtoul(token, nullptr, 10);
+            if (!parse_id(token, payload_id))
+            {
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid payload id '%s' for AppId %d\n",
+                    token, app_id);
+                snort_free(app_name);
+                continue;
+            }
 
             /* snort service key, if it exists */
             const char* snort_service_key = strtok_r(nullptr, CONF_SEPARATORS, &context); 
@@ -949,28 +990,63 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
                 client_id, payload_id, attributes);
 
+            // Validate every id before touching any table so a rejected entry needs no rollback
+            auto map_id = [](const char* kind, uint32_t id, AppId& mapped)
+            {
+                mapped = get_static_app_info_entry(id);
+                if (mapped or id == 0)
+                    return true;
+
+                const bool is_csd = id >= SF_APPID_CSD_MIN;
+                const uint32_t lo = is_csd ? SF_APPID_CSD_MIN : 1;
+                const uint32_t hi = is_csd ?
+                    SF_APPID_CSD_MIN + (SF_APPID_MAX - SF_APPID_BUILTIN_MAX) : SF_APPID_BUILTIN_MAX;
+                APPID_LOG(nullptr, TRACE_WARNING_LEVEL,
+                    "%s %u is outside the allowed range %u-%u\n", kind, id, lo, hi - 1);
+                return false;
+            };
+
+            AppId mapped_app = 0, mapped_svc = 0, mapped_cli = 0, mapped_pld = 0;
+            bool valid = map_id("AppId", entry->appId, mapped_app) and
+                map_id("Service AppId", entry->serviceId, mapped_svc) and
+                map_id("Client AppId", entry->clientId, mapped_cli) and
+                map_id("Payload AppId", entry->payloadId, mapped_pld);
+
+            // app_info_table owns the entries, so every row needs its own unique slot there
+            if (valid and !mapped_app)
+            {
+                APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "AppId 0 is not allowed, \"%s\" "
+                    "is ignored\n", entry->app_name);
+                valid = false;
+            }
+            else if (valid and app_info_table.count(mapped_app))
+            {
+                APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "AppId %d is a duplicate entry, \"%s\" "
+                    "is ignored\n", entry->appId, entry->app_name);
+                valid = false;
+            }
+
+            if (!valid or !add_entry_to_app_info_name_table(entry->app_name_key, entry))
+            {
+                delete entry;
+                continue;
+            }
+
             //Ignore "~" service key, which is used to indicate an empty service key
             if (snort_service_key and (strcmp(snort_service_key, "~") != 0))
                 entry->snort_protocol_id = add_appid_protocol_reference(snort_service_key, sc);
 
-            if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
-                delete entry;
-            else
-            {
-                if ((app_id = get_static_app_info_entry(entry->appId)))
-                {
-                    app_info_table[app_id] = entry;
-                    AppIdPegCounts::add_app_peg_info(entry->app_name_key, app_id);
-                }
-                if ((app_id = get_static_app_info_entry(entry->serviceId)))
-                    app_info_service_table[app_id] = entry;
-                if ((app_id = get_static_app_info_entry(entry->clientId)))
-                    app_info_client_table[app_id] = entry;
-                if ((app_id = get_static_app_info_entry(entry->payloadId)))
-                    app_info_payload_table[app_id] = entry;
-            }
+            app_info_table[mapped_app] = entry;
+            peg_apps.emplace_back(mapped_app, entry->app_name_key);
+            if (mapped_svc)
+                app_info_service_table[mapped_svc] = entry;
+            if (mapped_cli)
+                app_info_client_table[mapped_cli] = entry;
+            if (mapped_pld)
+                app_info_payload_table[mapped_pld] = entry;
         }
         fclose(tableFile);
+        AppIdPegCounts::add_app_peg_info(peg_apps);
 
         snprintf(filepath, sizeof(filepath), "%s/odp/%s", config.app_detector_dir,
             APP_CONFIG_FILE);
@@ -984,7 +1060,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
     }
 }
 
-uint32_t AppInfoManager::getAttributeBits(AppId id) 
+AppInfoAttrsType AppInfoManager::getAttributeBits(AppId id) 
 {  
     const AppInfoTableEntry* entry = get_app_info_entry(id);
     if (! entry) { 

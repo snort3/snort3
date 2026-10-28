@@ -105,12 +105,9 @@ namespace
 {
 constexpr AppId SEED_COUNT = 1000;
 constexpr unsigned READER_THREADS = 4;
-// appid_dynamic_sum[] has SF_APPID_MAX+1 fixed slots that collect_stats()/sum_stats index
-// by an app_id's dynamic index (== map size at insertion). Real AppIds are always
-// < SF_APPID_MAX, so keep the synthetic writer ids within that bound; otherwise the
-// map grows past the array and collect_stats() reads out of bounds (a SIGSEGV in
-// all_zeros() observed on FreeBSD -O2).
-constexpr AppId APPID_ID_CAP = 39000;   // < SF_APPID_MAX (40000)
+// add_app_peg_info() stops registering apps at SF_APPID_MAX; keep the synthetic
+// writer ids within that bound so every insertion is a real one.
+constexpr AppId APPID_ID_CAP = SF_APPID_MAX - 1000;
 // Because the id space is bounded, the writer makes a FINITE number of real
 // insertions. Once they are exhausted it would only re-emplace existing keys,
 // which cannot rehash and so cannot corrupt a reader -- i.e. the run is only
@@ -348,12 +345,8 @@ TEST(appid_peg_counts_race, concurrent_collect_vs_writers)
     CHECK_TEXT(overlap >= MIN_OVERLAP_WRITES, overlap_msg.c_str());
 }
 
-// appid_dynamic_sum[] is a fixed AppIdDynamicPeg[SF_APPID_MAX + 1] indexed by the
-// dynamic index add_app_peg_info() assigns (the map size at insertion), with the
-// last slot reserved for the unknown-app aggregate. Nothing bounds how many apps a
-// detector package may register, so before add_app_peg_info() enforced the limit a
-// large enough ODP handed out indices past the end of that array and sum_stats()
-// and collect_stats() read and wrote out of bounds (ASAN: global-buffer-overflow).
+// Registration past SF_APPID_MAX must be refused so those apps are counted as unknown
+// rather than given a dynamic index.
 TEST(appid_peg_counts_race, registration_bounded_by_dynamic_sum_capacity)
 {
     // Previous cases leave totals in appid_dynamic_sum; start from a known state so
@@ -425,6 +418,38 @@ TEST(appid_peg_counts_race, init_pegs_snapshots_every_registered_app)
     CHECK_TEXT(app_lines == APP_COUNT, count_msg.c_str());
     CHECK_TEXT(unknown_lines == 1, "a detection for an unregistered app was not "
         "counted in the unknown-app bucket");
+}
+
+// A detector reload replaces the shared map with a smaller one while a packet
+// thread still holds the old map; its sum_stats() must stay within appid_dynamic_sum.
+TEST(appid_peg_counts_race, sum_stats_with_stale_map_after_reload)
+{
+    AppIdPegCounts::cleanup_dynamic_sum();
+    AppIdPegCounts::init_peg_info();
+
+    constexpr AppId OLD_COUNT = 2000;
+    for (AppId id = 0; id < OLD_COUNT; ++id)
+        AppIdPegCounts::add_app_peg_info("old_" + std::to_string(id), id);
+
+    AppIdPegCounts::init_pegs();
+    AppIdPegCounts::inc_service_count(OLD_COUNT - 1);
+
+    AppIdPegCounts::init_peg_info();
+    AppIdPegCounts::add_app_peg_info("new_0", 0);
+
+    AppIdPegCounts::sum_stats();
+    AppIdPegCounts::cleanup_pegs();
+
+    AppIdPegCounts::init_pegs();
+    AppIdPegCounts::inc_service_count(0);
+    AppIdPegCounts::sum_stats();
+
+    const auto snapshot = collect_appid_stats();
+
+    AppIdPegCounts::cleanup_pegs();
+    AppIdPegCounts::cleanup_peg_info();
+
+    CHECK_TEXT(has_app_row(snapshot, "new_0"), "an app registered after reload was not tracked");
 }
 
 int main(int argc, char** argv)

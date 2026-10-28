@@ -22,6 +22,8 @@
 #ifndef APP_INFO_TABLE_H
 #define APP_INFO_TABLE_H
 
+#include <cstdint>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -33,15 +35,13 @@
 #include "utils/util.h"
 
 #define APP_PRIORITY_DEFAULT 2
-#define SF_APPID_MAX            40000
-#define SF_APPID_BUILDIN_MAX    30000
+#define SF_APPID_MAX            300000
+#define SF_APPID_BUILTIN_MAX    225000
 #define SF_APPID_CSD_MIN        1000000
 #define SF_APPID_DYNAMIC_MIN    2000000
 
-#define ATTR_EMPTY 0 
-#define ATTR_APPEVASIVEVPN       (1<<0) 
-#define ATTR_APPMULTIHOPPROXY    (1<<1) 
-#define ATTR_APPENCRYPTEDDNS     (1<<2)
+static_assert(SF_APPID_BUILTIN_MAX < SF_APPID_MAX);
+static_assert(SF_APPID_MAX <= SF_APPID_CSD_MIN);
 
 class AppIdConfig;
 class ClientDetector;
@@ -64,28 +64,60 @@ enum AppInfoFlags
     APPINFO_FLAG_TP_CLIENT            = (1<<10),
     APPINFO_FLAG_DEFER_PAYLOAD        = (1<<11),
     APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK = (1<<12),
-    APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK = (1<<13)
+    APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK = (1<<13),
+    APPINFO_FLAG_END    // keep last, new flags go above in ascending bit order
 };
+
+enum AppInfoAttributes
+{
+    ATTR_EMPTY            = 0,
+    ATTR_APPEVASIVEVPN    = (1<<0),
+    ATTR_APPMULTIHOPPROXY = (1<<1),
+    ATTR_APPENCRYPTEDDNS  = (1<<2),
+    ATTR_END    // keep last, new attributes go above in ascending bit order
+};
+
+// all bits up to and including the highest flag, which is the one preceding the end marker
+constexpr uint64_t appinfo_bits_mask(uint64_t end)
+{ return end <= 1 ? 0 : ((end - 1) << 1) - 1; }
+
+constexpr uint64_t APPINFO_FLAGS_MASK = appinfo_bits_mask(APPINFO_FLAG_END);
+constexpr uint64_t APPINFO_ATTRS_MASK = appinfo_bits_mask(ATTR_END);
+
+static_assert(((APPINFO_FLAG_END - 1) & (APPINFO_FLAG_END - 2)) == 0,
+    "last AppInfoFlags value must be a single bit");
+static_assert(((ATTR_END - 1) & (ATTR_END - 2)) == 0,
+    "last AppInfoAttributes value must be a single bit");
+
+template<uint64_t max_value>
+using AppInfoMinUint = std::conditional_t<(max_value <= UINT8_MAX), uint8_t,
+    std::conditional_t<(max_value <= UINT16_MAX), uint16_t,
+    std::conditional_t<(max_value <= UINT32_MAX), uint32_t, uint64_t>>>;
+
+using AppInfoFlagsType = AppInfoMinUint<APPINFO_FLAGS_MASK>;
+using AppInfoAttrsType = AppInfoMinUint<APPINFO_ATTRS_MASK>;
+using AppInfoPriorityType = uint8_t;
 
 class AppInfoTableEntry
 {
 public:
-    AppInfoTableEntry(AppId id, char* name, uint32_t attr=0);
-    AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid, uint32_t attr=0);
+    AppInfoTableEntry(AppId id, char* name, AppInfoAttrsType attr=ATTR_EMPTY);
+    AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid,
+        AppInfoAttrsType attr=ATTR_EMPTY);
     ~AppInfoTableEntry();
 
     AppId appId;
     uint32_t serviceId;
     uint32_t clientId;
     uint32_t payloadId;
-    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
-    uint32_t flags = 0;
-    uint32_t priority = APP_PRIORITY_DEFAULT;
     ClientDetector* client_detector = nullptr;
     ServiceDetector* service_detector = nullptr;
     char* app_name = nullptr;
     char* app_name_key = nullptr;
-    uint32_t attributes = 0;
+    AppInfoFlagsType flags = 0;
+    SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
+    AppInfoPriorityType priority = APP_PRIORITY_DEFAULT;
+    AppInfoAttrsType attributes = ATTR_EMPTY;
 };
 
 typedef std::unordered_map<AppId, AppInfoTableEntry*> AppInfoTable;
@@ -130,7 +162,7 @@ public:
         return entry ? entry->flags & flags : 0;
     }
 
-    void set_app_info_priority(AppId appId, unsigned priority)
+    void set_app_info_priority(AppId appId, AppInfoPriorityType priority)
     {
         AppInfoTableEntry* entry = get_app_info_entry(appId);
         // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
@@ -151,7 +183,7 @@ public:
     static SnortProtocolId add_appid_protocol_reference(const char* protocol,
         snort::SnortConfig*);
     static void dump_appid_configurations(const std::string&);
-    uint32_t getAttributeBits(AppId id);
+    AppInfoAttrsType getAttributeBits(AppId id);
 
 private:
     void load_odp_config(OdpContext&, const char* path);

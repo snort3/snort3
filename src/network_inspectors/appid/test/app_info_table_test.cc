@@ -127,7 +127,7 @@ TEST(app_info_table, get_static_app_info_entry)
     AppId mapped_id;
 
     mapped_id = get_static_app_info_entry(appid);
-    CHECK_TRUE(mapped_id == (SF_APPID_BUILDIN_MAX + appid - SF_APPID_CSD_MIN));
+    CHECK_TRUE(mapped_id == (SF_APPID_BUILTIN_MAX + appid - SF_APPID_CSD_MIN));
 }
 
 int main(int argc, char** argv)

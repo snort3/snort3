@@ -33,6 +33,8 @@
 // Only the main thread is using a static array.
 
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "application_ids.h"
 #include "framework/counts.h"
@@ -68,6 +70,7 @@ class AppIdPegCounts
 {
 public:
     static void add_app_peg_info(std::string app_name, AppId);
+    static void add_app_peg_info(const std::vector<std::pair<AppId, const char*>>& apps);
     static void init_pegs();
     static void cleanup_pegs();
     static void init_peg_info();

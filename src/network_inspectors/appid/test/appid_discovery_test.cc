@@ -221,7 +221,7 @@ const char* AppInfoManager::get_app_name(int32_t)
     return nullptr;
 }
 
-uint32_t AppInfoManager::getAttributeBits(AppId)
+AppInfoAttrsType AppInfoManager::getAttributeBits(AppId)
 {
     return 0;
 }
