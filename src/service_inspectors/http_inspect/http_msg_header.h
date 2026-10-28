@@ -61,6 +61,9 @@ public:
     std::string get_host_header_field() const;
 
 private:
+    void check_allowed_content_type();
+    bool content_type_allowed(const Field& content_type, bool& named_type) const;
+    bool body_indicated();
     void prepare_body();
     void setup_mime();
     void setup_file_processing();

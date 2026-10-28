@@ -42,4 +42,8 @@ void append_escaped(std::string& out, const uint8_t* data, int32_t len, int32_t 
 // Appends a header line, replacing the value of a credential-bearing header with a placeholder.
 void append_header_detail(std::string& out, const uint8_t* data, int32_t len, int32_t max_append);
 
+// Appends the trimmed header value, cut off at an obs-fold.
+void append_content_type_detail(std::string& out, const uint8_t* value, int32_t len,
+    int32_t max_len);
+
 #endif

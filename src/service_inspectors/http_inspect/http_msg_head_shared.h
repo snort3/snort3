@@ -76,9 +76,22 @@ protected:
     // Do a case insensitive search for "boundary=" in a Field
     static bool boundary_present(const Field& field);
 
+    // A '*' matches one or more token characters, so never a '/', ',', space, CR or LF
+    static bool content_type_matches(const std::string& pattern, const uint8_t* value,
+        int32_t len);
+
+    // These take the raw value; normalizing strips the quotes and token characters they check
+
+    // Length of the media type, with offset set to where it begins
+    static int32_t content_type_media_type(const uint8_t* value, int32_t len, int32_t& offset);
+
+    // True when this is not one media type: a comma outside a quoted string, or open quoting
+    static bool content_type_is_list(const uint8_t* value, int32_t len);
+
     // All of these are indexed by the relative position of the header field in the message
 
     Field* header_line = nullptr;
+    Field* header_value = nullptr;
     HttpEnums::HeaderId* header_name_id = nullptr;
     int32_t num_headers = HttpCommon::STAT_NOT_COMPUTE;
     int32_t max_header_line = HttpCommon::STAT_NOT_COMPUTE;
@@ -112,7 +125,6 @@ private:
     Field classic_norm_header;   // URI normalization applied
     Field classic_norm_cookie;   // URI normalization applied to concatenated cookie values
     Field* header_name = nullptr;
-    Field* header_value = nullptr;
 
     NormalizedHeader* get_header_node(HttpEnums::HeaderId k) const;
     NormalizedHeader* norm_heads = nullptr;

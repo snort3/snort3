@@ -91,9 +91,13 @@ void DetectionEngine::set_data(unsigned id, IpsContextData* data)
 }
 }
 
+static Field test_content_type;
+
 // cppcheck-suppress functionStatic
-const Field& HttpMsgSection::get_classic_buffer(unsigned, uint64_t, uint64_t)
+const Field& HttpMsgSection::get_classic_buffer(unsigned buffer, uint64_t sub_id, uint64_t)
 {
+    if (buffer == HTTP_BUFFER_RAW_HEADER and sub_id == HEAD_CONTENT_TYPE)
+        return test_content_type;
     return Field::FIELD_NULL;
 }
 
@@ -340,6 +344,165 @@ TEST(http_field_buffer_wire_domain_test, context_clear_resets_cached_wire_slots)
     CHECK_EQUAL(STAT_NOT_COMPUTE, detail_slot->field.length());
     CHECK(detail_slot->text.empty());
     CHECK_EQUAL(0, detail_slot->num);
+}
+
+// ---------------------------------------------------------------------------
+// append_content_type_detail tests
+// ---------------------------------------------------------------------------
+
+TEST_GROUP(append_content_type_detail_test) {};
+
+static std::string content_type_detail(const char* value, int32_t max_len = 256)
+{
+    std::string out = "Content Type: ";
+    append_content_type_detail(out, reinterpret_cast<const uint8_t*>(value),
+        static_cast<int32_t>(strlen(value)), max_len);
+    return out;
+}
+
+TEST(append_content_type_detail_test, a_bare_media_type_is_reported_as_sent)
+{
+    CHECK_EQUAL(std::string("Content Type: application/xml"),
+        content_type_detail("application/xml"));
+}
+
+TEST(append_content_type_detail_test, parameters_are_reported_with_the_media_type)
+{
+    CHECK_EQUAL(std::string("Content Type: multipart/form-data; boundary=abc123"),
+        content_type_detail("multipart/form-data; boundary=abc123"));
+}
+
+TEST(append_content_type_detail_test, an_empty_media_type_still_reports_the_header)
+{
+    CHECK_EQUAL(std::string("Content Type: ;charset=utf-8"), content_type_detail(";charset=utf-8"));
+}
+
+// The placeholder is decided after the fold is cut off, so an empty pre-fold value still gets it
+TEST(append_content_type_detail_test, an_empty_media_type_before_a_fold_reports_no_value)
+{
+    CHECK_EQUAL(std::string("Content Type: <no value><redacted>"),
+        content_type_detail(" \r\n\tfoo/bar"));
+}
+
+TEST(append_content_type_detail_test, an_attacker_sized_boundary_is_capped)
+{
+    const std::string value = "multipart/form-data; boundary=" + std::string(400, 'a');
+    const std::string out = content_type_detail(value.c_str());
+    CHECK_EQUAL(256, static_cast<int>(out.length()));
+    CHECK(out.compare(0, 33, "Content Type: multipart/form-data") == 0);
+}
+
+TEST(append_content_type_detail_test, a_negative_length_reports_no_value)
+{
+    std::string out = "Content Type: ";
+    append_content_type_detail(out, reinterpret_cast<const uint8_t*>("x"), STAT_NO_SOURCE, 256);
+    CHECK_EQUAL(std::string("Content Type: <no value>"), out);
+}
+
+TEST(append_content_type_detail_test, non_printable_bytes_are_escaped)
+{
+    CHECK_EQUAL(std::string("Content Type: text/plain\\x01"),
+        content_type_detail("text/plain\x01"));
+}
+
+TEST(append_content_type_detail_test, the_value_is_trimmed)
+{
+    CHECK_EQUAL(std::string("Content Type: text/plain; x=1"),
+        content_type_detail(" text/plain; x=1 "));
+}
+
+TEST(append_content_type_detail_test, the_value_keeps_case_and_quoting)
+{
+    CHECK_EQUAL(std::string("Content Type: multipart/form-data; boundary=\"AaB03x\""),
+        content_type_detail("multipart/form-data; boundary=\"AaB03x\""));
+}
+
+TEST(append_content_type_detail_test, a_folded_value_does_not_report_the_continuation)
+{
+    CHECK_EQUAL(std::string("Content Type: application/xml; x=1<redacted>"),
+        content_type_detail("application/xml; x=1\r\n\tCookie: session=secret123"));
+}
+
+TEST(append_content_type_detail_test, a_folded_value_is_redacted_without_parameters_too)
+{
+    CHECK_EQUAL(std::string("Content Type: application/xml<redacted>"),
+        content_type_detail("application/xml\r\n\tCookie: session=secret123"));
+}
+
+TEST(append_content_type_detail_test, a_bare_lf_fold_is_also_redacted)
+{
+    CHECK_EQUAL(std::string("Content Type: application/xml<redacted>"),
+        content_type_detail("application/xml\n\tCookie: session=secret123"));
+}
+
+TEST(append_content_type_detail_test, a_folded_value_respects_the_cap)
+{
+    const std::string value = "multipart/form-data; boundary=" + std::string(400, 'a') +
+        "\r\n\tCookie: session=secret123";
+    const std::string out = content_type_detail(value.c_str());
+    CHECK_EQUAL(256, static_cast<int>(out.length()));
+    CHECK(out.find("secret123") == std::string::npos);
+}
+
+// ---------------------------------------------------------------------------
+// detail_119_306 materializer tests
+// ---------------------------------------------------------------------------
+
+TEST_GROUP(detail_119_306_test)
+{
+    void setup() override
+    {
+        HttpContextData::ips_id = 1;
+    }
+
+    void teardown() override
+    {
+        clear_test_context_data();
+        HttpContextData::ips_id = 0;
+        test_content_type.reset();
+    }
+};
+
+static std::string detail_119_306(const char* raw_value)
+{
+    test_content_type.reset();
+    if (raw_value)
+        test_content_type.set(static_cast<int32_t>(strlen(raw_value)),
+            reinterpret_cast<const uint8_t*>(raw_value));
+
+    char section_storage;
+    auto* section = reinterpret_cast<HttpMsgSection*>(&section_storage);
+    return field_to_string(get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_306), section));
+}
+
+TEST(detail_119_306_test, the_field_value_is_reported)
+{
+    CHECK_EQUAL(std::string("Content Type: multipart/form-data; boundary=AaB03x"),
+        detail_119_306("multipart/form-data; boundary=AaB03x"));
+}
+
+TEST(detail_119_306_test, an_absent_header_reports_no_value)
+{
+    CHECK_EQUAL(std::string("Content Type: <no value>"), detail_119_306(nullptr));
+}
+
+TEST(detail_119_306_test, an_empty_media_type_still_reports_the_header)
+{
+    CHECK_EQUAL(std::string("Content Type: ;charset=utf-8"), detail_119_306(";charset=utf-8"));
+}
+
+TEST(detail_119_306_test, a_folded_value_does_not_report_the_continuation)
+{
+    const std::string out = detail_119_306("application/xml; x=1\r\n\tCookie: session=secret123");
+    CHECK(out.find("secret123") == std::string::npos);
+    CHECK_EQUAL(std::string("Content Type: application/xml; x=1<redacted>"), out);
+}
+
+TEST(detail_119_306_test, a_folded_value_is_redacted_without_parameters_too)
+{
+    const std::string out = detail_119_306("application/xml\r\n\tCookie: session=secret123");
+    CHECK(out.find("secret123") == std::string::npos);
+    CHECK_EQUAL(std::string("Content Type: application/xml<redacted>"), out);
 }
 
 // ---------------------------------------------------------------------------

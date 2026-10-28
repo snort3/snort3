@@ -370,6 +370,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_HEADER_INVALID_CL_OR_TE,    "invalid Content-Length or Transfer-Encoding header" },
     { EVENT_UNSAFE_CHARACTERS_IN_HEADER, "unsafe character present in HTTP header" },
     { EVENT_MALFORMED_HEADER,           "malformed HTTP header present" },
+    { EVENT_CONTENT_TYPE_NOT_ALLOWED,   "Content-Type not allowed" },
     { 0, nullptr }
 };
 
@@ -428,6 +429,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "max_request_line_exceeded", "total number of requests exceeding the configured maximum request line length" },
     { CountType::SUM, "disallowed_method", "total number of requests using a disallowed HTTP method" },
     { CountType::SUM, "request_line_not_valid", "total number of requests with an invalid request line format" },
+    { CountType::SUM, "content_type_not_allowed", "total number of requests with a disallowed Content-Type" },
     { CountType::END, nullptr, nullptr }
 };
 

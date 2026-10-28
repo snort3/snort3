@@ -23,6 +23,7 @@
 
 #include "http_msg_header.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <memory>
@@ -264,8 +265,66 @@ std::string HttpMsgHeader::get_host_header_field() const
     return "";
 }
 
+bool HttpMsgHeader::body_indicated()
+{
+    if (session_data->for_httpx)
+        return session_data->hx_body_state[source_id] != HX_BODY_NO_BODY;
+
+    if (get_header_count(HEAD_TRANSFER_ENCODING) > 0)
+        return true;
+
+    const Field& content_length = get_header_value_norm(HEAD_CONTENT_LENGTH);
+    return content_length.length() > 0 and norm_decimal_integer(content_length) > 0;
+}
+
+void HttpMsgHeader::check_allowed_content_type()
+{
+    // A partial header block omits lines not yet seen in full, so wait for the complete block
+    if (session_data->partial_flush[source_id])
+        return;
+
+    // Line by line, since a repeat joined by commas would look like a list
+    bool allowed = true;
+    bool named_type = false;
+    for (int32_t k = 0; allowed and k < num_headers; k++)
+    {
+        if (header_name_id[k] == HEAD_CONTENT_TYPE)
+            allowed = content_type_allowed(header_value[k], named_type);
+    }
+
+    // RFC 9110 8.3 only asks for a Content-Type on a message that carries content.
+    if (allowed and (named_type or !body_indicated()))
+        return;
+
+    HttpModule::increment_peg_counts(PEG_CONTENT_TYPE_NOT_ALLOWED);
+    create_event(EVENT_CONTENT_TYPE_NOT_ALLOWED);
+}
+
+bool HttpMsgHeader::content_type_allowed(const Field& content_type, bool& named_type) const
+{
+    const uint8_t* const value = content_type.start();
+    const int32_t len = content_type.length();
+
+    if (HttpMsgHeadShared::content_type_is_list(value, len))
+        return false;
+
+    int32_t offset;
+    const int32_t media_len = HttpMsgHeadShared::content_type_media_type(value, len, offset);
+    if (media_len <= 0)
+        return true;
+
+    named_type = true;
+    const uint8_t* const media_type = value + offset;
+    return std::any_of(params->allowed_content_type.cbegin(), params->allowed_content_type.cend(),
+        [media_type, media_len](const std::string& pattern)
+        { return HttpMsgHeadShared::content_type_matches(pattern, media_type, media_len); });
+}
+
 void HttpMsgHeader::gen_events()
 {
+    if (source_id == SRC_CLIENT and !params->allowed_content_type.empty())
+        check_allowed_content_type();
+
     auto raise_cl_or_te = [this] (Detail301ReasonCode code)
     {
         constexpr auto slot_index = get_tmp_buffer_index<DETAIL_119_301>();

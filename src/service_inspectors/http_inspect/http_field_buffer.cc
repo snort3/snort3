@@ -151,6 +151,31 @@ void append_header_detail(std::string& out, const uint8_t* data, int32_t len, in
     out.append(REDACTED);
 }
 
+void append_content_type_detail(std::string& out, const uint8_t* value, int32_t len,
+    int32_t max_len)
+{
+    // Bytes past an obs-fold belong to another header and may be a credential, so cut them off
+    int32_t end = 0;
+    while (end < len and !is_cr_lf[value[end]])
+        end++;
+    const int32_t redacted_len = (end < len) ? static_cast<int32_t>(sizeof(REDACTED)) - 1 : 0;
+
+    int32_t start = 0;
+    while (start < end and is_sp_tab[value[start]])
+        start++;
+    while (end > start and is_sp_tab[value[end-1]])
+        end--;
+
+    if (start == end)
+        out.append("<no value>");
+    else
+    {
+        const int32_t budget = max_len - static_cast<int32_t>(out.length()) - redacted_len;
+        append_escaped(out, value + start, end - start, std::max(budget, 0));
+    }
+    out.append(REDACTED, redacted_len);
+}
+
 static const char* get_http_event_reason_msg(RequestLineInvalidReasonCode event)
 {
     switch (event)
@@ -712,6 +737,26 @@ static void compute_detail_119_305(const HttpBufferSource&, HttpTmpBufferCache& 
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
 
+static void compute_detail_119_306(const HttpBufferSource& src, HttpTmpBufferCache&,
+    HttpTmpBuffer& slot, const HttpBufferInfo&)
+{
+    // EVENT_CONTENT_TYPE_NOT_ALLOWED
+    // Content Type: XXX
+    static constexpr int32_t max_content_type_log_len = 256;
+
+    assert(src.section);
+    // Raw value: the normalized one drops quotes and lowercases the case-sensitive boundary
+    const Field& value = src.section->get_classic_buffer(HTTP_BUFFER_RAW_HEADER,
+        HEAD_CONTENT_TYPE, 0);
+
+    slot.text = "Content Type: ";
+    append_content_type_detail(slot.text, value.start(), value.length(),
+        max_content_type_log_len);
+
+    slot.field.set(static_cast<int32_t>(slot.text.length()),
+        reinterpret_cast<const uint8_t*>(slot.text.c_str()));
+}
+
 // ---------------------------------------------------------------------------
 // Descriptor table and shared materializer
 // ---------------------------------------------------------------------------
@@ -745,6 +790,7 @@ static const TmpBufferDescriptor tmp_buffer_desc[HTTP_TMP_BUFFER_CNT] =
     { compute_detail_119_301,       false }, // DETAIL_119_301
     { compute_detail_119_304,       false }, // DETAIL_119_304
     { compute_detail_119_305,       false }, // DETAIL_119_305
+    { compute_detail_119_306,       false }, // DETAIL_119_306
 };
 
 static const Field& materialize(const HttpBufferSource& src, const HttpBufferInfo& buf)

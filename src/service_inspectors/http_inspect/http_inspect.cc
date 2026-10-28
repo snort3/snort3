@@ -213,6 +213,14 @@ void HttpInspect::show(const SnortConfig*) const
             methods += (methods.empty() ? "" : " ") + m;
         ConfigLogger::log_value("disallowed_methods", methods.c_str());
     }
+
+    if (!params->allowed_content_type.empty())
+    {
+        std::string types;
+        for (const auto& t : params->allowed_content_type)
+            types += (types.empty() ? "" : " ") + t;
+        ConfigLogger::log_value("allowed_content_type", types.c_str());
+    }
 }
 
 PduSection HttpInspect::get_latest_is(const Packet* p)

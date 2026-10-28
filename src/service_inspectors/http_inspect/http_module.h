@@ -139,6 +139,8 @@ public:
     std::set<std::string> allowed_methods;
     std::set<std::string> disallowed_methods;
 
+    std::set<std::string> allowed_content_type;
+
 #ifdef REG_TEST
     int64_t print_amount = 1200;
 

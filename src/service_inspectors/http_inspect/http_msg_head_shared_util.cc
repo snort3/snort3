@@ -50,3 +50,82 @@ bool HttpMsgHeadShared::boundary_present(const Field& field)
     return false;
 }
 
+static inline bool is_content_type_lws(uint8_t octet)
+{
+    return octet == ' ' or octet == '\t' or octet == '\r' or octet == '\n';
+}
+
+int32_t HttpMsgHeadShared::content_type_media_type(const uint8_t* value, int32_t len,
+    int32_t& offset)
+{
+    offset = 0;
+    if (len <= 0)
+        return 0;
+
+    while (offset < len and is_content_type_lws(value[offset]))
+        offset++;
+
+    // A quoted string can only appear in a parameter, so the first ';' always ends the media type
+    const uint8_t* const semicolon = (const uint8_t*)memchr(value + offset, ';', len - offset);
+    int32_t end = semicolon ? (int32_t)(semicolon - value) : len;
+
+    while (end > offset and is_content_type_lws(value[end-1]))
+        end--;
+
+    return end - offset;
+}
+
+bool HttpMsgHeadShared::content_type_is_list(const uint8_t* value, int32_t len)
+{
+    bool quoted = false;
+
+    for (int32_t k = 0; k < len; k++)
+    {
+        if (quoted)
+        {
+            if (value[k] == '\\')
+                k++;
+            else if (value[k] == '"')
+                quoted = false;
+        }
+        else if (value[k] == '"')
+            quoted = true;
+        else if (value[k] == ',')
+            return true;
+    }
+
+    return quoted;
+}
+
+bool HttpMsgHeadShared::content_type_matches(const std::string& pattern, const uint8_t* value,
+    int32_t len)
+{
+    if (len <= 0)
+        return false;
+
+    const char* const val = (const char*)value;
+    const size_t star = pattern.find('*');
+
+    if (star == std::string::npos)
+        return (pattern.length() == (size_t)len) and !strncasecmp(pattern.c_str(), val, len);
+
+    const size_t suffix_len = pattern.length() - star - 1;
+
+    if ((size_t)len <= star + suffix_len)
+        return false;
+
+    if (strncasecmp(pattern.c_str(), val, star) != 0)
+        return false;
+
+    if (strncasecmp(pattern.c_str() + star + 1, val + len - suffix_len, suffix_len) != 0)
+        return false;
+
+    for (size_t k = star; k < (size_t)len - suffix_len; k++)
+    {
+        if (!HttpEnums::token_char[value[k]])
+            return false;
+    }
+
+    return true;
+}
+

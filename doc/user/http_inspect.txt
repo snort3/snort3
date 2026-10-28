@@ -326,6 +326,44 @@ Detail field, however, echoes the full synthesized HTTP/1-style request
 line, including its trailing " HTTP/2.0" version suffix,
 so the string shown there is longer than the reported length.
 
+===== allowed_content_type
+
+http_inspect generates 119:306 when the media type in a client request's
+Content-Type header is not in allowed_content_type. Entries are delimited
+by whitespace or a comma and matched case-insensitively, and an unset list
+disables the check. Parameters after the first semicolon are ignored, so
+"application/json" matches "application/json; charset=utf-8". A single '*'
+matches one or more token characters, never a '/' or a space, so
+"application/*+json" matches application/vnd.api+json but not
+application/json. An entry with more than one '*' is a configuration
+error. For example if configured for:
+
+    allowed_content_type = "application/json application/*+json text/plain"
+
+http_inspect raises 119:306 for a request sent as application/xml, and no
+alert for one sent as application/vnd.api+json.
+
+Content-Type holds a single media type, so a comma-separated list raises
+119:306 even when every type in it is allowed. A comma inside a quoted
+parameter, as in boundary="a,b", belongs to that value, and quoting that
+never closes is a violation too. Each line of a repeated Content-Type
+header is checked on its own, so 119:306 is raised when one of them is not
+allowed, not because the header repeats.
+
+A request whose Transfer-Encoding header or non-zero Content-Length
+indicates content must name a media type, so a missing or empty
+Content-Type on it is a violation too. A request with no content is not
+required to carry one, but a media type it does carry is still checked.
+
+Responses are not checked. Both the comparison and the Message Detail
+field use the header as sent rather than the normalized value, which drops
+the quoting and the token characters these cases turn on. An obs-fold
+inside the media type leaves its bytes in the compared value, while
+whitespace a fold adds before or after it is trimmed. Anything past an
+obs-fold is redacted from the Message Detail, since the folded line can be
+any other header. On a partially inspected header block the check waits
+for the complete block.
+
 ===== Validate Request Line Format
 
 http_inspect generates 119:300 when the request line does not conform to

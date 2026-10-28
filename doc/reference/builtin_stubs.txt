@@ -1335,6 +1335,13 @@ Trailers are not included.
 A message header line is malformed: it has no colon separator, no field name, no field
 value, or is a multi-line header.
 
+119:306
+
+The media type in the request Content-Type header is not in allowed_content_type. Any
+parameters after the first semicolon are ignored for this comparison. A comma-separated
+list and quoting that never closes are violations, and each line of a repeated header is
+checked on its own. A request that carries content must name a media type.
+
 121:1
 
 Invalid flag set on HTTP/2 frame header
