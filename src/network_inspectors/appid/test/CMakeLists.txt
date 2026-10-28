@@ -36,6 +36,10 @@ add_cpputest( appid_debug_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
 
+add_cpputest( appid_peg_counts_test
+    SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
+)
+
 add_cpputest( service_state_test
     SOURCES $<TARGET_OBJECTS:appid_cpputest_deps>
 )
@@ -81,5 +85,4 @@ endif ( ENABLE_UNIT_TESTS )
 add_cpputest( tp_appid_types_test
     SOURCES tp_appid_types_test.cc
 )
-
 
