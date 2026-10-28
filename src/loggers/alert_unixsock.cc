@@ -138,9 +138,23 @@ static void get_alert_pkt(
     {
         us.alert.pkth.ts_sec = (uint32_t)p->pkth->ts.tv_sec;
         us.alert.pkth.ts_usec = (uint32_t)p->pkth->ts.tv_usec;
-        us.alert.pkth.caplen = p->pktlen;
-        us.alert.pkth.len = p->pkth->pktlen;
-        memmove(us.alert.pkt, (const void*)p->pkt, us.alert.pkth.caplen);
+        
+        // Use reassembled payload data (p->data/dsize) instead of raw packet data (p->pkt/pktlen)
+        // to ensure we get the full TCP stream data, not just MTU-sized segments
+        if (p->data && p->dsize > 0)
+        {
+            uint32_t copy_size = (p->dsize < sizeof(us.alert.pkt)) ? p->dsize : sizeof(us.alert.pkt);
+            us.alert.pkth.caplen = copy_size;
+            us.alert.pkth.len = p->dsize;
+            memmove(us.alert.pkt, (const void*)p->data, copy_size);
+        }
+        else
+        {
+            // Fall back to raw packet data if no reassembled data is available
+            us.alert.pkth.caplen = p->pktlen;
+            us.alert.pkth.len = p->pkth->pktlen;
+            memmove(us.alert.pkt, (const void*)p->pkt, us.alert.pkth.caplen);
+        }
     }
     else
         us.alert.val |= NOPACKET_STRUCT;
@@ -157,46 +171,57 @@ static void get_alert_pkt(
     {
         if (p)
         {
-            if (p->proto_bits & PROTO_BIT__ETH)
+            // Only calculate header offsets if we're sending raw packet data
+            // When sending reassembled payload data (p->data), these offsets are not applicable
+            if (p->data && p->dsize > 0)
             {
-                const eth::EtherHdr* eh = layer::get_eth_layer(p);
-                us.alert.dlthdr=(const char*)eh-(const char*)p->pkt;
+                // Sending reassembled payload - header offsets not applicable
+                us.alert.data = 0;  // data starts at offset 0 in the pkt buffer
             }
-
-            /* we don't log any headers besides eth yet */
-            if (p->ptrs.ip_api.is_ip() && p->pkt)
+            else
             {
-                if (p->ptrs.ip_api.is_ip4())
-                    us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip4h()-(const char*)p->pkt;
-                else
-                    us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip6h()-(const char*)p->pkt;
-
-                switch (p->type())
+                // Sending raw packet - calculate header offsets for dissection
+                if (p->proto_bits & PROTO_BIT__ETH)
                 {
-                case PktType::TCP:
-                    if (p->ptrs.tcph)
-                        us.alert.transhdr=(const char*)p->ptrs.tcph-(const char*)p->pkt;
-                    break;
+                    const eth::EtherHdr* eh = layer::get_eth_layer(p);
+                    us.alert.dlthdr=(const char*)eh-(const char*)p->pkt;
+                }
 
-                case PktType::UDP:
-                    if (p->ptrs.udph)
-                        us.alert.transhdr=(const char*)p->ptrs.udph-(const char*)p->pkt;
-                    break;
+                /* we don't log any headers besides eth yet */
+                if (p->ptrs.ip_api.is_ip() && p->pkt)
+                {
+                    if (p->ptrs.ip_api.is_ip4())
+                        us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip4h()-(const char*)p->pkt;
+                    else
+                        us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip6h()-(const char*)p->pkt;
 
-                case PktType::ICMP:
-                    if (p->ptrs.icmph)
-                        us.alert.transhdr=(const char*)p->ptrs.icmph-(const char*)p->pkt;
-                    break;
+                    switch (p->type())
+                    {
+                    case PktType::TCP:
+                        if (p->ptrs.tcph)
+                            us.alert.transhdr=(const char*)p->ptrs.tcph-(const char*)p->pkt;
+                        break;
 
-                default:
-                    /* us.alert.transhdr is null due to initial memset */
-                    us.alert.val|=NO_TRANSHDR;
-                    break;
-                } /* switch */
+                    case PktType::UDP:
+                        if (p->ptrs.udph)
+                            us.alert.transhdr=(const char*)p->ptrs.udph-(const char*)p->pkt;
+                        break;
+
+                    case PktType::ICMP:
+                        if (p->ptrs.icmph)
+                            us.alert.transhdr=(const char*)p->ptrs.icmph-(const char*)p->pkt;
+                        break;
+
+                    default:
+                        /* us.alert.transhdr is null due to initial memset */
+                        us.alert.val|=NO_TRANSHDR;
+                        break;
+                    } /* switch */
+                }
+
+                if (p->data && p->pkt)
+                    us.alert.data=p->data - p->pkt;
             }
-
-            if (p->data && p->pkt)
-                us.alert.data=p->data - p->pkt;
         }
     }
 }
