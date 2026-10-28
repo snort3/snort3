@@ -44,11 +44,12 @@ struct HostPattern
     uint8_t pattern_type;
     bool is_literal; // is not regex pattern
     bool is_referred;
+    bool is_starts_with_dot;
 
     bool operator==(const HostPattern& v) const
     {
         return this->type == v.type and pattern_size == v.pattern_size and this->pattern_type == v.pattern_type
-            and (memcmp(pattern, v.pattern, (size_t)pattern_size) == 0);
+            and ((!pattern and !v.pattern) or (pattern and v.pattern and memcmp(pattern, v.pattern, (size_t)pattern_size) == 0));
     }
 };
 

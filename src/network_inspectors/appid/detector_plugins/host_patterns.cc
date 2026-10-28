@@ -49,6 +49,9 @@ static void create_matcher(SearchTool& matcher, HostPatternList* list, unsigned&
         matcher.add(element->dpattern->pattern,
             element->dpattern->pattern_size, element->dpattern, true, element->dpattern->is_literal);
         (*pattern_index)++;
+        // All SearchTool implementation perform a copy of the pattern, so we can free the original memory here.
+        snort_free(element->dpattern->pattern);
+        element->dpattern->pattern = nullptr;
     }
     pattern_count = size;
     matcher.prep();
@@ -118,7 +121,7 @@ inline bool host_pattern_validate_match(const MatchedHostPatterns * const mp, co
     return mp->match_start_pos + mp->mpattern->pattern_size == data_size and
             (mp->match_start_pos == 0 or
             data[mp->match_start_pos-1] == '.' or
-            *mp->mpattern->pattern == '.');
+            mp->mpattern->is_starts_with_dot);
 }
 
 inline bool host_pattern_validate_url_match(const MatchedHostPatterns * const mp, const uint8_t* data)
@@ -258,6 +261,7 @@ static void add_pattern(HostPatternList*& list, const uint8_t* pattern_str, size
     new_host_pattern->dpattern->is_referred = is_referred;
     new_host_pattern->dpattern->pattern = (uint8_t*)snort_alloc(pattern_size);
     memcpy(new_host_pattern->dpattern->pattern, pattern_str, pattern_size);
+    new_host_pattern->dpattern->is_starts_with_dot = (pattern_size and (pattern_str[0] == '.'));
 
     new_host_pattern->next = list;
     list = new_host_pattern;

@@ -46,6 +46,7 @@ class AppIdContext;
 class AppIdDetector;
 struct DetectorFlow;
 class LuaObject;
+class LuaStateDescriptor;
 
 bool get_lua_field(lua_State* L, int table, const char* field, std::string& out);
 bool get_lua_field(lua_State* L, int table, const char* field, int& out);
@@ -58,9 +59,8 @@ public:
     virtual ~LuaDetectorManager();
     virtual void initialize(const snort::SnortConfig*);
 
-    bool load_detector(char* detector_name, bool is_custom, std::string& buf);
-    void set_num_odp_detectors()
-    { num_odp_detectors = allocated_objects.size(); }
+    bool load_detector(char* detector_name, bool is_custom, std::string& buf,
+        const snort::SnortConfig*, bool& has_validate);
     bool insert_cb_detector(AppId app_id, LuaObject* ud);
     LuaObject* get_cb_detector(AppId app_id);
 
@@ -68,13 +68,18 @@ public:
 
 protected:
     void activate_lua_detectors(const snort::SnortConfig*);
+    bool init_lua_detector(LuaObject*, const snort::SnortConfig*);
     LuaObject* create_lua_detector(const char* detector_name, bool is_custom,
         const char* detector_filename, bool& has_validate);
+    void call_clean_function(const LuaStateDescriptor&);
+    void free_lua_chunk(LuaObject*);
     virtual void list_lua_detectors() = 0;
 
     AppIdContext& ctxt;
     std::list<LuaObject*> allocated_objects;
-    size_t num_odp_detectors = 0;
+    size_t num_odp_validate_detectors = 0;
+    size_t num_odp_non_validate_detectors = 0;
+    size_t num_odp_custom_detectors = 0;
     std::map<AppId, LuaObject*> cb_detectors;
 };
 
@@ -121,9 +126,9 @@ public:
 private:
     static std::vector<std::shared_ptr<PacketLuaDetectorManager>> lua_detector_mgr_list;
 
-    void initialize_lua_detectors();
-    void load_lua_detectors(const char* path, bool is_custom);
-    void process_detector_file(char* detector_file_path, bool is_custom);
+    void initialize_lua_detectors(const snort::SnortConfig*);
+    void load_lua_detectors(const char* path, bool is_custom, const snort::SnortConfig*);
+    void process_detector_file(char* detector_file_path, bool is_custom, const snort::SnortConfig*);
     void list_lua_detectors() override;
 
     bool ignore_chp_cleanup = false;

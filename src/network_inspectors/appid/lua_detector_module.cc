@@ -206,40 +206,53 @@ LuaDetectorManager::~LuaDetectorManager()
 
         for (auto& lua_object : allocated_objects)
         {
-            LuaStateDescriptor* lsd = lua_object->validate_lua_state(false);
-
-            if (!lsd->package_info.cleanFunctionName.empty())
-            {
-                lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
-                if (lua_istable(L, -1))
-                {
-                    lua_getfield(L, -1, lsd->package_info.cleanFunctionName.c_str());
-                    if (lua_isfunction(L, -1))
-                    {
-                        string name = lsd->package_info.name + "_";
-                        lua_getglobal(L, name.c_str());
-
-                        if ( lua_pcall(L, 1, 1, 0) )
-                        {
-                            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not cleanup the %s client app element: %s\n",
-                                lsd->package_info.name.c_str(), lua_message_log(lua_tostring(L, -1)));
-                        }
-                    }
-                }
-                else
-                {
-                    APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not find the %s detector table for cleanup\n",
-                        lsd->package_info.name.c_str());
-                }
-                
-                lua_settop(L, 0);
-            }
-
+            call_clean_function(*lua_object->validate_lua_state(false));
             delete lua_object;
         }
         lua_close(L);
     }
+}
 
+void LuaDetectorManager::call_clean_function(const LuaStateDescriptor& lsd)
+{
+    if (lsd.package_info.cleanFunctionName.empty())
+        return;
+
+    lua_getfield(L, LUA_REGISTRYINDEX, lsd.package_info.name.c_str());
+    if (lua_istable(L, -1))
+    {
+        lua_getfield(L, -1, lsd.package_info.cleanFunctionName.c_str());
+        if (lua_isfunction(L, -1))
+        {
+            string name = lsd.package_info.name + "_";
+            lua_getglobal(L, name.c_str());
+
+            if ( lua_pcall(L, 1, 1, 0) )
+            {
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not cleanup the %s client app element: %s\n",
+                    lsd.package_info.name.c_str(), lua_message_log(lua_tostring(L, -1)));
+            }
+        }
+    }
+    else
+    {
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not find the %s detector table for cleanup\n",
+            lsd.package_info.name.c_str());
+    }
+
+    lua_settop(L, 0);
+}
+
+void LuaDetectorManager::free_lua_chunk(LuaObject* lua_object)
+{
+    const LuaStateDescriptor& lsd = *lua_object->validate_lua_state(false);
+
+    lua_pushnil(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, lsd.package_info.name.c_str());
+
+    string name = lsd.package_info.name + "_";
+    lua_pushnil(L);
+    lua_setglobal(L, name.c_str());
 }
 
 void LuaDetectorManager::initialize(const SnortConfig* sc)
@@ -457,7 +470,8 @@ static int dump(lua_State*, const void* buf,size_t size, void* data)
     return 0;
 }
 
-bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, string& buf)
+bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, string& buf,
+    const SnortConfig* sc, bool& has_validate)
 {
     if (!buf.empty())
     {
@@ -516,12 +530,82 @@ bool LuaDetectorManager::load_detector(char* detector_filename, bool is_custom, 
         return false;
     }
 
-    bool has_validate;
     LuaObject* lua_object = create_lua_detector(detectorName, is_custom, detector_filename, has_validate);
-    if (lua_object)
-        allocated_objects.push_front(lua_object);
+    if (!lua_object)
+        return false;
 
-    return has_validate;
+    if (!has_validate)
+    {
+        bool initialized = init_lua_detector(lua_object, sc);
+        if (initialized)
+            call_clean_function(*lua_object->validate_lua_state(false));
+
+        free_lua_chunk(lua_object);
+        delete lua_object;
+        if (!initialized)
+            return false;
+
+        if (is_custom)
+            num_odp_custom_detectors++;
+        else
+            num_odp_non_validate_detectors++;
+        return true;
+    }
+
+    allocated_objects.push_front(lua_object);
+    if (is_custom)
+        num_odp_custom_detectors++;
+    else
+        num_odp_validate_detectors++;
+    return true;
+}
+
+bool LuaDetectorManager::init_lua_detector(LuaObject* lua_object, const SnortConfig* sc)
+{
+    const LuaStateDescriptor& lsd = *lua_object->validate_lua_state(false);
+
+    lua_getfield(L, LUA_REGISTRYINDEX, lsd.package_info.name.c_str());
+    if (!lua_istable(L, -1))
+    {
+        if (init(L))
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not find detector table %s for initialization\n",
+                lua_object->get_detector()->get_name().c_str());
+        lua_settop(L, 0);
+        return false;
+    }
+
+    lua_getfield(L, -1, lsd.package_info.initFunctionName.c_str());
+    if (!lua_isfunction(L, -1))
+    {
+        if (init(L))
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load DetectorInit function from %s\n",
+                lua_object->get_detector()->get_name().c_str());
+        lua_settop(L, 0);
+        return false;
+    }
+
+    /*first parameter is DetectorUserData */
+    string name = lsd.package_info.name + "_";
+    lua_getglobal(L, name.c_str());
+
+    /*second parameter is a table containing configuration stuff. */
+    lua_newtable(L);
+    const SnortConfig** sc_ud = static_cast<const SnortConfig**>(lua_newuserdata(L, sizeof(const SnortConfig*)));
+    *(sc_ud) = sc;
+    lua_setglobal(L, LUA_STATE_GLOBAL_SC_ID);
+    int rc = lua_pcall(L, 2, 1, 0);
+    *(sc_ud) = nullptr;
+    if (rc)
+    {
+        if (init(L))
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not run DetectorInit, %s\n", lua_message_log(lua_tostring(L, -1)));
+        lua_settop(L, 0);
+        return false;
+    }
+
+    lua_settop(L, 0);
+
+    return true;
 }
 
 void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
@@ -546,21 +630,9 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
             continue;
         }
         lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
-        if (!lua_istable(L, -1))
-        {
-            if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: Could not find detector table %s for initialization\n",
-                    (*lo)->get_detector()->get_name().c_str());
-            if (!(*lo)->get_detector()->is_custom_detector())
-                num_odp_detectors--;
-            lua_settop(L, 0);
-            delete *lo;
-            lo = allocated_objects.erase(lo);
-            continue;
-        }
         // DetectorCommon is bundled into each detector environment, so clear that detector's
         // packet-derived state before DetectorInit reactivates it for a new Analyzer.
-        if (!reset_lua_tracker_state(L))
+        if (lua_istable(L, -1) and !reset_lua_tracker_state(L))
         {
             // Detector tables can still be referenced by discovery and callbacks. Keep the
             // object alive, but stop invoking this environment until a detector reload.
@@ -572,49 +644,28 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
             ++lo;
             continue;
         }
-        lua_getfield(L, -1, lsd->package_info.initFunctionName.c_str());
-        if (!lua_isfunction(L, -1))
+        lua_settop(L, 0);
+
+        if (!init_lua_detector(*lo, sc))
         {
-            if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load DetectorInit function from %s\n",
-                    (*lo)->get_detector()->get_name().c_str());
-            if (!(*lo)->get_detector()->is_custom_detector())
-                num_odp_detectors--;
-            lua_settop(L, 0);
+            if ((*lo)->get_detector()->is_custom_detector())
+                num_odp_custom_detectors--;
+            else
+                num_odp_validate_detectors--;
             delete *lo;
             lo = allocated_objects.erase(lo);
             continue;
         }
 
-        /*first parameter is DetectorUserData */
-        string name = lsd->package_info.name + "_";
-        lua_getglobal(L, name.c_str());
-
-        /*second parameter is a table containing configuration stuff. */
-        lua_newtable(L);
-        const SnortConfig** sc_ud = static_cast<const SnortConfig**>(lua_newuserdata(L, sizeof(const SnortConfig*)));
-        *(sc_ud) = sc;
-        lua_setglobal(L, LUA_STATE_GLOBAL_SC_ID);
-        if (lua_pcall(L, 2, 1, 0))
-        {
-            if (init(L))
-                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not run DetectorInit, %s\n", lua_message_log(lua_tostring(L, -1)));
-            if (!(*lo)->get_detector()->is_custom_detector())
-                num_odp_detectors--;
-            lua_settop(L, 0);
-            delete *lo;
-            lo = allocated_objects.erase(lo);
-            continue;
-        }
-        *(sc_ud) = nullptr;
-
-        lua_getfield(L, LUA_REGISTRYINDEX, lsd->package_info.name.c_str());
+        lua_getfield(L, LUA_REGISTRYINDEX, (*lo)->validate_lua_state(false)->package_info.name.c_str());
         set_lua_tracker_size(L, lua_tracker_size);
         lua_settop(L, 0);
+
         ++lo;
     }
 }
-void ControlLuaDetectorManager::process_detector_file(char* detector_file_path, bool is_custom)
+void ControlLuaDetectorManager::process_detector_file(char* detector_file_path, bool is_custom,
+    const SnortConfig* sc)
 {
     ifstream file(detector_file_path, ios::ate);
     int size = file.tellg();
@@ -651,18 +702,25 @@ void ControlLuaDetectorManager::process_detector_file(char* detector_file_path, 
     // loading detectors that don't have validate for packet threads.
 
     string buf;
-    bool has_validate = load_detector(detector_file_path, is_custom, buf);
+    bool has_validate = false;
+    bool loaded = load_detector(detector_file_path, is_custom, buf, sc, has_validate);
+    if (!loaded)
+        return;
 
-    for (auto& lua_detector_mgr : lua_detector_mgr_list)
+    if (has_validate)
     {
-        if (has_validate)
-            lua_detector_mgr->load_detector(detector_file_path, is_custom, buf);
+        for (auto& lua_detector_mgr : lua_detector_mgr_list)
+        {
+            lua_detector_mgr->load_detector(detector_file_path, is_custom, buf, sc, has_validate);
+        }
     }
+    
     lua_settop(L, 0);
 }
 
 
-void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_custom)
+void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_custom,
+    const SnortConfig* sc)
 {
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/*", path);
@@ -688,7 +746,7 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
                 while (std::getline(file, line))
                 {
                     std::string full_path = std::string(path) + "/" + line;
-                    process_detector_file(const_cast<char*>(full_path.c_str()), is_custom);
+                    process_detector_file(const_cast<char*>(full_path.c_str()), is_custom, sc);
                 }
             }
             return;
@@ -709,7 +767,7 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
 
         for (unsigned n = 0; n < globs.gl_pathc; n++)
         {
-            process_detector_file(globs.gl_pathv[n], is_custom);
+            process_detector_file(globs.gl_pathv[n], is_custom, sc);
         }
 
         globfree(&globs);
@@ -722,7 +780,7 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
             pattern, rval);
 }
 
-void ControlLuaDetectorManager::initialize_lua_detectors()
+void ControlLuaDetectorManager::initialize_lua_detectors(const SnortConfig* sc)
 {
     char path[PATH_MAX];
     const char* dir = ctxt.config.app_detector_dir;
@@ -731,13 +789,10 @@ void ControlLuaDetectorManager::initialize_lua_detectors()
         return;
 
     snprintf(path, sizeof(path), "%s/odp/lua", dir);
-    load_lua_detectors(path, false);
-    set_num_odp_detectors();
-    for (auto& mgr : lua_detector_mgr_list)
-        mgr->set_num_odp_detectors();
+    load_lua_detectors(path, false, sc);
 
     snprintf(path, sizeof(path), "%s/custom/lua", dir);
-    load_lua_detectors(path, true);
+    load_lua_detectors(path, true, sc);
 }
 
 ControlLuaDetectorManager::ControlLuaDetectorManager(AppIdContext& appid_ctxt) : LuaDetectorManager(appid_ctxt, true)
@@ -756,7 +811,7 @@ void ControlLuaDetectorManager::initialize(const SnortConfig* sc)
     for (unsigned i = 0 ; i < max_threads; i++)
         lua_detector_mgr_list.emplace_back(make_shared<PacketLuaDetectorManager>(ctxt));
 
-    initialize_lua_detectors();
+    initialize_lua_detectors(sc);
     LuaDetectorManager::initialize(sc);
 }
 
@@ -770,8 +825,8 @@ void ControlLuaDetectorManager::list_lua_detectors()
     int memory_used_by_lua = lua_gc(L, LUA_GCCOUNT, 0);
     #endif
 
-    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "AppId Lua-Detector Stats: control instance, odp detectors %zu, custom detectors %zu,"
-        " total memory %d kb\n", num_odp_detectors, (allocated_objects.size() - num_odp_detectors), memory_used_by_lua);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "AppId Lua-Detector Stats: control instance, total odp detectors %zu (validate %zu, non-validate %zu), custom detectors %zu,"
+        " total memory %d kb\n", num_odp_validate_detectors + num_odp_non_validate_detectors, num_odp_validate_detectors, num_odp_non_validate_detectors, num_odp_custom_detectors, memory_used_by_lua);
 }
 
 void ControlLuaDetectorManager::cleanup_after_swap()
@@ -812,8 +867,7 @@ void PacketLuaDetectorManager::list_lua_detectors()
     #endif
 
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "AppId Lua-Detector Stats: instance %u, odp detectors %zu, custom detectors %zu,"
-        " total memory %d kb\n", get_instance_id(), num_odp_detectors,
-        (allocated_objects.size() - num_odp_detectors), memory_used_by_lua);
+        " total memory %d kb\n", get_instance_id(), num_odp_validate_detectors, num_odp_custom_detectors, memory_used_by_lua);
 }
 
 void PacketLuaDetectorManager::free_detector_flow()
