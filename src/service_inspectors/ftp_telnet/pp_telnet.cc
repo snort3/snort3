@@ -98,12 +98,8 @@ int normalize_telnet(
         }
         else
         {
-            if ( on_ftp_channel )
-            {
-                return FTPP_SUCCESS;
-            }
             /* Okay, it wasn't an IAC also its a midstream pickup */
-            if (*read_ptr > 0x7F && Stream::is_midstream(p->flow))
+            if (!on_ftp_channel && *read_ptr > 0x7F && Stream::is_midstream(p->flow))
             {
                 consec_8bit_chars++;
                 if (consec_8bit_chars > CONSECUTIVE_8BIT_THRESHOLD)

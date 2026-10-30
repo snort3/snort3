@@ -1048,7 +1048,7 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
         }
 
 
-        if ( buf.len )
+        if ( iRet == FTPP_NORMALIZED )
         {
             /* Normalized data will always be in decode buffer */
             if ((iMode == FTPP_SI_CLIENT_MODE && session->client_conf->telnet_cmds) ||
@@ -1057,6 +1057,10 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
                 DetectionEngine::queue_event(GID_FTP, FTP_TELNET_CMD);
                 return FTPP_ALERT; /* Nothing else to do since we alerted */
             }
+
+            // Telnet commands consumed the whole PDU; nothing to parse or publish
+            if ( !buf.len )
+                return FTPP_NORMALIZED;
 
             read_ptr = buf.data;
         }
@@ -1420,12 +1424,6 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
     FTP_CLIENT_REQ* req;
     FTP_CMD_CONF* CmdConf = nullptr;
 
-    const unsigned char* end = p->data + p->dsize;
-
-    const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
-    if ( buf.len )
-        end = buf.data + buf.len;
-
     if (iMode == FTPP_SI_CLIENT_MODE)
     {
         req = &ftpssn->client.request;
@@ -1438,6 +1436,12 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
     }
     else
         return FTPP_INVALID_ARG;
+
+    // Bound the parse by the buffer initialize_ftp() pointed pipeline_req into
+    const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
+    const unsigned char* end =
+        (req->pipeline_req and (const unsigned char*)req->pipeline_req == buf.data) ?
+        buf.data + buf.len : p->data + p->dsize;
 
     while (req->pipeline_req)
     {
