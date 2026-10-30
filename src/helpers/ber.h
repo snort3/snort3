@@ -54,6 +54,7 @@ public:
     }
 
     bool read(const uint8_t* c, BerElement& e);
+    bool read_uncapped(const uint8_t* c, BerElement& e);
 
     bool convert(const BerElement& e, uint32_t& intval);
     bool extract(const uint8_t*& c, uint32_t& intval);

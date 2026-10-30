@@ -90,7 +90,7 @@ inline void ber_mock_reset()
 namespace snort
 {
 
-inline bool BerReader::read(const uint8_t*, BerElement& e)
+inline bool BerReader::read(const uint8_t* c, BerElement& e)
 {
     BerMockQueue& queue = ber_mock_queue();
 
@@ -100,6 +100,11 @@ inline bool BerReader::read(const uint8_t*, BerElement& e)
     const BerMockResult r = queue.pop();
 
     e = r.element;
+
+    // same bound as the production reader
+    if ( e.total_length > UINT32_MAX - (uint64_t)(c - beg) )
+        return false;
+
     return r.result;
 }
 

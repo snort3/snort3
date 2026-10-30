@@ -52,6 +52,11 @@ add_catch_test( lockless_ring_test
         ${CMAKE_THREAD_LIBS_INIT}
 )
 
+add_catch_test( ber_test
+    SOURCES
+        ../ber.cc
+)
+
 if (ENABLE_BENCHMARK_TESTS)
 
     add_catch_test( ring2_benchmark

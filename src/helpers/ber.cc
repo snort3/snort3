@@ -140,7 +140,7 @@ bool BerReader::read_length(uint32_t& length)
     return true;
 }
 
-bool BerReader::read(const uint8_t* c, BerElement& e)
+bool BerReader::read_uncapped(const uint8_t* c, BerElement& e)
 {
     const uint8_t* start = c;
 
@@ -167,6 +167,18 @@ bool BerReader::read(const uint8_t* c, BerElement& e)
 
     // integer overflow check
     if ( e.total_length < e.header_length )
+        return false;
+
+    return true;
+}
+
+bool BerReader::read(const uint8_t* c, BerElement& e)
+{
+    if ( !read_uncapped(c, e) )
+        return false;
+
+    // the element end must be representable as a 32-bit Cursor position
+    if ( e.total_length > UINT32_MAX - (uint64_t)(c - beg) )
         return false;
 
     return true;

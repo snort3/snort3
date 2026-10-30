@@ -93,7 +93,7 @@ IpsOption::EvalStatus BerSkipOption::eval(Cursor& c, Packet*)
     BerReader ber(c);
     BerElement e;
 
-    if ( !ber.read(c.start(), e) )
+    if ( !ber.read_uncapped(c.start(), e) )
         return NO_MATCH;
 
     if ( e.type != type )

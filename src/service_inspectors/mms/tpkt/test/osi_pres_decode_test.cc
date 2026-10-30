@@ -167,6 +167,86 @@ TEST(osi_pres_decode_test, resolve_mode_selector_normal_mode_value_in_bounds)
     CHECK_EQUAL(7u, cur.get_pos());
 }
 
+TEST(osi_pres_decode_test, resolve_mode_selector_oversized_mode_value_length)
+{
+    uint8_t data[11] = { 0x31, 0x08, 0xA0, 0x06, 0x80, 0x84, 0xFF, 0xFF, 0xFF, 0xFF };
+    data[10] = OSI_PRES_MODE__NORMAL;
+
+    ber_mock_push(0x31, 8);                                // OSI_PRES_TYPE_SEQ
+    ber_mock_push(0xA0, 6);                                // OSI_PRES_MODE_SELECTOR_SEQ
+    ber_mock_push(0x80, 0xFFFFFFFF, 6, true, data + 10);   // OSI_PRES_MODE_VALUE
+
+    Cursor cur;
+    cur.set("test", data, 10);
+
+    BerReader ber(cur);
+
+    OsiPresPpduModeSelectorType res = resolve_mode_selector(&ber, &cur, OSI_SESSION_SPDU__CN);
+
+    CHECK(res == OSI_PRES_MODE__INVALID);
+    CHECK_EQUAL(10u, cur.get_pos());
+}
+
+TEST(osi_pres_decode_test, resolve_mode_selector_truncated_mode_value)
+{
+    uint8_t data[8] = { 0 };
+    data[6] = OSI_PRES_MODE__NORMAL;
+
+    ber_mock_push(0x31, 4);                       // OSI_PRES_TYPE_SEQ
+    ber_mock_push(0xA0, 2);                       // OSI_PRES_MODE_SELECTOR_SEQ
+    ber_mock_push(0x80, 2, 2, true, data + 6);    // OSI_PRES_MODE_VALUE, one octet short
+
+    Cursor cur;
+    cur.set("test", data, 7);
+
+    BerReader ber(cur);
+
+    OsiPresPpduModeSelectorType res = resolve_mode_selector(&ber, &cur, OSI_SESSION_SPDU__CN);
+
+    CHECK(res == OSI_PRES_MODE__INVALID);
+    CHECK_EQUAL(7u, cur.get_pos());
+}
+
+TEST(osi_pres_decode_test, resolve_mode_selector_mode_value_ends_at_buffer_end)
+{
+    uint8_t data[7] = { 0 };
+    data[6] = OSI_PRES_MODE__NORMAL;
+
+    ber_mock_push(0x31, 4);                       // OSI_PRES_TYPE_SEQ
+    ber_mock_push(0xA0, 2);                       // OSI_PRES_MODE_SELECTOR_SEQ
+    ber_mock_push(0x80, 1, 2, true, data + 6);    // OSI_PRES_MODE_VALUE
+
+    Cursor cur;
+    cur.set("test", data, sizeof(data));
+
+    BerReader ber(cur);
+
+    OsiPresPpduModeSelectorType res = resolve_mode_selector(&ber, &cur, OSI_SESSION_SPDU__AC);
+
+    CHECK(res == OSI_PRES_MODE__NORMAL);
+    CHECK_EQUAL(7u, cur.get_pos());
+}
+
+TEST(osi_pres_decode_test, decode_osi_pres_context_list_item_oversized_context_id_length)
+{
+    uint8_t data[5] = { 0 };
+    data[4] = OSI_PRES_CONTEXT_ID__ACSE;
+
+    ber_mock_push(0x30, 8);                                // context list item
+    ber_mock_push(0x02, 0xFFFFFFFF, 2, true, data + 4);    // context id
+
+    Cursor cur;
+    cur.set("test", data, 4);
+
+    BerReader ber(cur);
+
+    TpktAppliSearchStateType res = decode_osi_pres_context_list_item(&ber, &cur);
+
+    CHECK(res == TPKT_APPLI_SEARCH_STATE__EXIT);
+    CHECK_EQUAL(2u, cur.get_pos());
+    CHECK_EQUAL(1, mock_charge_calls);
+}
+
 TEST(osi_pres_decode_test, decode_osi_pres_context_list_item_zero_length_context_id)
 {
     uint8_t data[5] = { 0 };
