@@ -119,6 +119,7 @@ static bool dnp3_process_udp(const dnp3ProtoConf& config, dnp3_session_data_t* d
        Split up and process individually. */
 
     uint16_t bytes_processed = 0;
+    uint16_t junk_bytes = 0;
     bool truncated_pdu = false;
 
     while (bytes_processed < p->dsize)
@@ -133,14 +134,33 @@ static bool dnp3_process_udp(const dnp3ProtoConf& config, dnp3_session_data_t* d
         /*Stop if the start bytes are not 0x0564 */
         if ((p->dsize < bytes_processed + 2)
             || (link->start != DNP3_START_BYTES))
-            break;
+        {
+            bytes_processed++;
+            if (++junk_bytes > DNP3_MAX_OCTETS)
+            {
+                truncated_pdu = true;
+                break;
+            }
+            continue;
+        }
 
         /* Alert and stop if there's not enough data to read a length */
-        if ((p->dsize - bytes_processed < (int)sizeof(dnp3_link_header_t)) ||
-            (link->len < DNP3_HEADER_REMAINDER_LEN))
+        if (p->dsize - bytes_processed < (int)sizeof(dnp3_link_header_t))
         {
             truncated_pdu = true;
             break;
+        }
+
+        if (link->len < DNP3_HEADER_REMAINDER_LEN)
+        {
+            bytes_processed += 3;
+            junk_bytes += 3;
+            if (junk_bytes > DNP3_MAX_OCTETS)
+            {
+                truncated_pdu = true;
+                break;
+            }
+            continue;
         }
 
         /* Calculate the actual length of data to inspect */
@@ -156,6 +176,7 @@ static bool dnp3_process_udp(const dnp3ProtoConf& config, dnp3_session_data_t* d
 
         dnp3_full_reassembly(config, dnp3_sess, p, pdu_start, pdu_length);
         bytes_processed += pdu_length;
+        junk_bytes = 0;
     }
 
     if (truncated_pdu)
@@ -205,6 +226,12 @@ static void process_dnp3(const dnp3ProtoConf& config, Packet* p)
 
     if (p->has_tcp_data())
     {
+        // PAF flushed junk before valid frame
+        if (p->dsize < DNP3_MIN_LEN or
+            p->data[0] != DNP3_START_BYTE_1 or p->data[1] != DNP3_START_BYTE_2 or
+            p->data[DNP3_LEN_OFFSET] < DNP3_HEADER_REMAINDER_LEN)
+            return;
+
         ++dnp3_stats.tcp_pdus;
         /* Single PDU. PAF already split them up into separate pseudo-packets. */
         dnp3_full_reassembly(config, dnp3_sess, p,(const uint8_t*)p->data,p->dsize);

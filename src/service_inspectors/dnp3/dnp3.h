@@ -97,6 +97,8 @@
 #define DNP3_OK true
 #define DNP3_FAIL false
 
+#define DNP3_MAX_OCTETS 2920 // using max length of dnp3 packet (DNP3_LPDU_MAX) times 10
+
 struct Dnp3Stats
 {
     PegCount total_packets;

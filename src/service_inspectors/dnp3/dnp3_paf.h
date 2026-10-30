@@ -41,6 +41,8 @@ struct dnp3_paf_data
     uint8_t dnp3_length;
     uint16_t real_length;
     uint8_t zero_length_packets;
+    uint16_t junk_bytes; // junk bytes count since the last valid frame
+    bool junk_pending;   // junk prefix not yet flushed before a start candidate
 };
 
 class Dnp3Splitter : public snort::StreamSplitter
