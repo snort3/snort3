@@ -2,6 +2,10 @@
 
 include::active.txt[]
 
+=== Advanced Logging
+
+include::extractor.txt[]
+
 === AppId
 
 include::appid.txt[]
@@ -96,10 +100,6 @@ include::pop_imap.txt[]
 === Port Scan
 
 include::port_scan.txt[]
-
-=== Advanced Logging
-
-include::extractor.txt[]
 
 === Sensitive Data Filtering
 

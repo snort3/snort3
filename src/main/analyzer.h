@@ -100,6 +100,7 @@ public:
     bool process_rebuilt_packet(snort::Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, uint32_t pktlen);
     void finalize_daq_message(DAQ_Msg_h, DAQ_Verdict);
     void add_to_retry_queue(DAQ_Msg_h, snort::Flow*);
+    void clear_current_daq_message();
 
     // Functions called by analyzer commands
     void start();

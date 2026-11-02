@@ -84,7 +84,6 @@ void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() = default;
 void OopsHandler::tinit() { }
 void OopsHandler::tterm() { }
-void OopsHandler::set_current_message(DAQ_Msg_h, snort::SFDAQInstance*) { }
 uint16_t get_run_num() { return 0; }
 void set_run_num(uint16_t) { }
 void set_instance_id(unsigned) { }
@@ -263,3 +262,16 @@ bool FlowControl::move_to_allowlist(snort::Flow*) { return true; }
 void memory::MemoryCap::thread_init() { }
 void memory::MemoryCap::thread_term() { }
 void memory::MemoryCap::free_space() { }
+
+#ifdef CRASH_MITIGATOR
+#include "mitigator/mitigator_module.h"
+#include "mitigator/mitigator_action_exception.h"
+namespace snort
+{
+THREAD_LOCAL MitigatorStats mitigator_stats;
+bool mitigator_disable() { return false; }
+void handle_block_action(Packet*, const MitigationActionException&) { }
+void handle_drop_action(Packet*, const MitigationActionException&) { }
+void finalize_mitigated_packet(Packet*, const MitigationActionException&) { }
+}
+#endif

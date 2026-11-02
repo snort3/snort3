@@ -1,0 +1,132 @@
+This directory contains all the crash mitigation related classes and APIs.
+Requires `-fnon-call-exceptions`. Enable with `--enable-mitigator`
+(cmake: `ENABLE_CRASH_MITIGATOR`).
+
+NOTE: This feature is experimental and is disabled by default.
+
+Crash mitigation provides an opportunity to take actions according to set rules when Snort
+receives any of the signals below:
+
+* SIGILL
+* SIGABRT
+* SIGBUS
+* SIGFPE
+* SIGSEGV
+
+It performs context analysis, and either skips execution of the current function (Action IGNORE),
+or throws C++ exception to the upper layers, where it's being processed accordingly.
+
+==== API
+
+Both macros are defined in `mitigator_api.h`, which is installed unconditionally
+so plugins always get the header. When `CRASH_MITIGATOR` is not defined, both
+macros compile to zero-cost pass-throughs.
+
+===== Client Module Mitigator
+
+**Configuration**
+
+Set of rules defining actions is represented as Mitigator and is created via:
+
+    SETUP_MITIGATOR(<mitigator_name>, <module_name>, <policies>);
+
+`SETUP_MITIGATOR` creates a mitigation context where:
+
+* `<mitigator_name>` - name of the mitigator that is used to wrap function calls
+* `<module_name>` - name of the existing snort module
+* `<policies>` - set of mitigation policies, that are validated at compile time
+
+Mitigation policy is a definition of a `MitigationAction` and threshold of signals, upon
+reaching of which the respective action would be taken.
+
+Mitigation policies requirements:
+
+* thresholds are non-zero
+* thresholds are in ascending (or equal) order
+* order of actions should be ascending by severity
+* abort action is required
+
+**Actions**
+
+Available MitigationActions (in ascending severity order):
+
+* Ignore: skip the faulting execution and continue processing.
+* Drop: drop the packet and finalize the DAQ message, proceed to the next packet.
+* Block: block/block-list the flow and finalize the DAQ message, proceed to the next packet.
+  Drop and Block are enforced on the wire only in inline mode; see "Inline vs. IDS mode" below.
+* Abort: abort the process.
+
+==== Usage
+
+    void myfunction1(int, int, int);
+    int myfunction2(int, int, int);
+
+    SETUP_MITIGATOR(my_mitigator, "my_module",
+    {
+        MitigationPolicy{ MitigationAction::Ignore, 1u },
+        MitigationPolicy{ MitigationAction::Abort, 2u }
+    });
+
+    auto r = my_mitigator(myfunction2, arg1, arg2, ...);
+    auto r = my_mitigator([](){ return 10; });
+
+==== Packet Mitigator
+
+The `PacketMitigator` wraps `process_packet()` in the Analyzer and is created via:
+
+    SETUP_PACKET_MITIGATOR(<mitigator_name>);
+
+**Exception Propagation**
+
+Packet actions work via exception propagation:
+
+* Mitigator throws `MitigationActionException` if action is Drop/Block, which is caught
+  by `PacketMitigator` in the Analyzer; if IGNORE, generates builtin event in-place.
+* `PacketMitigator` is the catch boundary, it wraps packet processing and finalizes
+  the DAQ message directly.
+* When Block/Drop is triggered, the faulting packet's processing is immediately abandoned —
+  all remaining inspection, detection, and post-processing are skipped.
+* Events queued for the faulting packet are discarded, and the Block/Drop builtin event is
+  logged in-place with the action actually taken (block/drop) regardless of the rule's
+  configured action; rate filtering is ignored for mitigator events (event filters and
+  suppressions still apply).
+* Before throwing, the mitigator marks the packet abandoned, so contexts of rebuilt packets
+  (e.g. reassembled PDUs) released by `DetectionEngine` during stack unwinding discard their
+  queued events instead of logging them. The mark is cleared when the analyzer finalizes
+  the faulting packet.
+
+**Inline vs. IDS Mode**
+
+The Drop/Block DAQ verdict is applied only when the DAQ runs inline. In IDS (passive/tap)
+mode the mitigator finalizes the faulting packet's DAQ message with PASS and logs
+"Mitigator attempted <action> while IDS mode is enabled.":
+
+* Drop: processing of the faulting packet is abandoned, but the packet still reaches its
+  destination. Subsequent packets of the flow are inspected as usual.
+* Block: the faulting packet still reaches its destination. The flow is marked as blocked,
+  so Snort no longer inspects its subsequent packets, but the DAQ keeps passing them; traffic
+  is not blocked on the wire.
+
+In IDS mode the builtin event (logged with force_drop/force_block) and the actions_drop/
+actions_block peg counts still record the mitigator decision, not traffic stopped on the wire.
+
+**Nested Mitigation**
+
+Nested mitigation (a second signal during exception unwinding) is detected and
+falls back to the original crash handler.
+
+==== Configuration
+
+Mitigation is disabled by default. A module is mitigated only when it is explicitly enabled,
+either with `mitigator.modules.<module_name>.enabled = true` or the `mitigator.enable()` command.
+Mitigator contexts are created disabled to match this configuration default.
+
+Mitigator configuration is not reloadable; a reload logs a message and leaves
+the running configuration unchanged.
+
+Per-module `abort_on_flags` can force an abort when a specific action (e.g. Block)
+would otherwise be taken.
+
+WARNING: Client module must ensure objects in its local try/catch block, and
+between the local mitigation and Analyzer do follow RAII approach to support
+correct stack unwinding.

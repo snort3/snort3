@@ -27,6 +27,7 @@
 #include <dlfcn.h>
 
 #include "main/snort_config.h"
+#include "mitigator/mitigator_api.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -519,7 +520,7 @@ static void clear_tp_reinspect(AppIdSession& asd, const Packet* p, AppidSessionD
     }
 }
 
-bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, IpProtocol protocol,
+static bool tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, IpProtocol protocol,
     Packet* p, AppidSessionDirection& direction, AppidChangeBits& change_bits)
 {
     AppId tp_app_id = asd.get_tp_app_id();
@@ -737,3 +738,14 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     return true;
 }
 
+SETUP_MITIGATOR(tp_mitigator, "appid",
+{
+    MitigationPolicy{ MitigationAction::Ignore, 1u },
+    MitigationPolicy{ MitigationAction::Abort, 2u }
+});
+
+bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, IpProtocol protocol,
+    Packet* p, AppidSessionDirection& direction, AppidChangeBits& change_bits)
+{
+    return tp_mitigator(tp_discovery, tp_appid_ctxt, asd, protocol, p, direction, change_bits);
+}

@@ -155,9 +155,13 @@ if (NUMA_FOUND)
 endif()
 
 if (LIBUNWIND_FOUND)
-    # We don't actually use backtrace from libunwind, but it's basically the
-    # only symbol guaranteed to be present.
-    check_library_exists (${LIBUNWIND_LIBRARIES} backtrace "" HAVE_LIBUNWIND)
+    if (APPLE)
+        set (HAVE_LIBUNWIND 1)
+    else ()
+        # We don't actually use backtrace from libunwind, but it's basically the
+        # only symbol guaranteed to be present.
+        check_library_exists (${LIBUNWIND_LIBRARIES} backtrace "" HAVE_LIBUNWIND)
+    endif ()
 endif()
 
 if (SAFEC_FOUND)

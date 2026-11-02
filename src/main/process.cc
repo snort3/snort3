@@ -67,6 +67,10 @@ extern "C" {
 #include <daq.h>
 }
 
+#ifdef CRASH_MITIGATOR
+#include "mitigator/mitigator.h"
+#endif
+
 #include <csignal>
 #include <fstream>
 #include <iostream>
@@ -74,7 +78,7 @@ extern "C" {
 #include "log/messages.h"
 #include "helpers/markup.h"
 #include "helpers/ring.h"
-#include "helpers/sigsafe.h"
+#include "helpers/backtrace.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"   // For NUM_IP_PROTOS
 #include "utils/cpp_macros.h"
@@ -218,105 +222,6 @@ static void child_ready_handler(int /*signal*/)
     child_ready_signal = 1;
 }
 
-#ifdef HAVE_LIBUNWIND
-static void print_backtrace(SigSafePrinter& ssp)
-{
-    int ret;
-
-    // grab the machine context and initialize the cursor
-    unw_context_t context;
-    if ((ret = unw_getcontext(&context)) < 0)
-    {
-        ssp.printf("unw_getcontext failed: %s (%d)\n", unw_strerror(ret), ret);
-        return;
-    }
-
-    unw_cursor_t cursor;
-    if ((ret = unw_init_local(&cursor, &context)) < 0)
-    {
-        ssp.printf("unw_init_local failed: %s (%d)\n", unw_strerror(ret), ret);
-        return;
-    }
-
-    ssp.printf("Backtrace:\n");
-
-    // walk the stack frames
-    unsigned frame_num = 0;
-    bool signal_frame_found = false;
-
-    while ((ret = unw_step(&cursor)) > 0)
-    {
-        if (!signal_frame_found)
-        {
-            if (unw_is_signal_frame(&cursor))
-            {
-                signal_frame_found = true;
-#ifdef __aarch64__
-                // skip __kernel_rt_sigreturn in vDSO for arm
-                continue;
-#endif
-            }
-            else
-                // skip printing any frames until we've found the frame that received the signal
-                continue;
-        }
-
-        unw_word_t pc;
-        if ((ret = unw_get_reg(&cursor, UNW_REG_IP, &pc)) < 0)
-        {
-            ssp.printf("unw_get_reg failed for instruction pointer: %s (%d)\n",
-                    unw_strerror(ret), ret);
-            return;
-        }
-
-
-        ssp.printf("  #%u 0x%x", frame_num, pc);
-
-        char sym[1024];
-        unw_word_t offset;
-        ret = unw_get_proc_name(&cursor, sym, sizeof(sym), &offset);
-        switch (-ret)
-        {
-            case 0:
-                // fallthrough
-            case UNW_ENOMEM:
-                ssp.printf(" in %s+0x%x", sym, offset);
-                break;
-            case UNW_ENOINFO:
-                // fallthrough
-            case UNW_EUNSPEC:
-                // fallthrough
-            default:
-                ssp.printf(" unw_get_proc_name failed: %s (%d)", unw_strerror(ret), ret);
-                break;
-        }
-
-        unw_proc_info_t pip;
-        if ((ret = unw_get_proc_info(&cursor, &pip)) < 0)
-        {
-            ssp.printf(" unw_get_proc_info failed: %s (%d)", unw_strerror(ret), ret);
-        }
-        else
-        {
-            Dl_info dlinfo;
-            if (dladdr((void*) (uintptr_t) (pip.start_ip + offset), &dlinfo)
-                && dlinfo.dli_fname && *dlinfo.dli_fname)
-            {
-                ssp.printf(" (%s @0x%x)", dlinfo.dli_fname, dlinfo.dli_fbase);
-            }
-        }
-
-        ssp.printf("\n");
-
-        frame_num++;
-    }
-    if (ret < 0)
-        ssp.printf("unw_step failed: %s (%d)\n", unw_strerror(ret), ret);
-
-    ssp.printf("\n");
-}
-#endif
-
 static void oops_handler(int signal)
 {
     // First things first, restore the original signal handler.
@@ -365,6 +270,37 @@ static void oops_handler(int signal)
     // Finally, raise the signal so that the original handler can handle it.
     raise(signal);
 }
+
+#if defined(HAVE_SIGACTION) and defined(CRASH_MITIGATOR)
+static void default_crash_handler(int sig, siginfo_t*, void* ctx)
+{
+    if ( mitigator_is_enabled() )
+    {
+        mitigator_save_pre_signal_mask(static_cast<ucontext_t*>(ctx)->uc_sigmask);
+
+        mitigation_handle_signal(sig);
+    }
+    else
+        oops_handler(sig);
+}
+#else
+static void default_crash_handler(int sig)
+{
+#ifdef CRASH_MITIGATOR
+    // best-effort: we do not receive signal mask before signal processing from kernel,
+    // hence subtracting current signal from current mask to achieve similar behavior
+    sigset_t current;
+    pthread_sigmask(SIG_SETMASK, nullptr, &current);
+    sigdelset(&current, sig);
+    mitigator_save_pre_signal_mask(current);
+
+    if ( mitigator_is_enabled() )
+        mitigation_handle_signal(sig);
+    else
+#endif
+        oops_handler(sig);
+}
+#endif
 
 //-------------------------------------------------------------------------
 // access methods
@@ -491,11 +427,34 @@ void install_oops_handler()
 
     int flag = SA_RESTART | (process_alt_signal_stack ? SA_ONSTACK : 0);
 
-    add_signal(SIGILL, oops_handler, flag);
-    add_signal(SIGABRT, oops_handler, flag);
-    add_signal(SIGBUS, oops_handler, flag);
-    add_signal(SIGFPE, oops_handler, flag);
-    add_signal(SIGSEGV, oops_handler, flag);
+#if defined(HAVE_SIGACTION) and defined(CRASH_MITIGATOR)
+    struct sigaction action;
+    sigfillset(&action.sa_mask);
+    action.sa_flags = flag | SA_SIGINFO;
+    action.sa_sigaction = default_crash_handler;
+
+    static const int crash_sigs[] = { SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV };
+    for ( int sig : crash_sigs )
+    {
+        struct sigaction* old_action = nullptr;
+        for ( unsigned i = 0; original_sigactions[i].signal; i++ )
+        {
+            if ( original_sigactions[i].signal == sig )
+            {
+                old_action = &original_sigactions[i].original_sigaction;
+                break;
+            }
+        }
+        if ( sigaction(sig, &action, old_action) != 0 )
+            ErrorMessage("Could not add handler for signal %d: %s (%d)\n", sig, get_error(errno), errno);
+    }
+#else
+    add_signal(SIGILL,  default_crash_handler, flag);
+    add_signal(SIGABRT, default_crash_handler, flag);
+    add_signal(SIGBUS,  default_crash_handler, flag);
+    add_signal(SIGFPE,  default_crash_handler, flag);
+    add_signal(SIGSEGV, default_crash_handler, flag);
+#endif
 }
 
 void init_signals()
@@ -590,7 +549,7 @@ static void snuff_stdio()
     // Redirect stdout to /dev/null
     if (freopen("/dev/null", "w", stdout) == nullptr)
         FatalError("failed to snuff stdout - %s", get_error(errno));
- 
+
     // Redirect stderr to /dev/null
     if (freopen("/dev/null", "w", stderr) == nullptr)
         FatalError("failed to snuff stderr - %s", get_error(errno));

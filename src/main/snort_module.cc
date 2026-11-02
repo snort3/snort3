@@ -164,7 +164,6 @@ static const Command snort_cmds[] =
     { "show_snort_cpu", show_snort_cpu, nullptr, "show snort cpu usage"},
     { "show_snort_packet_latency", show_snort_packet_latency, nullptr, "show snort packet latency data"},
 
-
     { nullptr, nullptr, nullptr, nullptr }
 };
 #endif

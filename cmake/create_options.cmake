@@ -26,6 +26,7 @@ option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
 option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )
 option ( ENABLE_STDLOG "Use file descriptor 3 instead of stdout for alerts" OFF )
 option ( ENABLE_TSC_CLOCK "Use timestamp counter register clock (x86 and arm only)" OFF )
+option ( ENABLE_CRASH_MITIGATOR "Enable crash mitigator support" OFF )
 
 option ( ENABLE_FUZZERS "enable fuzzers" OFF )
 option ( ENABLE_FUZZ_SANITIZER "Enable libFuzzer fuzzer sanitizer builds" OFF )

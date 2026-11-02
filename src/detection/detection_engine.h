@@ -96,6 +96,11 @@ public:
     static int queue_event(unsigned gid, unsigned sid);
 
     static int log_builtin_event(unsigned gid, unsigned sid, int rate_action);
+    static void clear_events(Packet*);
+
+    // while the current packet is abandoned by stack unwinding, contexts released
+    // by ~DetectionEngine discard their queued events instead of logging them
+    static void set_packet_abandoned(bool abandoned = true);
 
     static void disable_all(Packet*);
     static bool all_disabled(Packet*);
@@ -123,7 +128,6 @@ private:
     static void resume_ready_suspends(const IpsContextChain&);
 
     static int log_events(Packet*);
-    static void clear_events(Packet*);
     static void finish_inspect_with_latency(Packet*);
     static void finish_inspect(Packet*, bool inspected);
     static void finish_packet(Packet*, bool flow_deletion = false);

@@ -1,0 +1,21 @@
+add_cpputest(mitigator_finalize_test
+    SOURCES
+        ../mitigator.cc
+        ../mitigator_context_processor.cc
+        ../../detection/detection_engine.cc
+        ../../events/sfeventq.cc
+        $<TARGET_OBJECTS:catch_tests>
+)
+
+add_cpputest(mitigator_context_reuse_test
+    SOURCES
+        ../mitigator.cc
+        ../mitigator_context_processor.cc
+        ../../detection/context_switcher.cc
+        ../../detection/ips_context.cc
+        ../../detection/ips_context_chain.cc
+        ../../detection/ips_context_data.cc
+        ../../detection/detection_engine.cc
+        ../../events/sfeventq.cc
+        $<TARGET_OBJECTS:catch_tests>
+)

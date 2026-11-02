@@ -60,6 +60,7 @@
 using namespace snort;
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
+static THREAD_LOCAL bool packet_abandoned = false;
 bool DetectionEngine::offload_enabled = false;
 
 static unsigned de_pub_id = 0;
@@ -122,6 +123,9 @@ DetectionEngine::~DetectionEngine()
 {
     if ( context == Analyzer::get_switcher()->get_context() )
     {
+        if ( packet_abandoned )
+            clear_events(context->packet);
+
         // finish_packet is called here so that we clear wire packets at the right time
         // FIXIT-L if might not be needed anymore with wire packet checks in finish_packet
         finish_packet(context->packet, true);
@@ -806,6 +810,9 @@ void DetectionEngine::clear_events(Packet* p)
     SF_EVENTQ* pq = p->context->equeue;
     pc.log_limit += sfeventq_reset(pq);
 }
+
+void DetectionEngine::set_packet_abandoned(bool abandoned)
+{ packet_abandoned = abandoned; }
 
 unsigned DetectionEngine::get_pub_id()
 { return de_pub_id; }

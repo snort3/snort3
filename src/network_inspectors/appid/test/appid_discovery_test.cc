@@ -23,9 +23,14 @@
 
 #define APPID_MOCK_INSPECTOR_H // avoiding mocked inspector
 
+#include "detection/detection_engine.h"
 #include "framework/data_bus.h"
 #include "helpers/discovery_filter.h"
 #include "host_tracker/host_cache.h"
+#ifdef CRASH_MITIGATOR
+#include "mitigator/mitigator_types.h"
+#include "mitigator/mitigator_module.h"
+#endif
 #include "network_inspectors/appid/appid_discovery.cc"
 #include "network_inspectors/appid/appid_peg_counts.h"
 #include "packet_io/packet_tracer.h"
@@ -141,6 +146,18 @@ void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
         appid_event->get_change_bitset().to_string().c_str());
     mock().actualCall("publish");
 }
+
+#ifdef CRASH_MITIGATOR
+// Stubs for mitigator
+THREAD_LOCAL MitigatorStats mitigator_stats;
+void create_context(const MitigationConfig&) {}
+static THREAD_LOCAL sigset_t s_pre_signal_mask_stub;
+void mitigator_save_pre_signal_mask(const sigset_t& mask) { s_pre_signal_mask_stub = mask; }
+const sigset_t& mitigator_pre_signal_mask() { return s_pre_signal_mask_stub; }
+void DetectionEngine::set_packet_abandoned(bool) { }
+bool mitigator_disable() { return true; }
+int DetectionEngine::queue_event(unsigned, unsigned) { return 0; }
+#endif
 } // namespace snort
 void AppIdModule::reset_stats() {}
 DiscoveryFilter::~DiscoveryFilter() {}

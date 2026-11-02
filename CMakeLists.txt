@@ -227,4 +227,12 @@ else ()
     Brotli:         OFF")
 endif ()
 
+if (CRASH_MITIGATOR)
+    message("\
+    CrashMitigator: ON")
+else ()
+    message("\
+    CrashMitigator: OFF")
+endif ()
+
 message("-------------------------------------------------------\n")

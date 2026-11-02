@@ -55,6 +55,9 @@
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
+#ifdef CRASH_MITIGATOR
+#include "mitigator/mitigator_module.h"
+#endif
 #include "packet_io/active.h"
 #include "packet_io/active_counts.h"
 #include "packet_io/packet_tracer_module.h"
@@ -74,6 +77,7 @@
 #include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
 #include "trace/trace_module.h"
+
 
 #include "network_module.h"
 #include "snort_config.h"
@@ -434,7 +438,7 @@ static int dump_mp_stats(lua_State* L)
         return 0;
 
     ControlConn* ctrlconn = ControlConn::query_from_lua(L);
-    
+
     auto mod_name = luaL_optstring(L, 1, nullptr);
 
     if (mod_name and strlen(mod_name) == 0)
@@ -452,7 +456,7 @@ static int dump_mp_events(lua_State* L)
         return 0;
 
     ControlConn* ctrlconn = ControlConn::query_from_lua(L);
-    
+
     auto mod_name = luaL_optstring(L, 1, nullptr);
 
     if (mod_name and strlen(mod_name) == 0)
@@ -555,7 +559,7 @@ bool MPDataBusModule::set(const char*, Value& v, SnortConfig*)
         MPDataBus::hold_events = v.get_bool();
     }
 #endif
-    else 
+    else
     {
         WarningMessage("MPDataBus: Unknown parameter '%s' in mp_data_bus module\n", v.get_name());
         return false;
@@ -591,7 +595,7 @@ void MPDataBusModule::sum_stats(bool dump_stats)
 {
     if (get_instance_id() != 0)
         return;
-    
+
     if(SnortConfig::get_conf()->mp_dbus)
     {
         auto stats = SnortConfig::get_conf()->mp_dbus->get_stats_copy();
@@ -934,7 +938,7 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("obfuscate") )
         v.update_mask(sc->output_flags, OUTPUT_FLAG__OBFUSCATE);
-    
+
     else if ( v.is("log_buffered") )
     {
         if ( v.get_bool() )
@@ -2413,6 +2417,9 @@ void add_independent_modules()
 void add_dependent_modules()
 {
     PluginManager::add_module(new TraceModule);
+#ifdef CRASH_MITIGATOR
+    PluginManager::add_module(new MitigatorModule);
+#endif
 }
 
 #ifdef UNIT_TEST

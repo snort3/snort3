@@ -25,6 +25,9 @@ if(DISABLE_TENANT_ID)
     message(STATUS "Tenant ID support in FlowKey is disabled")
 endif()
 
+if(CRASH_MITIGATOR)
+    set(CRASH_MITIGATOR_CPPFLAGS "-DCRASH_MITIGATOR")
+endif()
 
 if(ENABLE_RULE_PROFILER)
     set(RULE_PROFILER_CPPFLAGS "-DENABLE_RULE_PROFILER")

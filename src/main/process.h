@@ -26,7 +26,6 @@
 
 #include "main/snort_types.h"
 
-
 // process oriented services like signal handling, heap info, etc.
 
 enum PigSignal
@@ -76,4 +75,3 @@ void SetNoCores();
 #endif
 
 #endif
-

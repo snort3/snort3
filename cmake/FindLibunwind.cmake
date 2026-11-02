@@ -26,18 +26,30 @@ find_path(LIBUNWIND_INCLUDE_DIRS
     HINTS ${PC_LIBUNWIND_INCLUDE_DIRS}
 )
 
-find_library(LIBUNWIND_LIBRARIES
-    NAMES unwind
-    HINTS ${PC_LIBUNWIND_LIBRARY_DIRS}
-)
+if (APPLE AND LIBUNWIND_INCLUDE_DIRS)
+    # On macOS, libunwind is part of libSystem — no standalone library to find.
+    set(LIBUNWIND_LIBRARIES "" CACHE FILEPATH "libunwind is part of libSystem on macOS" FORCE)
+else ()
+    find_library(LIBUNWIND_LIBRARIES
+        NAMES unwind
+        HINTS ${PC_LIBUNWIND_LIBRARY_DIRS}
+    )
+endif ()
 
 set(LIBUNWIND_VERSION ${PC_LIBUNWIND_VERSION})
 
 include(FindPackageHandleStandardArgs)
 
-find_package_handle_standard_args(Libunwind
-    REQUIRED_VARS LIBUNWIND_LIBRARIES LIBUNWIND_INCLUDE_DIRS
-    VERSION_VAR LIBUNWIND_VERSION
-)
+if (APPLE)
+    find_package_handle_standard_args(Libunwind
+        REQUIRED_VARS LIBUNWIND_INCLUDE_DIRS
+        VERSION_VAR LIBUNWIND_VERSION
+    )
+else ()
+    find_package_handle_standard_args(Libunwind
+        REQUIRED_VARS LIBUNWIND_LIBRARIES LIBUNWIND_INCLUDE_DIRS
+        VERSION_VAR LIBUNWIND_VERSION
+    )
+endif ()
 
 mark_as_advanced(LIBUNWIND_INCLUDE_DIRS LIBUNWIND_LIBRARIES)

@@ -20,8 +20,11 @@
 #ifndef ALT_SIGNAL_STACK_H
 #define ALT_SIGNAL_STACK_H
 
+#include <cerrno>
 #include <csignal>
 #include <cstdint>
+#include <cstring>
+#include <sys/mman.h>
 
 #include "log/messages.h"
 
@@ -35,15 +38,24 @@ static __attribute__((constructor)) size_t get_stack_size()
     return size;
 }
 
-// Each thread requires its own alternate signal stack
-// To avoid rewriting the stack with other threads' data, the alt stack pointer buffer should be THREAD_LOCAL
+// Each thread requires its own alternate signal stack.
+// To avoid rewriting the stack with other threads' data, the alt stack pointer buffer should be THREAD_LOCAL.
 static uint8_t* create_alt_signal_stack()
 {
 #ifndef HAVE_SIGACTION
     return nullptr;
 #else
     const size_t stack_size = get_stack_size();
-    uint8_t* alt_signal_stack = new uint8_t[stack_size];
+    void* p = mmap(nullptr, stack_size, PROT_READ | PROT_WRITE,
+        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+    if (p == MAP_FAILED)
+    {
+        snort::ErrorMessage("Failed to allocate alternate signal stack: %s (%d)\n", strerror(errno), errno);
+        return nullptr;
+    }
+
+    uint8_t* alt_signal_stack = static_cast<uint8_t*>(p);
 
     stack_t ss { };
     ss.ss_sp = alt_signal_stack;
@@ -53,7 +65,7 @@ static uint8_t* create_alt_signal_stack()
     if (sigaltstack(&ss, NULL) != 0)
     {
         snort::ErrorMessage("Failed to initialize alternate signal stack: %s (%d)\n", strerror(errno), errno);
-        delete[] alt_signal_stack;
+        munmap(alt_signal_stack, stack_size);
         alt_signal_stack = nullptr;
     }
 
@@ -71,9 +83,10 @@ static void term_alt_signal_stack(uint8_t*& alt_signal_stack)
 
     stack_t ss { };
     ss.ss_flags = SS_DISABLE;
-    sigaltstack(&ss, nullptr);
+    if (sigaltstack(&ss, nullptr) != 0)
+        return;
 
-    delete[] alt_signal_stack;
+    munmap(alt_signal_stack, get_stack_size());
     alt_signal_stack = nullptr;
 #endif
 }

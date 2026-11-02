@@ -71,6 +71,7 @@ Optional Features:
     --enable-jemalloc-static
                             same as --enable-jemalloc but linked statically
     --disable-tenant-id     disable tenant ID in the FlowKey
+    --enable-mitigator      enable crash mitigator support
     --enable-allowlist-move-on-excess
                             enable stream.allowlist_cache.move_on_excess feature
                             (disabled by default; enable for regression testing)
@@ -379,6 +380,9 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-tenant-id)
             append_cache_entry DISABLE_TENANT_ID        BOOL true
+            ;;
+        --enable-mitigator)
+            append_cache_entry ENABLE_CRASH_MITIGATOR   BOOL true
             ;;
         --enable-allowlist-move-on-excess)
             append_cache_entry ALLOWLIST_MOVE_ON_EXCESS BOOL true

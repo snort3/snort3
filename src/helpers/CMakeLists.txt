@@ -13,6 +13,7 @@ endif ()
 set (HELPERS_INCLUDES
     ${HYPER_HEADERS}
     base64_encoder.h
+    backtrace.h
     ber.h
     bitop.h
     boyer_moore.h
@@ -34,6 +35,7 @@ set (HELPERS_INCLUDES
 add_library (helpers OBJECT
     ${HELPERS_INCLUDES}
     ${HYPER_SOURCES}
+    backtrace.cc
     base64_encoder.cc
     ber.cc
     boyer_moore.cc

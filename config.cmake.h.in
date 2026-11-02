@@ -116,6 +116,8 @@
 #cmakedefine _LARGEFILE_SOURCE 1
 #cmakedefine _FILE_OFFSET_BITS @_FILE_OFFSET_BITS@
 
+/* enable crash mitigator  */
+#cmakedefine CRASH_MITIGATOR 1
 
 /*  System types and their sizes */
 

@@ -59,6 +59,7 @@
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_cap.h"
+#include "mitigator/mitigator_api.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq.h"
@@ -77,12 +78,15 @@
 
 #include "analyzer_command.h"
 #include "oops_handler.h"
+#include "process.h"
 #include "snort.h"
 #include "snort_config.h"
 #include "thread_config.h"
 
 using namespace snort;
 using namespace std;
+
+SETUP_PACKET_MITIGATOR(packet_mitigator);
 
 static MainHook_f main_hook = snort_ignore;
 
@@ -461,7 +465,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 
     PacketManager::decode(p, pkthdr, data, data_len, false, retry);
 
-    if (process_packet(p))
+    if (packet_mitigator(p, process_packet, p))
     {
         post_process_daq_pkt_msg(p);
         switcher->stop();
@@ -543,6 +547,11 @@ void Analyzer::post_process_packet(Packet* p)
     post_process_daq_pkt_msg(p);
     // FIXIT-? There is an assumption that this is being called on the active context...
     switcher->stop();
+}
+
+void Analyzer::clear_current_daq_message()
+{
+    oops_handler->set_current_message(nullptr, nullptr);
 }
 
 void Analyzer::finalize_daq_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
