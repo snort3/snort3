@@ -197,6 +197,8 @@ void HttpInspect::show(const SnortConfig*) const
 #endif
     ConfigLogger::log_limit("max_request_size", params->max_request_size, -1, 0);
     ConfigLogger::log_limit("max_request_line_length", params->max_request_line_length, -1, 0);
+    ConfigLogger::log_limit("maximum_header_value_length",
+        params->maximum_header_value_length, -1, 0);
 
     if (!params->allowed_methods.empty())
     {

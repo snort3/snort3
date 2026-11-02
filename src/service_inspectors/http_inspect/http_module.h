@@ -61,6 +61,7 @@ public:
     int64_t maximum_chunk_length = 0xFFFFFFFF;
     uint16_t maximum_header_length = 4096;
     uint16_t maximum_headers = 200;
+    int32_t maximum_header_value_length = 0;
     int32_t max_request_size = 0;
     int32_t max_request_line_length = 0;
     uint16_t maximum_pipelined_requests = 99;
@@ -227,6 +228,7 @@ public:
 private:
     static const snort::Parameter http_params[];
     static const snort::RuleMap http_events[];
+    // cppcheck-suppress duplInheritedMember ; http_inspect configuration, unrelated to Module's parameter table
     HttpParaList* params = nullptr;
     static const PegInfo peg_names[];
     static THREAD_LOCAL snort::ProfileStats http_profile;

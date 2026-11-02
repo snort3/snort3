@@ -86,6 +86,10 @@ const Parameter HttpModule::http_params[] =
     { "maximum_headers", Parameter::PT_INT, "0:65535", "200",
       "alert when the number of headers in a message exceeds this value" },
 
+    { "maximum_header_value_length", Parameter::PT_INT, "-1:32768", "0",
+      "alert when the length of a header value other than Cookie and Set-Cookie exceeds "
+      "this value (0 disabled, -1 no limit)" },
+
     { "maximum_pipelined_requests", Parameter::PT_INT, "0:99", "99",
       "alert when the number of pipelined requests exceeds this value" },
 
@@ -301,6 +305,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("maximum_headers"))
     {
         params->maximum_headers = val.get_uint16();
+    }
+    else if (val.is("maximum_header_value_length"))
+    {
+        params->maximum_header_value_length = val.get_int32();
     }
     else if (val.is("maximum_pipelined_requests"))
     {

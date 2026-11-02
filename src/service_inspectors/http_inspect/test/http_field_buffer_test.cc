@@ -201,6 +201,7 @@ TEST(http_field_buffer_wire_domain_test, reports_only_snapshot_supported_tmp_buf
     CHECK(is_wire_reportable_buffer(DETAIL_119_299));
     CHECK(is_wire_reportable_buffer(DETAIL_119_300));
     CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_301));
+    CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_302));
     CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_304));
     CHECK_FALSE(is_wire_reportable_buffer(DETAIL_119_305));
 }
@@ -245,6 +246,8 @@ TEST(http_field_buffer_wire_domain_test, returns_field_null_for_snapshot_unsuppo
         nullptr, nullptr, &snap);
     const Field& detail_301 = get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_301),
         nullptr, nullptr, &snap);
+    const Field& detail_302 = get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_302),
+        nullptr, nullptr, &snap);
     const Field& detail_305 = get_http_tmp_buffer(HttpBufferInfo(DETAIL_119_305),
         nullptr, nullptr, &snap);
 
@@ -252,6 +255,7 @@ TEST(http_field_buffer_wire_domain_test, returns_field_null_for_snapshot_unsuppo
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_20);
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_287);
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_301);
+    POINTERS_EQUAL(&Field::FIELD_NULL, &detail_302);
     POINTERS_EQUAL(&Field::FIELD_NULL, &detail_305);
 }
 

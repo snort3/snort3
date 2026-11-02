@@ -66,6 +66,7 @@ struct HttpTmpBufferCache
                 slot->clear();
         }
         decoded_path.reset();
+        long_value_header.reset();
         unsafe_header.reset();
         malformed_header.reset();
     }
@@ -74,6 +75,9 @@ struct HttpTmpBufferCache
 
     // Sidecar for decoded URI path (paired with HTTP_BUFFER_DECODED_URI slot).
     Field decoded_path;
+
+    // Raw header line used to materialize DETAIL_119_302.
+    Field long_value_header;
 
     // Raw header line used to materialize DETAIL_119_304.
     Field unsafe_header;

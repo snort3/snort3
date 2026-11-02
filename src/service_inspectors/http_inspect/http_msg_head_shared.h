@@ -119,6 +119,8 @@ private:
 
     void raise_malformed_header(const Field& malformed_line);
 
+    void raise_max_header_value_length(int32_t value_length, const Field& long_line);
+
     void raise_unsafe_header(const Field& raw_header);
 
     Field classic_raw_header;    // raw headers with cookies spliced out

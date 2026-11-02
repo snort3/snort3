@@ -100,9 +100,29 @@ void HttpMsgHeadShared::create_norm_head_list()
     // This function does not do the actual JIT normalization of header values. It converts the
     // header names into numeric IDs and creates a linked list of all the different headers that
     // are present in the message along with the number of times each one appears.
+    const int32_t max_value_length = params->maximum_header_value_length;
+
     for (int j=0; j < num_headers; j++)
     {
         derive_header_name_id(j);
+
+        if (max_value_length > 0 and get_inspection_section() == PS_HEADER and
+            header_value[j].length() > max_value_length and
+            header_name_id[j] != HEAD_COOKIE and header_name_id[j] != HEAD_SET_COOKIE)
+        {
+            const uint8_t* value = header_value[j].start();
+            int32_t begin = 0;
+            int32_t end = header_value[j].length();
+            while (begin < end and is_sp_tab[value[begin]])
+                begin++;
+            while (end > begin and is_sp_tab[value[end - 1]])
+                end--;
+
+            // cppcheck-suppress knownConditionTrueFalse ; result depends on packet contents
+            if (end - begin > max_value_length)
+                raise_max_header_value_length(end - begin, header_line[j]);
+        }
+
         if (header_name_id[j] > 0)
         {
             if (headers_present[header_name_id[j]])
@@ -560,6 +580,32 @@ void HttpMsgHeadShared::raise_malformed_header(const Field& malformed_line)
     tmp_cache.malformed_header.set(malformed_line);
 
     create_event(EVENT_MALFORMED_HEADER);
+}
+
+void HttpMsgHeadShared::raise_max_header_value_length(int32_t value_length,
+    const Field& long_line)
+{
+    constexpr auto slot_index = get_tmp_buffer_index<DETAIL_119_302>();
+
+    auto& tmp_cache = HttpContextData::get_tmp_buffers();
+    auto& slot_ptr = tmp_cache.tmp_bufs[slot_index];
+
+    if (!slot_ptr)
+        slot_ptr = std::make_unique<HttpTmpBuffer>();
+
+    auto& slot = *slot_ptr;
+
+    if (slot.num != 0)
+        return;
+
+    slot.num = value_length;
+    slot.text.clear();
+    slot.field.reset();
+    tmp_cache.long_value_header.set(long_line);
+
+    HttpModule::increment_peg_counts(PEG_MAX_HEADER_VALUE_EXCEEDED);
+
+    create_event(EVENT_MAX_HEADER_VALUE_LENGTH);
 }
 
 #if defined(REG_TEST) || defined(UNIT_TEST)

@@ -691,6 +691,29 @@ static void compute_detail_119_301(const HttpBufferSource& src, HttpTmpBufferCac
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
 
+static void compute_detail_119_302(const HttpBufferSource&, HttpTmpBufferCache& tmp_cache,
+    HttpTmpBuffer& slot, const HttpBufferInfo&)
+{
+    // EVENT_MAX_HEADER_VALUE_LENGTH
+    // Header Value Size: XXX, Header Detail: <escaped header bytes>
+    constexpr int32_t MAX_HEADER_VALUE_LOG_LEN = 256;
+    const Field& header_line = tmp_cache.long_value_header;
+
+    if (header_line.length() <= 0)
+        slot.text = "No header detail available";
+    else
+    {
+        slot.text = "Header Value Size: " + std::to_string(slot.num) + ", Header Detail: ";
+        const int32_t detail_budget =
+            MAX_HEADER_VALUE_LOG_LEN - static_cast<int32_t>(slot.text.length());
+        append_header_detail(slot.text, header_line.start(), header_line.length(),
+            std::max(detail_budget, 0));
+    }
+
+    slot.field.set(static_cast<int32_t>(slot.text.length()),
+        reinterpret_cast<const uint8_t*>(slot.text.c_str()));
+}
+
 static void compute_detail_119_304(const HttpBufferSource&, HttpTmpBufferCache& tmp_cache,
     HttpTmpBuffer& slot, const HttpBufferInfo&)
 {
@@ -788,6 +811,7 @@ static const TmpBufferDescriptor tmp_buffer_desc[HTTP_TMP_BUFFER_CNT] =
     { compute_detail_119_299,       true  }, // DETAIL_119_299
     { compute_detail_119_300,       true  }, // DETAIL_119_300
     { compute_detail_119_301,       false }, // DETAIL_119_301
+    { compute_detail_119_302,       false }, // DETAIL_119_302
     { compute_detail_119_304,       false }, // DETAIL_119_304
     { compute_detail_119_305,       false }, // DETAIL_119_305
     { compute_detail_119_306,       false }, // DETAIL_119_306

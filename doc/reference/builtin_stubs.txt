@@ -1324,6 +1324,12 @@ line termination.
 A message header contains a negative Content-Length value, or both a Content-Length and
 a Transfer-Encoding header where that combination is not allowed.
 
+119:302
+
+The length of a single header field value exceeds the configured
+maximum_header_value_length. Cookie and Set-Cookie header values are not
+checked.
+
 119:304
 
 An HTTP request or response header contains a name byte outside the HTTP token character
