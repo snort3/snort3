@@ -36,7 +36,6 @@
 static THREAD_LOCAL OopsHandler* local_oops_handler = nullptr;
 static THREAD_LOCAL uint8_t* oops_alt_signal_stack = nullptr;
 
-// cppcheck-suppress unusedFunction ; called from process.cc in another translation unit
 void OopsHandler::handle_crash(int fd)
 {
     if (local_oops_handler)

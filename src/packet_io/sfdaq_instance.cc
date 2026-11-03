@@ -210,7 +210,6 @@ DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned max_recv)
     return rstat;
 }
 
-// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int SFDAQInstance::finalize_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
 {
     if ( !msg )
