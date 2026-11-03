@@ -30,6 +30,7 @@
 
 using namespace snort;
 
+// cppcheck-suppress [syntaxError, unmatchedSuppression] ; Catch2 TEST_CASE is configuration-dependent
 TEST_CASE("BerReader::read rejects length that overflows cursor position", "[ber]")
 {
     const uint8_t buf[] = { 0x80, 0x84, 0xFF, 0xFF, 0xFF, 0xFF };
