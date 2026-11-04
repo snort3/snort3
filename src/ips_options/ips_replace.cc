@@ -94,34 +94,34 @@ public:
     bool is_relative() override
     { return true; }
 
-    void store(int off)
-    { offset[get_instance_id()] = off; }
+    void store(const uint8_t* at)
+    { match[get_instance_id()] = at; }
 
     bool pending()
-    { return offset[get_instance_id()] >= 0; }
+    { return match[get_instance_id()] != nullptr; }
 
-    int pos()
-    { return offset[get_instance_id()]; }
+    const uint8_t* pos()
+    { return match[get_instance_id()]; }
 
 private:
     string repl;
-    int* offset; /* >=0 is offset to start of replace */
+    const uint8_t** match; /* non-null is the start of the replace in the packet */
 };
 
 ReplaceOption::ReplaceOption(const string& s) : IpsOption(s_name)
 {
     unsigned n = ThreadConfig::get_instance_max();
-    offset = new int[n];
+    match = new const uint8_t*[n];
 
     for ( unsigned i = 0; i < n; i++ )
-        offset[i] = -1;
+        match[i] = nullptr;
 
     repl = s;
 }
 
 ReplaceOption::~ReplaceOption()
 {
-    delete[] offset;
+    delete[] match;
 }
 
 uint32_t ReplaceOption::hash() const
@@ -164,22 +164,30 @@ IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
         return NO_MATCH;
 
     if ( replace_ok(p->context->conf) )
-        store(c.get_pos() - repl.size());
+        store(c.start() - repl.size());
     else
-        store(-1);
+        store(nullptr);
 
     return MATCH;
 }
 
-void ReplaceOption::action(Packet*)
+void ReplaceOption::action(Packet* p)
 {
     RuleProfile profile(replacePerfStats);
 
-    if ( pending() )
-    {
-        DetectionEngine::add_replacement(repl, (unsigned)pos());
-        store(-1);
-    }
+    if ( !pending() )
+        return;
+
+    const uint8_t* at = pos();
+    store(nullptr);
+
+    // the deferred rewrite resolves this against p->data as it stands now; an
+    // ip rule also matches under each IP layer's own payload view, and a match
+    // found in one of those is not in the buffer the rewrite writes into
+    if ( at < p->data or at >= p->data + p->dsize )
+        return;
+
+    DetectionEngine::add_replacement(repl, at - p->data);
 }
 
 //-------------------------------------------------------------------------
