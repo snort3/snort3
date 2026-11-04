@@ -28,8 +28,6 @@
 #include "application_ids.h"
 #include "pub_sub/domain_fronting.h"
 
-enum class IpProtocol : uint8_t;
-
 class AppIdContext;
 class AppIdSession;
 

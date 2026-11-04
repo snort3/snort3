@@ -61,6 +61,26 @@ enum class LRUType : std::uint8_t
     MAX
 };
 
+enum class IpProtocol : uint8_t;
+
+static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
+{
+    switch (proto)
+    {
+    case IpProtocol::TCP:
+        return PktType::TCP;
+    case IpProtocol::UDP:
+        return PktType::UDP;
+    case IpProtocol::ICMPV4:
+        return PktType::ICMP;
+    case IpProtocol::IP:
+        return PktType::IP;
+    default:
+        break;
+    }
+    return PktType::NONE;
+}
+
 // the first several of these bits must map to PktType
 // eg PROTO_BIT__IP == BIT(PktType::IP), etc.
 #define PROTO_BIT__NONE             0x000000

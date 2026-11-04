@@ -35,12 +35,6 @@ using namespace std;
 
 static bool handle_protocol(const SshEvent& event, SshAppIdInfo* fd)
 {
-    // FIXIT-L
-    // There isn't any real specification on what separates the vendor name from version number. It
-    // seems to usually be an underscore or dash, but there are some clients where this pattern
-    // isn't followed. For example, in the Bitvise SSH client, the version string has the version
-    // number first, separated by a space from the subsequent client identification. Parsing may
-    // need to be enhanced to handle unusual version strings for new client apps.
     const string& protocol = event.get_version_str();
 
     const char* vendor_begin = strchr(protocol.c_str() + sizeof(SSH_BANNER) - 1, '-');

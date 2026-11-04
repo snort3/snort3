@@ -226,25 +226,6 @@ AppIdSession::~AppIdSession()
     inspector.rem_ref();
 }
 
-// FIXIT-RC X Move this to somewhere more generally available/appropriate (decode_data.h).
-static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
-{
-    switch (proto)
-    {
-    case IpProtocol::TCP:
-        return PktType::TCP;
-    case IpProtocol::UDP:
-        return PktType::UDP;
-    case IpProtocol::ICMPV4:
-        return PktType::ICMP;
-    case IpProtocol::IP:
-        return PktType::IP;
-    default:
-        break;
-    }
-    return PktType::NONE;
-}
-
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
     SnortProtocolId snort_protocol_id, OdpContext& odp_ctxt, bool swap_app_direction,
@@ -266,9 +247,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
         (InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     assert(inspector);
 
-    // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
-
-    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector, odp_ctxt,
+    AppIdSession* asd = new AppIdSession(proto, cliIp, cliPort, *inspector, odp_ctxt,
         ctrlPkt->pkth->address_space_id
 #ifndef DISABLE_TENANT_ID
         ,ctrlPkt->pkth->tenant_id
@@ -291,7 +270,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     {
         sfip_ntop(cliIp, src_ip, sizeof(src_ip));
         sfip_ntop(srvIp, dst_ip, sizeof(dst_ip));
-        	APPID_LOG(ctrlPkt, TRACE_DEBUG_LEVEL, "Related flow created for %s-%u -> %s-%u %u\n",
+        APPID_LOG(ctrlPkt, TRACE_DEBUG_LEVEL, "Related flow created for %s-%u -> %s-%u %u\n",
             src_ip, (unsigned)cliPort, dst_ip, (unsigned)srvPort, (unsigned)proto);
         asd->in_expected_cache = true;
     }
