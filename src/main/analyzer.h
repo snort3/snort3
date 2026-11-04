@@ -69,6 +69,7 @@ public:
         STARTED,
         RUNNING,
         PAUSED,
+        STOPPING,
         STOPPED,
         FAILED,
         NUM_STATES
@@ -118,7 +119,14 @@ public:
     bool is_idling() const
     { return idling; }
 
+    // Fully paused means PAUSED with no queued, running, or delayed commands.
+    bool is_fully_paused() const;
+
 private:
+#ifdef UNIT_TEST_BUILD
+    friend class AnalyzerTestAccess;
+#endif
+
     void analyze();
     bool handle_command();
     void handle_commands();
@@ -135,6 +143,7 @@ private:
     void term();
     void show_source();
     void add_command_to_uncompleted_queue(snort::AnalyzerCommand*);
+    void finish_command();
     void add_command_to_completed_queue(snort::AnalyzerCommand*);
 
 private:
@@ -155,8 +164,9 @@ private:
     RetryQueue* retry_queue;
     OopsHandler* oops_handler;
     ContextSwitcher* switcher = nullptr;
-    std::mutex pending_work_queue_mutex;
+    mutable std::mutex pending_work_queue_mutex;
     std::queue<snort::AnalyzerCommand*> pending_work_queue;
+    unsigned unfinished_commands = 0;
     std::list<UncompletedAnalyzerCommand*> uncompleted_work_queue;
     std::queue<snort::AnalyzerCommand*> completed_work_queue;
     std::mutex completed_work_queue_mutex;

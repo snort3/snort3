@@ -24,9 +24,13 @@
 
 // This provides a wrapper to start/stop file service
 
+#include <cstdint>
+
 #include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "mime/file_mime_config.h"
+
+#include "file_api.h"
 
 class FileEnforcer;
 class FileCache;
@@ -39,6 +43,23 @@ namespace stats
 class Builder;
 struct Group;
 }
+
+enum class FileCacheClearStatus : uint8_t
+{
+    READY = 0,
+    MULTIPROCESS,
+    UNAVAILABLE,
+    NOT_INITIALIZED,
+    PACKET_THREADS_BUSY,
+};
+
+// A per-command result is returned instead of changing file pegs: the sweep
+// runs on the main thread, while file_counts is packet-thread local.
+struct FileCacheClearResult
+{
+    FileCacheClearStatus status = FileCacheClearStatus::UNAVAILABLE;
+    FileCacheClearReport report;
+};
 
 class SO_PUBLIC FileService
 {
@@ -68,6 +89,11 @@ public:
     static int64_t get_max_file_depth(FileConfig* = nullptr);
     static void set_max_file_depth(const SnortConfig*);
     static void collect_cache_usage(stats::Builder&, stats::Group&);
+
+    // Cache entries can be freed only in a single-process configuration when
+    // every packet thread is fully paused. The status check does not modify the cache.
+    static FileCacheClearStatus get_file_cache_clear_status();
+    static FileCacheClearResult clear_file_cache();
 
     static FileCache* get_file_cache() { return file_cache; }
     static DecodeConfig decode_conf;

@@ -52,6 +52,9 @@ int show_snort_packet_latency(lua_State* = nullptr);
 
 int convert_counter_type(const char* type);
 
+// Main-thread only. True when every live packet thread is fully paused.
+bool main_packet_threads_fully_paused();
+
 #ifdef SHELL
 int main_detach(lua_State* = nullptr);
 int main_dump_inspector_map(lua_State* = nullptr);
@@ -62,4 +65,3 @@ int main_show_plugins(lua_State* = nullptr);
 void main_poke(unsigned);
 
 #endif
-

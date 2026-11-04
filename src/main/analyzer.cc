@@ -582,7 +582,8 @@ void Analyzer::set_state(State s)
 {
     state = s;
     main_poke(id);
-    ThreadConfig::update_thread_status(s == State::RUNNING);
+    const bool watchdog_active = s == State::RUNNING or s == State::STOPPING;
+    ThreadConfig::update_thread_status(watchdog_active);
 }
 
 const char* Analyzer::get_state_string()
@@ -596,6 +597,7 @@ const char* Analyzer::get_state_string()
         case State::STARTED:     return "STARTED";
         case State::RUNNING:     return "RUNNING";
         case State::PAUSED:      return "PAUSED";
+        case State::STOPPING:    return "STOPPING";
         case State::STOPPED:     return "STOPPED";
         case State::FAILED:      return "FAILED";
         default: assert(false);
@@ -895,6 +897,13 @@ void Analyzer::execute(AnalyzerCommand* ac)
         daq_instance->interrupt();
 }
 
+bool Analyzer::is_fully_paused() const
+{
+    std::lock_guard<std::mutex> lock(pending_work_queue_mutex);
+    return pending_work_queue.empty() and unfinished_commands == 0 and
+        state.load() == State::PAUSED;
+}
+
 bool Analyzer::handle_command()
 {
     AnalyzerCommand* ac = nullptr;
@@ -904,6 +913,7 @@ bool Analyzer::handle_command()
     {
         ac = pending_work_queue.front();
         pending_work_queue.pop();
+        ++unfinished_commands;
     }
     pending_work_queue_mutex.unlock();
 
@@ -911,11 +921,22 @@ bool Analyzer::handle_command()
         return false;
 
     if ( ac->execute(*this) )
+    {
         add_command_to_completed_queue(ac);
+        finish_command();
+    }
     else
         add_command_to_uncompleted_queue(ac);
 
     return true;
+}
+
+void Analyzer::finish_command()
+{
+    std::lock_guard<std::mutex> lock(pending_work_queue_mutex);
+    assert(unfinished_commands > 0);
+    if ( unfinished_commands > 0 )
+        --unfinished_commands;
 }
 
 void Analyzer::add_command_to_uncompleted_queue(AnalyzerCommand* aci)
@@ -953,6 +974,7 @@ void Analyzer::handle_uncompleted_commands()
             add_command_to_completed_queue(cac->command);
             it = uncompleted_work_queue.erase(it);
             delete cac;
+            finish_command();
         }
         else
             ++it;
@@ -1007,8 +1029,7 @@ DAQ_RecvStatus Analyzer::process_messages()
 
     if (exit_after_cnt && (exit_after_cnt -= num_recv) == 0)
         stop();
-
-    if (pause_after_cnt && (pause_after_cnt -= num_recv) == 0)
+    else if (pause_after_cnt && (pause_after_cnt -= num_recv) == 0)
         pause();
     return rstat;
 }
@@ -1103,6 +1124,7 @@ void Analyzer::run(bool paused)
 
 void Analyzer::stop()
 {
+    set_state(State::STOPPING);
     exit_requested = true;
 }
 

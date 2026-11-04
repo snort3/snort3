@@ -204,7 +204,7 @@ public:
     bool is_cache_dup() const { return cache_dup; }
     void set_limit_excluded() { limit_excluded = true; }
     bool is_limit_excluded() const { return limit_excluded; }
-    bool segments_queued() { return (file_segments != nullptr); }
+    bool segments_queued() const { return (file_segments != nullptr); }
 
     // Configuration functions
     void remove_segments();

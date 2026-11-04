@@ -29,6 +29,7 @@
 #include "sfip/sf_ip.h"
 #include "utils/cpp_macros.h"
 
+#include "file_api.h"
 #include "file_config.h"
 
 class ControlConn;
@@ -81,6 +82,10 @@ public:
 
     void dump_cache(ControlConn*, unsigned max_entries);
     void dump_cache_entry(ControlConn*, const std::string& sha_hex);
+    // Free every cache entry.
+    // PRECONDITION: every packet thread is fully paused and this is a
+    // single-process configuration.
+    snort::FileCacheClearReport clear();
 
 private:
     void make_key(snort::Flow*, uint64_t file_id, FileHashKey&) const;
@@ -108,4 +113,3 @@ private:
 };
 
 #endif
-

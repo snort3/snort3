@@ -42,6 +42,7 @@
 #include "main/snort_config.h"
 #include "main/snort_module.h"
 #include "main/swapper.h"
+#include "main/thread.h"
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
@@ -320,6 +321,25 @@ void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target,  ControlC
         orphan_commands.push(ac);
 }
 #endif
+
+bool main_packet_threads_fully_paused()
+{
+    if ( !in_main_thread() or !pigs )
+        return false;
+
+    for ( unsigned i = 0; i < max_pigs; ++i )
+    {
+        Analyzer* analyzer = pigs[i].analyzer;
+
+        if ( !analyzer )
+            continue;
+
+        if ( !analyzer->is_fully_paused() )
+            return false;
+    }
+
+    return true;
+}
 
 int main_dump_stats(lua_State* L)
 {

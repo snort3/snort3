@@ -23,6 +23,7 @@
 
 #include "file_cache.h"
 
+#include <cassert>
 #include <cinttypes>
 #include <cstring>
 
@@ -46,7 +47,6 @@
 #include "file_flows.h"
 #include "file_inspect.h"
 #include "file_module.h"
-#include "file_service.h"
 #include "file_stats.h"
 
 #define DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM 3600    // 1 hour
@@ -452,6 +452,32 @@ void FileCache::publish_flow_verdict_locked(const FileHashKey& key, int64_t time
     {
         node->set_file_data(nullptr);
     }
+}
+
+FileCacheClearReport FileCache::clear()
+{
+    FileCacheClearReport report;
+
+    std::lock_guard<std::mutex> lock(cache_mutex);
+
+    if ( !fileHash )
+        return report;
+
+    // XHash::clear_hash() also resets the configured cache capacity.
+    HashNode* hnode = fileHash->find_first_node();
+
+    while ( hnode )
+    {
+        HashNode* current = hnode;
+        // Find the next entry before removing the current one.
+        hnode = fileHash->find_next_node();
+
+        fileHash->release_node(current);
+        ++report.freed;
+    }
+
+    report.remaining = fileHash->get_num_nodes();
+    return report;
 }
 
 void FileCache::take_pending_file_data(Flow* flow, uint64_t file_id, FileInfo* dst)
@@ -1106,3 +1132,156 @@ void FileCache::dump_cache_entry(ControlConn* ctrlcon, const std::string& sha_he
             LogRespond(ctrlcon, "Host: %s\n", row.host.c_str());
     }
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+static FileHashKey ut_make_key(uint64_t file_id)
+{
+    FileHashKey key{};
+    key.file_id = file_id;
+    return key;
+}
+
+static FileContext* ut_add(FileCache& cache, uint64_t file_id)
+{
+    bool cache_full = false;
+    int64_t cache_expire = 0;
+    return cache.add(ut_make_key(file_id), 60, cache_full, cache_expire, true);
+}
+
+TEST_CASE("file cache clear: all entries are freed", "[file_cache]")
+{
+    FileCache cache(16);
+
+    FileContext* unknown_entry = ut_add(cache, 1);
+    REQUIRE(unknown_entry != nullptr);
+    REQUIRE(unknown_entry->verdict == FILE_VERDICT_UNKNOWN);
+
+    FileContext* pending_entry = ut_add(cache, 2);
+    REQUIRE(pending_entry != nullptr);
+    pending_entry->verdict = FILE_VERDICT_PENDING;
+
+    FileContext* logged_entry = ut_add(cache, 3);
+    REQUIRE(logged_entry != nullptr);
+    logged_entry->verdict = FILE_VERDICT_LOG;
+
+    FileContext* entry_with_user_data = ut_add(cache, 4);
+    REQUIRE(entry_with_user_data != nullptr);
+    entry_with_user_data->set_file_data(new UserFileDataBase);
+
+    const FileCacheClearReport report = cache.clear();
+    CHECK(report.freed == 4);
+    CHECK(report.remaining == 0);
+    CHECK(cache.get_num_entries() == 0);
+}
+
+TEST_CASE("file cache clear: entry with capture is freed", "[file_cache]")
+{
+    FileConfig config;
+    FileCache cache(16);
+
+    FileContext* file = ut_add(cache, 1);
+    REQUIRE(file != nullptr);
+    file->verdict = FILE_VERDICT_LOG;
+    file->set_config(&config);
+    REQUIRE(file->process_file_capture(nullptr, 0, SNORT_FILE_FULL) == FILE_CAPTURE_SUCCESS);
+
+    const FileCacheClearReport report = cache.clear();
+    CHECK(report.freed == 1);
+    CHECK(report.remaining == 0);
+    CHECK(cache.get_num_entries() == 0);
+}
+
+TEST_CASE("file cache clear: entry with queued segments is freed", "[file_cache]")
+{
+    FileCache cache(16);
+
+    FileContext* file = ut_add(cache, 1);
+    REQUIRE(file != nullptr);
+    file->verdict = FILE_VERDICT_LOG;
+    file->set_file_size(16);
+    const uint8_t data = 0;
+    REQUIRE(file->process(nullptr, &data, 1, 8, nullptr));
+    REQUIRE(file->segments_queued());
+
+    const FileCacheClearReport report = cache.clear();
+    CHECK(report.freed == 1);
+    CHECK(report.remaining == 0);
+    CHECK(cache.get_num_entries() == 0);
+}
+
+TEST_CASE("file cache clear: configured capacity is preserved", "[file_cache]")
+{
+    const int64_t max_files = 4;
+    FileCache cache(max_files);
+
+    for ( uint64_t i = 1; i <= (uint64_t)max_files; ++i )
+    {
+        FileContext* file = ut_add(cache, i);
+        REQUIRE(file != nullptr);
+        file->verdict = FILE_VERDICT_LOG;
+    }
+
+    REQUIRE(cache.clear().freed == (uint64_t)max_files);
+
+    for ( uint64_t i = 100; i < 100 + (uint64_t)max_files; ++i )
+    {
+        FileContext* file = ut_add(cache, i);
+        REQUIRE(file != nullptr);
+    }
+
+    CHECK(cache.get_num_entries() == max_files);
+}
+
+TEST_CASE("file cache clear: empty cache stays empty", "[file_cache]")
+{
+    FileCache cache(16);
+    const FileCacheClearReport report = cache.clear();
+
+    CHECK(report.freed == 0);
+    CHECK(report.remaining == 0);
+}
+
+TEST_CASE("file cache clear: re-add creates a fresh entry", "[file_cache]")
+{
+    FileCache cache(16);
+
+    FileContext* first = ut_add(cache, 42);
+    REQUIRE(first != nullptr);
+    first->verdict = FILE_VERDICT_BLOCK;
+
+    REQUIRE(cache.clear().freed == 1);
+
+    FileContext* second = ut_add(cache, 42);
+    REQUIRE(second != nullptr);
+    CHECK(second->verdict == FILE_VERDICT_UNKNOWN);
+    CHECK(cache.get_num_entries() == 1);
+}
+
+TEST_CASE("file cache clear: owned copy remains valid", "[file_cache]")
+{
+    FileCache cache(16);
+    FileContext* source = ut_add(cache, 1);
+    REQUIRE(source != nullptr);
+    source->set_file_name("evil.exe", 8);
+    source->set_url("http://example.com/evil.exe", 27);
+    source->verdict = FILE_VERDICT_BLOCK;
+
+    FileContext copy;
+    copy.copy(*source, false);
+
+    REQUIRE(cache.clear().freed == 1);
+
+    CHECK(copy.get_file_name() == "evil.exe");
+    CHECK(copy.get_url() == "http://example.com/evil.exe");
+    CHECK(copy.verdict == FILE_VERDICT_BLOCK);
+    CHECK(copy.get_file_data() == nullptr);
+}
+
+#endif

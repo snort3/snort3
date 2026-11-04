@@ -118,6 +118,12 @@ namespace snort
 #define FILE_ID_MAX          1024
 typedef std::bitset<FILE_ID_MAX> FileTypeBitSet;
 
+struct FileCacheClearReport
+{
+    uint64_t freed = 0;
+    uint64_t remaining = 0;
+};
+
 class FileContext;
 class FileInfo;
 class Flow;

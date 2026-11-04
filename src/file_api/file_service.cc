@@ -31,6 +31,7 @@
 
 #include "log/log_stats.h"
 #include "log/messages.h"
+#include "main.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "mime/file_mime_process.h"
@@ -80,6 +81,38 @@ void FileService::collect_cache_usage(stats::Builder& builder, stats::Group& gro
     const auto entries = file_cache->get_num_entries();
     if (entries > 0)
         builder.counter(group, "File cache entries", static_cast<uint64_t>(entries));
+}
+
+FileCacheClearStatus FileService::get_file_cache_clear_status()
+{
+    // Pausing this process cannot stop cache writes from another process.
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if ( !sc )
+        return FileCacheClearStatus::UNAVAILABLE;
+
+    if ( sc->max_procs != 1 or sc->mp_dbus )
+        return FileCacheClearStatus::MULTIPROCESS;
+
+    if ( !file_cache )
+        return FileCacheClearStatus::NOT_INITIALIZED;
+
+    // Packet threads can still use pointers to entries after a cache lookup.
+    // Freeing entries is safe only when every packet thread is fully paused.
+    if ( !main_packet_threads_fully_paused() )
+        return FileCacheClearStatus::PACKET_THREADS_BUSY;
+
+    return FileCacheClearStatus::READY;
+}
+
+FileCacheClearResult FileService::clear_file_cache()
+{
+    FileCacheClearResult result;
+    result.status = get_file_cache_clear_status();
+
+    if ( result.status == FileCacheClearStatus::READY )
+        result.report = file_cache->clear();
+
+    return result;
 }
 
 void FileService::post_init()
