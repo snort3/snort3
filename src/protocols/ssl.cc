@@ -923,10 +923,10 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
         if (!cert)
             break;
 
-        cert_subject = X509_get_subject_name(cert);
+        // Open SSL 4.0 updated API; cert_subject is kept non-const to satisfy OpenSSL 3.0
+        cert_subject = const_cast<X509_NAME*>(X509_get_subject_name(cert));
         cert_issuer = X509_get_issuer_name(cert);
 
-        // cppcheck-suppress knownConditionTrueFalse ; values come from the parsed certificate
         if (!cert_subject and !cert_issuer)
         {
             X509_free(cert);

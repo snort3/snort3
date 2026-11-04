@@ -44,9 +44,10 @@ static int g_test_asn1_len = 0;
 static char g_mock_mem[64];
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
-X509_NAME *X509_get_subject_name(const X509 *a) 
-{ return g_test_asn1_data ? reinterpret_cast<X509_NAME*>(g_mock_mem) : nullptr; }
-X509_NAME *X509_get_issuer_name(const X509 *a) { return nullptr; }
+using X509_name_ret_t = decltype(X509_get_subject_name(std::declval<const X509*>()));
+X509_name_ret_t X509_get_subject_name(const X509 *a)
+{ return g_test_asn1_data ? reinterpret_cast<X509_name_ret_t>(g_mock_mem) : nullptr; }
+X509_name_ret_t X509_get_issuer_name(const X509 *a) { return nullptr; }
 // cppcheck-suppress constParameterPointer ; must match the OpenSSL API
 void X509_free(X509* a) { }
 
@@ -57,10 +58,12 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos)
 #endif
 { return g_test_asn1_data ? 0 : -1; }
-X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc) 
-{ return g_test_asn1_data ? reinterpret_cast<X509_NAME_ENTRY*>(g_mock_mem + 16) : nullptr; }
-ASN1_STRING *X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne) 
-{ return g_test_asn1_data ? reinterpret_cast<ASN1_STRING*>(g_mock_mem + 32) : nullptr; }
+using X509_name_entry_ret_t = decltype(X509_NAME_get_entry(std::declval<const X509_NAME*>(), 0));
+X509_name_entry_ret_t X509_NAME_get_entry(const X509_NAME *name, int loc)
+{ return g_test_asn1_data ? reinterpret_cast<X509_name_entry_ret_t>(g_mock_mem + 16) : nullptr; }
+using X509_name_entry_data_ret_t = decltype(X509_NAME_ENTRY_get_data(std::declval<const X509_NAME_ENTRY*>()));
+X509_name_entry_data_ret_t X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne)
+{ return g_test_asn1_data ? reinterpret_cast<X509_name_entry_data_ret_t>(g_mock_mem + 32) : nullptr; }
 const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x) 
 { return g_test_asn1_data; }
 X509* d2i_X509(X509 **a, const unsigned char **in, long len) 

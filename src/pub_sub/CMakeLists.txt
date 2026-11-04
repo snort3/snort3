@@ -56,7 +56,6 @@ add_library( pub_sub OBJECT
     http_form_data_event.cc
     http_request_body_event.cc
     http_transaction_end_event.cc
-    quic_events.cc
     sip_events.cc
     ssh_events.cc
 )
