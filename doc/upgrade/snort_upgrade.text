@@ -8,7 +8,7 @@ Snort 3 Upgrade Manual
 The Snort Team
 
 Revision History
-Revision 3.13.2.0 2026-09-22 13:50:03 EDT TST
+Revision 3.13.2.0 2026-11-04 20:21:30 EST TST
 
 ---------------------------------------------------------------------
 
@@ -179,7 +179,6 @@ Some things Snort++ can do today that Snort can not do:
   * rule remarks (comment is part of rule, not just in it)
   * process raw files (eg read a PDF and do file processing)
   * process raw payload (eg bridge 2 sockets and do inspection)
-  * fast pattern offload to separate thread (experimental)
   * add or override any config item on command line
   * set CPU affinity
   * pause and resume commands

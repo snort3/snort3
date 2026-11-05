@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.13.2.0 2026-09-22 13:49:29 EDT TST
+Revision 3.13.2.0 2026-11-04 20:20:48 EST TST
 
 ---------------------------------------------------------------------
 
@@ -612,10 +612,12 @@ Configuration:
     against all policies
   * bool detection.hyperscan_literals = false: use hyperscan for
     content literal searches instead of boyer-moore
-  * int detection.offload_limit = 99999: minimum sizeof PDU to
-    offload fast pattern search (defaults to disabled) { 0:max32 }
-  * int detection.offload_threads = 0: maximum number of simultaneous
-    offloads (defaults to disabled) { 0:max32 }
+  * int detection.offload_limit = 99999: detection offload is
+    disabled (no-op): formerly the minimum PDU size for fast-pattern
+    offload { 0:max32 }
+  * int detection.offload_threads = 0: detection offload is disabled
+    (no-op): formerly the maximum number of simultaneous offloads {
+    0:max32 }
   * bool detection.pcre_enable = true: enable pcre pattern matching
   * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
     = off { 0:max32 }
@@ -1186,6 +1188,12 @@ Peg counts:
   * memory.active: total bytes allocated in active pages (now)
   * memory.resident: maximum bytes physically resident (now)
   * memory.retained: total bytes not returned to OS (now)
+  * memory.dpf_n_added: number of entries added to dpf tracker (now)
+  * memory.dpf_n_freed: number of entries freed from dpf tracker
+    (now)
+  * memory.dpf_n_overwrites: number of overwrites in dpf ring-buffer
+    (now)
+  * memory.dpf_n_bytes_buffered: current bytes in dpf buffer (now)
 
 
 2.21. mp_data_bus
@@ -1563,7 +1571,7 @@ Peg counts:
   * reload_survivor.rss_bus_destroyed: on_bus_destroyed() invocations
     across all bus teardowns (sum)
   * reload_survivor.rss_policy_resolve_fail: old policy unresolvable
-    in new config on any inspector removal (sum)
+    in new config on removal of an inspector with both policies (sum)
   * reload_survivor.rss_list_returned: total SurvivorView entries
     returned by list_survivors() (sum)
   * reload_survivor.rss_bus_stripped: handler entries stripped in
@@ -1576,6 +1584,10 @@ Peg counts:
     inspectors tracked in RSS registry (now)
   * reload_survivor.rss_dedup_conflicts: subscribe() key reused with
     a different (publisher, event) (sum)
+  * reload_survivor.rss_slow_drains: callback or borrow waits that
+    outlived the slow-wait threshold (sum)
+  * reload_survivor.rss_reconcile_deferrals: release or quiescence
+    requests deferred because reconciliation held the survivor (sum)
 
 
 2.32. search_engine
@@ -1614,9 +1626,9 @@ Configuration:
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_bnfa | ac_full |
     hyperscan | lowmem }
-  * dynamic search_engine.offload_search_method: set fast pattern
-    offload algorithm - choose available search engine { ac_bnfa |
-    ac_full | hyperscan | lowmem }
+  * dynamic search_engine.offload_search_method: detection offload is
+    disabled (no-op): formerly the fast pattern offload algorithm {
+    ac_bnfa | ac_full | hyperscan | lowmem }
   * string search_engine.rule_db_dir: directory for reading / writing
     rule group databases
   * bool search_engine.split_any_any = true: evaluate any-any rules
@@ -2044,12 +2056,36 @@ Configuration:
   * int trace.modules.stream.all: enable all trace options { 0:255 }
   * int trace.modules.stream.flow_mem: enable per-flow memory trace
     logging { 0:255 }
+  * int trace.modules.stream_file.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_file.state: enable stream file state
+    trace logging { 0:255 }
+  * int trace.modules.stream_icmp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_icmp.state: enable stream ICMP state
+    trace logging { 0:255 }
+  * int trace.modules.stream_ip.all: enable all trace options { 0:255
+    }
+  * int trace.modules.stream_ip.state: enable stream IP session and
+    defrag state trace logging { 0:255 }
+  * int trace.modules.stream_ip.frag: enable stream IP per-fragment
+    reassembly trace logging { 0:255 }
   * int trace.modules.stream_tcp.all: enable all trace options {
     0:255 }
   * int trace.modules.stream_tcp.segments: enable stream TCP segments
     trace logging { 0:255 }
   * int trace.modules.stream_tcp.state: enable stream TCP state trace
     logging { 0:255 }
+  * int trace.modules.stream_udp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_udp.state: enable stream UDP state trace
+    logging { 0:255 }
+  * int trace.modules.stream_user.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_user.state: enable stream user state
+    trace logging { 0:255 }
+  * int trace.modules.stream_user.segments: enable stream user
+    segment reassembly trace logging { 0:255 }
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -2922,6 +2958,8 @@ Peg counts:
     (sum)
   * appid.tp_mem_bytes_in_use: number of bytes in use in third-party
     module (now)
+  * appid.suppressed_future_flows: number of suppressed expected
+    flows (sum)
 
 
 5.2. appid_listener
@@ -3882,6 +3920,12 @@ Configuration:
     tenant { 0:max32 }
   * string extractor.protocols[].on_events: specify events to log
   * string extractor.protocols[].fields: specify fields to log
+  * int extractor.protocols[].sampling_threshold = 25: occurrences to
+    log before sampling { 0:max32 }
+  * int extractor.protocols[].sampling_rate = 1000: log every N
+    occurrence after the threshold { 1:max32 }
+  * int extractor.protocols[].sampling_duration = 600: seconds before
+    rate-filter counters reset; 0 disables expiration { 0:max32 }
 
 Peg counts:
 
@@ -3936,6 +3980,13 @@ Configuration:
     file data
   * int file_inspect.decompress_buffer_size = 100000: file
     decompression buffer size { 1024:max31 }
+
+Commands:
+
+  * file_inspect.dump_file_cache(max_entries): dump file cache
+    summary (default 100 entries; optional row count arg, -1 for all)
+  * file_inspect.dump_file_cache_detail(sha256_prefix): dump details
+    for a file cache entry by SHA256 prefix
 
 Rules:
 
@@ -4348,6 +4399,9 @@ Configuration:
     length of a header exceeds this value { 0:65535 }
   * int http_inspect.maximum_headers = 200: alert when the number of
     headers in a message exceeds this value { 0:65535 }
+  * int http_inspect.maximum_header_value_length = 0: alert when the
+    length of a header value other than Cookie and Set-Cookie exceeds
+    this value (0 disabled, -1 no limit) { -1:32768 }
   * int http_inspect.maximum_pipelined_requests = 99: alert when the
     number of pipelined requests exceeds this value { 0:99 }
   * bool http_inspect.normalize_utf = true: normalize charset utf
@@ -4415,6 +4469,8 @@ Configuration:
     request (0 disabled, -1 no limit) { -1:65536 }
   * int http_inspect.max_request_line_length = 0: maximum length of a
     http request line (0 disabled, -1 no limit) { -1:49152 }
+  * string http_inspect.allowed_content_type: list of allowed
+    Content-Type media types, * matches one or more token characters
 
 Rules:
 
@@ -4620,6 +4676,10 @@ Rules:
   * 119:300 (http_inspect) invalid HTTP request line format
   * 119:301 (http_inspect) invalid Content-Length or
     Transfer-Encoding header
+  * 119:302 (http_inspect) maximum header value length exceeded
+  * 119:304 (http_inspect) unsafe character present in HTTP header
+  * 119:305 (http_inspect) malformed HTTP header present
+  * 119:306 (http_inspect) Content-Type not allowed
 
 Peg counts:
 
@@ -4701,6 +4761,23 @@ Peg counts:
     maximum publish depth was exceeded (sum)
   * http_inspect.header_count_exceeded: total number of HTTP messages
     with header count exceeding the configured maximum (sum)
+  * http_inspect.unsafe_header_char: total number of HTTP request/
+    response header blocks flagged for unsafe characters (sum)
+  * http_inspect.malformed_headers: total number of HTTP messages
+    with malformed headers (sum)
+  * http_inspect.max_request_size_exceeded: total number of requests
+    exceeding the configured maximum request size (sum)
+  * http_inspect.max_request_line_exceeded: total number of requests
+    exceeding the configured maximum request line length (sum)
+  * http_inspect.disallowed_method: total number of requests using a
+    disallowed HTTP method (sum)
+  * http_inspect.request_line_not_valid: total number of requests
+    with an invalid request line format (sum)
+  * http_inspect.content_type_not_allowed: total number of requests
+    with a disallowed Content-Type (sum)
+  * http_inspect.max_header_value_exceeded: total number of HTTP
+    messages with a header value exceeding the configured maximum
+    length (sum)
 
 
 5.27. iec104
@@ -5632,6 +5709,10 @@ Peg counts:
     allowlist matches (sum)
   * reputation.aux_ip_monitored: number of auxiliary ip packets
     monitored (sum)
+  * reputation.do_not_block: number of packets exempted from blocking
+    (sum)
+  * reputation.aux_ip_do_not_block: number of auxiliary ip packets
+    exempted from blocking (sum)
 
 
 5.40. rna
@@ -5691,11 +5772,13 @@ Configuration:
     devicename pattern
   * string rna.tcp_fingerprints[].devicename: deviceinfo devicename
     value
-  * string rna.tcp_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.tcp_fingerprints[].os_value: deviceinfo os value
+  * string rna.tcp_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.tcp_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.tcp_fingerprints[].mac_addr: deviceinfo mac address
-  * string rna.tcp_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.tcp_fingerprints[].os_postfix: deviceinfo os postfix
+  * string rna.tcp_fingerprints[].cpe_prefix: deviceinfo cpe prefix
+  * string rna.tcp_fingerprints[].cpe_postfix: deviceinfo cpe postfix
   * int rna.ua_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.ua_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.ua_fingerprints[].uuid: fingerprint uuid
@@ -5731,11 +5814,13 @@ Configuration:
     devicename pattern
   * string rna.ua_fingerprints[].devicename: deviceinfo devicename
     value
-  * string rna.ua_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.ua_fingerprints[].os_value: deviceinfo os value
+  * string rna.ua_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.ua_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.ua_fingerprints[].mac_addr: deviceinfo mac address
-  * string rna.ua_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.ua_fingerprints[].os_postfix: deviceinfo os postfix
+  * string rna.ua_fingerprints[].cpe_prefix: deviceinfo cpe prefix
+  * string rna.ua_fingerprints[].cpe_postfix: deviceinfo cpe postfix
   * int rna.udp_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.udp_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.udp_fingerprints[].uuid: fingerprint uuid
@@ -5771,11 +5856,13 @@ Configuration:
     devicename pattern
   * string rna.udp_fingerprints[].devicename: deviceinfo devicename
     value
-  * string rna.udp_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.udp_fingerprints[].os_value: deviceinfo os value
+  * string rna.udp_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.udp_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.udp_fingerprints[].mac_addr: deviceinfo mac address
-  * string rna.udp_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.udp_fingerprints[].os_postfix: deviceinfo os postfix
+  * string rna.udp_fingerprints[].cpe_prefix: deviceinfo cpe prefix
+  * string rna.udp_fingerprints[].cpe_postfix: deviceinfo cpe postfix
   * int rna.smb_fingerprints[].fpid = 0: fingerprint id { 0:max32 }
   * int rna.smb_fingerprints[].type = 0: fingerprint type { 0:max32 }
   * string rna.smb_fingerprints[].uuid: fingerprint uuid
@@ -5811,11 +5898,13 @@ Configuration:
     devicename pattern
   * string rna.smb_fingerprints[].devicename: deviceinfo devicename
     value
-  * string rna.smb_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.smb_fingerprints[].os_value: deviceinfo os value
+  * string rna.smb_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.smb_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.smb_fingerprints[].mac_addr: deviceinfo mac address
-  * string rna.smb_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.smb_fingerprints[].os_postfix: deviceinfo os postfix
+  * string rna.smb_fingerprints[].cpe_prefix: deviceinfo cpe prefix
+  * string rna.smb_fingerprints[].cpe_postfix: deviceinfo cpe postfix
   * int rna.deviceinfo_fingerprints[].fpid = 0: fingerprint id {
     0:max32 }
   * int rna.deviceinfo_fingerprints[].type = 0: fingerprint type {
@@ -5864,15 +5953,15 @@ Configuration:
     deviceinfo devicename pattern
   * string rna.deviceinfo_fingerprints[].devicename: deviceinfo
     devicename value
-  * string rna.deviceinfo_fingerprints[].os_pattern: deviceinfo os
-    pattern
-  * string rna.deviceinfo_fingerprints[].os_value: deviceinfo os
-    value
+  * string rna.deviceinfo_fingerprints[].version_pattern: deviceinfo
+    version pattern
+  * string rna.deviceinfo_fingerprints[].version_value: deviceinfo
+    version value
   * string rna.deviceinfo_fingerprints[].mac_addr: deviceinfo mac
     address
-  * string rna.deviceinfo_fingerprints[].os_prefix: deviceinfo os
+  * string rna.deviceinfo_fingerprints[].cpe_prefix: deviceinfo cpe
     prefix
-  * string rna.deviceinfo_fingerprints[].os_postfix: deviceinfo os
+  * string rna.deviceinfo_fingerprints[].cpe_postfix: deviceinfo cpe
     postfix
 
 Commands:
@@ -6755,6 +6844,9 @@ Instance Type: multiton
 
 Configuration:
 
+  * bool stream_tcp.enforce_auto_window_trims = true: enable
+    automatic sequence/window payload trimming; disabling it does not
+    disable queue limits or explicit trim actions
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments {
     0:65535 }
@@ -6971,6 +7063,8 @@ Peg counts:
   * stream_tcp.ooo_3whs_late_synack: server-side stream state
     repaired from late SYN-ACK; wscale/snd_wnd repaired if negotiated
     (sum)
+  * stream_tcp.forced_trims_skipped: automatic sequence/window
+    payload trims skipped because enforcement was disabled (sum)
 
 
 5.55. stream_udp
@@ -7078,6 +7172,8 @@ Configuration:
     0:65535 }
   * bool tlv_pdu.relative = false: extracted length follows field
     (instead of whole PDU)
+  * int tlv_pdu.max_pipelined = 65535: maximum number of pipelined
+    PDUs flushed at once { 1:65535 }
 
 Peg counts:
 
@@ -10772,10 +10868,12 @@ libraries see the Getting Started section of the manual.
     content literal searches instead of boyer-moore
   * int detection.max_continuations_per_flow = 1024: maximum number
     of continuations stored simultaneously on the flow { 0:65535 }
-  * int detection.offload_limit = 99999: minimum sizeof PDU to
-    offload fast pattern search (defaults to disabled) { 0:max32 }
-  * int detection.offload_threads = 0: maximum number of simultaneous
-    offloads (defaults to disabled) { 0:max32 }
+  * int detection.offload_limit = 99999: detection offload is
+    disabled (no-op): formerly the minimum PDU size for fast-pattern
+    offload { 0:max32 }
+  * int detection.offload_threads = 0: detection offload is disabled
+    (no-op): formerly the maximum number of simultaneous offloads {
+    0:max32 }
   * bool detection.pcre_enable = true: enable pcre pattern matching
   * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
     = off { 0:max32 }
@@ -10841,6 +10939,12 @@ libraries see the Getting Started section of the manual.
     csv | tsv | json }
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
+  * int extractor.protocols[].sampling_duration = 600: seconds before
+    rate-filter counters reset; 0 disables expiration { 0:max32 }
+  * int extractor.protocols[].sampling_rate = 1000: log every N
+    occurrence after the threshold { 1:max32 }
+  * int extractor.protocols[].sampling_threshold = 25: occurrences to
+    log before sampling { 0:max32 }
   * enum extractor.protocols[].service: service to extract from { 
     http | ssh | ftp | ssl | conn | dns | quic | file | weird | 
     notice }
@@ -11082,6 +11186,8 @@ libraries see the Getting Started section of the manual.
     will be removed in a future release
   * implied http_header.with_trailer: option is no longer used and
     will be removed in a future release
+  * string http_inspect.allowed_content_type: list of allowed
+    Content-Type media types, * matches one or more token characters
   * string http_inspect.allowed_methods: list of allowed methods
   * bool http_inspect.backslash_to_slash = true: replace \ with /
     when normalizing URIs
@@ -11118,6 +11224,9 @@ libraries see the Getting Started section of the manual.
     length of a header exceeds this value { 0:65535 }
   * int http_inspect.maximum_headers = 200: alert when the number of
     headers in a message exceeds this value { 0:65535 }
+  * int http_inspect.maximum_header_value_length = 0: alert when the
+    length of a header value other than Cookie and Set-Cookie exceeds
+    this value (0 disabled, -1 no limit) { -1:32768 }
   * int http_inspect.maximum_host_length = -1: maximum allowed length
     for Host header value (-1 no limit) { -1:max53 }
   * int http_inspect.maximum_pipelined_requests = 99: alert when the
@@ -11855,6 +11964,10 @@ libraries see the Getting Started section of the manual.
   * bool reputation.scan_local = false: inspect local address defined
     in RFC 1918
   * int rev.~: revision { 1:max32 }
+  * string rna.deviceinfo_fingerprints[].cpe_postfix: deviceinfo cpe
+    postfix
+  * string rna.deviceinfo_fingerprints[].cpe_prefix: deviceinfo cpe
+    prefix
   * string rna.deviceinfo_fingerprints[].device: device information
   * string rna.deviceinfo_fingerprints[].devicename: deviceinfo
     devicename value
@@ -11887,14 +12000,6 @@ libraries see the Getting Started section of the manual.
   * string rna.deviceinfo_fingerprints[].model_pattern: deviceinfo
     model pattern
   * string rna.deviceinfo_fingerprints[].mss = X: fingerprint mss
-  * string rna.deviceinfo_fingerprints[].os_pattern: deviceinfo os
-    pattern
-  * string rna.deviceinfo_fingerprints[].os_postfix: deviceinfo os
-    postfix
-  * string rna.deviceinfo_fingerprints[].os_prefix: deviceinfo os
-    prefix
-  * string rna.deviceinfo_fingerprints[].os_value: deviceinfo os
-    value
   * string rna.deviceinfo_fingerprints[].service_type: deviceinfo
     service type
   * string rna.deviceinfo_fingerprints[].tcp_window: fingerprint tcp
@@ -11911,6 +12016,10 @@ libraries see the Getting Started section of the manual.
   * string rna.deviceinfo_fingerprints[].user_agent[].substring: a
     substring of user agent string
   * string rna.deviceinfo_fingerprints[].uuid: fingerprint uuid
+  * string rna.deviceinfo_fingerprints[].version_pattern: deviceinfo
+    version pattern
+  * string rna.deviceinfo_fingerprints[].version_value: deviceinfo
+    version value
   * string rna.deviceinfo_fingerprints[].ws = X: fingerprint window
     size
   * string rna.dump_file: file name to dump RNA mac cache on
@@ -11920,6 +12029,8 @@ libraries see the Getting Started section of the manual.
   * bool rna.log_when_idle = false: enable host update logging when
     snort is idle
   * string rna.rna_conf_path: path to rna configuration
+  * string rna.smb_fingerprints[].cpe_postfix: deviceinfo cpe postfix
+  * string rna.smb_fingerprints[].cpe_prefix: deviceinfo cpe prefix
   * string rna.smb_fingerprints[].device: device information
   * string rna.smb_fingerprints[].devicename: deviceinfo devicename
     value
@@ -11944,10 +12055,6 @@ libraries see the Getting Started section of the manual.
   * string rna.smb_fingerprints[].model_pattern: deviceinfo model
     pattern
   * string rna.smb_fingerprints[].mss = X: fingerprint mss
-  * string rna.smb_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.smb_fingerprints[].os_postfix: deviceinfo os postfix
-  * string rna.smb_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.smb_fingerprints[].os_value: deviceinfo os value
   * string rna.smb_fingerprints[].service_type: deviceinfo service
     type
   * string rna.smb_fingerprints[].tcp_window: fingerprint tcp window
@@ -11959,7 +12066,13 @@ libraries see the Getting Started section of the manual.
   * string rna.smb_fingerprints[].user_agent[].substring: a substring
     of user agent string
   * string rna.smb_fingerprints[].uuid: fingerprint uuid
+  * string rna.smb_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.smb_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.smb_fingerprints[].ws = X: fingerprint window size
+  * string rna.tcp_fingerprints[].cpe_postfix: deviceinfo cpe postfix
+  * string rna.tcp_fingerprints[].cpe_prefix: deviceinfo cpe prefix
   * string rna.tcp_fingerprints[].device: device information
   * string rna.tcp_fingerprints[].devicename: deviceinfo devicename
     value
@@ -11984,10 +12097,6 @@ libraries see the Getting Started section of the manual.
   * string rna.tcp_fingerprints[].model_pattern: deviceinfo model
     pattern
   * string rna.tcp_fingerprints[].mss = X: fingerprint mss
-  * string rna.tcp_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.tcp_fingerprints[].os_postfix: deviceinfo os postfix
-  * string rna.tcp_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.tcp_fingerprints[].os_value: deviceinfo os value
   * string rna.tcp_fingerprints[].service_type: deviceinfo service
     type
   * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
@@ -11999,7 +12108,13 @@ libraries see the Getting Started section of the manual.
   * string rna.tcp_fingerprints[].user_agent[].substring: a substring
     of user agent string
   * string rna.tcp_fingerprints[].uuid: fingerprint uuid
+  * string rna.tcp_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.tcp_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.tcp_fingerprints[].ws = X: fingerprint window size
+  * string rna.ua_fingerprints[].cpe_postfix: deviceinfo cpe postfix
+  * string rna.ua_fingerprints[].cpe_prefix: deviceinfo cpe prefix
   * string rna.ua_fingerprints[].device: device information
   * string rna.ua_fingerprints[].devicename: deviceinfo devicename
     value
@@ -12024,10 +12139,6 @@ libraries see the Getting Started section of the manual.
   * string rna.ua_fingerprints[].model_pattern: deviceinfo model
     pattern
   * string rna.ua_fingerprints[].mss = X: fingerprint mss
-  * string rna.ua_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.ua_fingerprints[].os_postfix: deviceinfo os postfix
-  * string rna.ua_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.ua_fingerprints[].os_value: deviceinfo os value
   * string rna.ua_fingerprints[].service_type: deviceinfo service
     type
   * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
@@ -12039,7 +12150,13 @@ libraries see the Getting Started section of the manual.
   * string rna.ua_fingerprints[].user_agent[].substring: a substring
     of user agent string
   * string rna.ua_fingerprints[].uuid: fingerprint uuid
+  * string rna.ua_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.ua_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.ua_fingerprints[].ws = X: fingerprint window size
+  * string rna.udp_fingerprints[].cpe_postfix: deviceinfo cpe postfix
+  * string rna.udp_fingerprints[].cpe_prefix: deviceinfo cpe prefix
   * string rna.udp_fingerprints[].device: device information
   * string rna.udp_fingerprints[].devicename: deviceinfo devicename
     value
@@ -12064,10 +12181,6 @@ libraries see the Getting Started section of the manual.
   * string rna.udp_fingerprints[].model_pattern: deviceinfo model
     pattern
   * string rna.udp_fingerprints[].mss = X: fingerprint mss
-  * string rna.udp_fingerprints[].os_pattern: deviceinfo os pattern
-  * string rna.udp_fingerprints[].os_postfix: deviceinfo os postfix
-  * string rna.udp_fingerprints[].os_prefix: deviceinfo os prefix
-  * string rna.udp_fingerprints[].os_value: deviceinfo os value
   * string rna.udp_fingerprints[].service_type: deviceinfo service
     type
   * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
@@ -12079,6 +12192,10 @@ libraries see the Getting Started section of the manual.
   * string rna.udp_fingerprints[].user_agent[].substring: a substring
     of user agent string
   * string rna.udp_fingerprints[].uuid: fingerprint uuid
+  * string rna.udp_fingerprints[].version_pattern: deviceinfo version
+    pattern
+  * string rna.udp_fingerprints[].version_value: deviceinfo version
+    value
   * string rna.udp_fingerprints[].ws = X: fingerprint window size
   * int rpc.~app: application number { 0:max32 }
   * string rpc.~proc: procedure number or * for any
@@ -12111,9 +12228,9 @@ libraries see the Getting Started section of the manual.
     compiling into state machine (0 means no maximum) { 0:max32 }
   * int search_engine.max_queue_events = 5: maximum number of
     matching fast pattern states to queue per packet { 2:100 }
-  * dynamic search_engine.offload_search_method: set fast pattern
-    offload algorithm - choose available search engine { ac_bnfa |
-    ac_full | hyperscan | lowmem }
+  * dynamic search_engine.offload_search_method: detection offload is
+    disabled (no-op): formerly the fast pattern offload algorithm {
+    ac_bnfa | ac_full | hyperscan | lowmem }
   * int search_engine.queue_limit = 0: maximum number of fast pattern
     matches to queue per packet (0 is unlimited) { 0:max32 }
   * string search_engine.rule_db_dir: directory for reading / writing
@@ -12609,6 +12726,9 @@ libraries see the Getting Started section of the manual.
     before retiring session tracker { 1:max32 }
   * int stream_tcp.embryonic_timeout = 30: Non-established connection
     timeout { 1:max31 }
+  * bool stream_tcp.enforce_auto_window_trims = true: enable
+    automatic sequence/window payload trimming; disabling it does not
+    disable queue limits or explicit trim actions
   * int stream_tcp.flush_factor = 0: flush upon seeing a drop in
     segment size after given number of non-decreasing segments {
     0:65535 }
@@ -12690,6 +12810,8 @@ libraries see the Getting Started section of the manual.
   * bool telnet.normalize = false: eliminate escape sequences
   * string tenant_selector[].file: use configuration in given file
   * string tenant_selector[].tenants: list of tenants to match
+  * int tlv_pdu.max_pipelined = 65535: maximum number of pipelined
+    PDUs flushed at once { 1:65535 }
   * int tlv_pdu.offset = 0: index to first byte of length field {
     0:65535 }
   * bool tlv_pdu.relative = false: extracted length follows field
@@ -12729,14 +12851,38 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
   * int trace.modules.stream.all: enable all trace options { 0:255 }
+  * int trace.modules.stream_file.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_file.state: enable stream file state
+    trace logging { 0:255 }
   * int trace.modules.stream.flow_mem: enable per-flow memory trace
     logging { 0:255 }
+  * int trace.modules.stream_icmp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_icmp.state: enable stream ICMP state
+    trace logging { 0:255 }
+  * int trace.modules.stream_ip.all: enable all trace options { 0:255
+    }
+  * int trace.modules.stream_ip.frag: enable stream IP per-fragment
+    reassembly trace logging { 0:255 }
+  * int trace.modules.stream_ip.state: enable stream IP session and
+    defrag state trace logging { 0:255 }
   * int trace.modules.stream_tcp.all: enable all trace options {
     0:255 }
   * int trace.modules.stream_tcp.segments: enable stream TCP segments
     trace logging { 0:255 }
   * int trace.modules.stream_tcp.state: enable stream TCP state trace
     logging { 0:255 }
+  * int trace.modules.stream_udp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_udp.state: enable stream UDP state trace
+    logging { 0:255 }
+  * int trace.modules.stream_user.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_user.segments: enable stream user
+    segment reassembly trace logging { 0:255 }
+  * int trace.modules.stream_user.state: enable stream user state
+    trace logging { 0:255 }
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -12852,6 +12998,8 @@ libraries see the Getting Started section of the manual.
     pruned (sum)
   * appid.service_cache_removes: number of times an item was removed
     from the service cache (sum)
+  * appid.suppressed_future_flows: number of suppressed expected
+    flows (sum)
   * appid.total_sessions: count of sessions created (sum)
   * appid.tp_mem_allocations: number of memory allocations in
     third-party module (sum)
@@ -13504,7 +13652,11 @@ libraries see the Getting Started section of the manual.
   * http_inspect.connect_requests: CONNECT requests inspected (sum)
   * http_inspect.connect_tunnel_cutovers: CONNECT tunnel flow
     cutovers to wizard (sum)
+  * http_inspect.content_type_not_allowed: total number of requests
+    with a disallowed Content-Type (sum)
   * http_inspect.delete_requests: DELETE requests inspected (sum)
+  * http_inspect.disallowed_method: total number of requests using a
+    disallowed HTTP method (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
     (sum)
   * http_inspect.flows: HTTP connections inspected (sum)
@@ -13521,10 +13673,19 @@ libraries see the Getting Started section of the manual.
     JavaScripts processed (sum)
   * http_inspect.js_pdf_scripts: total number of PDF files processed
     (sum)
+  * http_inspect.malformed_headers: total number of HTTP messages
+    with malformed headers (sum)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
+  * http_inspect.max_header_value_exceeded: total number of HTTP
+    messages with a header value exceeding the configured maximum
+    length (sum)
   * http_inspect.max_publish_depth_hits: total number of times the
     maximum publish depth was exceeded (sum)
+  * http_inspect.max_request_line_exceeded: total number of requests
+    exceeding the configured maximum request line length (sum)
+  * http_inspect.max_request_size_exceeded: total number of requests
+    exceeding the configured maximum request size (sum)
   * http_inspect.options_requests: OPTIONS requests inspected (sum)
   * http_inspect.other_requests: other request methods inspected
     (sum)
@@ -13543,6 +13704,8 @@ libraries see the Getting Started section of the manual.
     messages (sum)
   * http_inspect.request_bodies: POST, PUT, and other requests with
     message bodies (sum)
+  * http_inspect.request_line_not_valid: total number of requests
+    with an invalid request line format (sum)
   * http_inspect.requests: HTTP request messages inspected (sum)
   * http_inspect.responses: HTTP response messages inspected (sum)
   * http_inspect.scans: TCP segments scanned looking for HTTP
@@ -13555,6 +13718,8 @@ libraries see the Getting Started section of the manual.
     too soon (sum)
   * http_inspect.total_bytes: total HTTP data bytes inspected (sum)
   * http_inspect.trace_requests: TRACE requests inspected (sum)
+  * http_inspect.unsafe_header_char: total number of HTTP request/
+    response header blocks flagged for unsafe characters (sum)
   * http_inspect.uri_coding: URIs with character coding problems
     (sum)
   * http_inspect.uri_normalizations: URIs needing to be normalization
@@ -13638,6 +13803,12 @@ libraries see the Getting Started section of the manual.
   * memory.cur_in_use: current memory used (now)
   * memory.deallocated: total amount of memory deallocated by packet
     threads (now)
+  * memory.dpf_n_added: number of entries added to dpf tracker (now)
+  * memory.dpf_n_bytes_buffered: current bytes in dpf buffer (now)
+  * memory.dpf_n_freed: number of entries freed from dpf tracker
+    (now)
+  * memory.dpf_n_overwrites: number of overwrites in dpf ring-buffer
+    (now)
   * memory.epochs: number of memory updates (sum)
   * memory.max_in_use: maximum memory used (max)
   * memory.reap_aborts: abort pruning before target due to process
@@ -13890,22 +14061,30 @@ libraries see the Getting Started section of the manual.
   * reload_survivor.rss_list_returned: total SurvivorView entries
     returned by list_survivors() (sum)
   * reload_survivor.rss_policy_resolve_fail: old policy unresolvable
-    in new config on any inspector removal (sum)
+    in new config on removal of an inspector with both policies (sum)
+  * reload_survivor.rss_reconcile_deferrals: release or quiescence
+    requests deferred because reconciliation held the survivor (sum)
   * reload_survivor.rss_registry_tracked: distinct survivor
     inspectors tracked in RSS registry (now)
   * reload_survivor.rss_release_retired: RSS handler subscriptions
     retired via release() (sum)
+  * reload_survivor.rss_slow_drains: callback or borrow waits that
+    outlived the slow-wait threshold (sum)
   * reload_survivor.rss_survivors_active: live RSS handler
     registrations (now)
   * reload_survivor.rss_survivors_installed: successful RSS handler
     subscribes (sum)
   * reputation.aux_ip_blocked: number of auxiliary ip packets blocked
     (sum)
+  * reputation.aux_ip_do_not_block: number of auxiliary ip packets
+    exempted from blocking (sum)
   * reputation.aux_ip_monitored: number of auxiliary ip packets
     monitored (sum)
   * reputation.aux_ip_trusted: number of packets with auxiliary ip
     allowlist matches (sum)
   * reputation.blocked: number of packets blocked (sum)
+  * reputation.do_not_block: number of packets exempted from blocking
+    (sum)
   * reputation.memory_allocated: total memory allocated (sum)
   * reputation.monitored: number of packets monitored (sum)
   * reputation.packets: total packets processed (sum)
@@ -14275,6 +14454,8 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.fins: number of fin packets (sum)
   * stream_tcp.flush_on_asymmetric_flow: number of flushes on
     asymmetric flows (sum)
+  * stream_tcp.forced_trims_skipped: automatic sequence/window
+    payload trims skipped because enforcement was disabled (sum)
   * stream_tcp.full_retransmits: number of fully retransmitted
     segments (sum)
   * stream_tcp.gaps: missing data between PDUs (sum)
@@ -16077,6 +16258,32 @@ A message header contains a negative Content-Length value, or both a
 Content-Length and a Transfer-Encoding header where that combination
 is not allowed.
 
+119:302 (http_inspect) maximum header value length exceeded
+
+The length of a single header field value exceeds the configured
+maximum_header_value_length. Cookie and Set-Cookie header values are
+not checked.
+
+119:304 (http_inspect) unsafe character present in HTTP header
+
+An HTTP request or response header contains a name byte outside the
+HTTP token character set, a bare control character in a value (TAB is
+allowed), or obsolete line folding. Trailers are not included.
+
+119:305 (http_inspect) malformed HTTP header present
+
+A message header line is malformed: it has no colon separator, no
+field name, no field value, or is a multi-line header.
+
+119:306 (http_inspect) Content-Type not allowed
+
+The media type in the request Content-Type header is not in
+allowed_content_type. Any parameters after the first semicolon are
+ignored for this comparison. A comma-separated list and quoting that
+never closes are violations, and each line of a repeated header is
+checked on its own. A request that carries content must name a media
+type.
+
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 
 Invalid flag set on HTTP/2 frame header
@@ -17805,7 +18012,8 @@ by the enhanced JavaScript normalizer.
 
 154:5 (js_norm) unexpected HTML script closing tag
 
-This alert is raised when </script> end-tag is encountered inside a
+This alert is raised when a script end-tag (</script followed by a
+tab, line break, form feed, space, / or >) is encountered inside a
 JavaScript comment or literal, which is a syntax error, as the last
 comment or literal is not closed before script end. This alert is
 raised by the enhanced JavaScript normalizer.
@@ -17876,6 +18084,10 @@ alert is raised by the enhanced JavaScript normalizer.
   * appid.show_cpu_profiler_stats(appid, display_rows_limit): show
     appid cpu profiling stats
   * appid.show_cpu_profiler_status(): show appid cpu profiling status
+  * file_inspect.dump_file_cache(max_entries): dump file cache
+    summary (default 100 entries; optional row count arg, -1 for all)
+  * file_inspect.dump_file_cache_detail(sha256_prefix): dump details
+    for a file cache entry by SHA256 prefix
   * host_cache.dump(file_name): dump host cache
   * host_cache.delete_host(host_ip): delete host from host cache
   * host_cache.delete_network_proto(host_ip, proto): delete network

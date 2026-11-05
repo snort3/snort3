@@ -1,3 +1,83 @@
+2026-11-04: 3.13.2.0
+
+* appid: add nullptr string validation
+* appid: add sip port validation
+* appid: check for DNS metadata presence before assigning DNS AppID
+* appid: consume authoritative MCP inspector verdicts
+* appid: free pattern-only detectors during initialisation
+* appid: initialize the app ids that the appids rule option checks
+* appid: isolate Lua detector state between analyzers
+* appid: restructure AppInfoTableEntry class, increase AppIds value limits
+* appid: set pointer to null
+* codecs/ciscometadata: decode the inner frame of a reserved SGT
+* codecs/ipv6: keep decoding past a bad option length the receiver skips
+* dce_rpc: bound retained co fragment reassembly memory
+* dce_rpc: bounds check the smb2 header and negotiate body before reading
+* dce_rpc: exclude linker-only test stubs from coverage
+* dce_rpc: fix 1byte oob in smb1 DELETE PDU
+* dce_rpc: fix rpkt co mock header for smb2
+* dce_rpc: fix smb inspection bypass via crafted nbss keep-alive length
+* dce_rpc: fix smb netbios identifier validation across scan boundaries
+* decompress: fix heap buffer safety issues in OLE2 VBA processing
+* decompress: prevent ole sector offset overflow
+* detection: deprecate offload
+* dnp3: add junk budget
+* dns: cap TXT char-string length to RDLENGTH
+* extractor: add WEIRD logs rate filtering
+* extractor: fix cppcheck warnings
+* file_api: add file cache dump control-channel commands
+* file_api: expose safe file cache clearing
+* flow: keep max value for inspected_packet_count
+* framework: diagnose stalled RSS waits and trim the RSS public surface
+* ftp_telnet: normalize Telnet commands on the FTP control channel
+* hash: fix xhash row collisions from a collapsing scale
+* host_tracker: fix for issue where apps could potentially be stale if reused
+* http2_inspect: remove dead in_error_state() code
+* http_inspect: add peg-counts for request enforcement events
+* http_inspect: alert on header value exceeding maximum length
+* http_inspect: alert on malformed header
+* http_inspect: alert on unsafe characters in header names/values
+* http_inspect: alert when a request Content-Type is not allowed
+* http_inspect: bound the script attribute scan to the search buffer
+* http_inspect: capture splitter-time request-limit buffers in context
+* http_inspect: fix cppcheck findings in http_js_norm_attr_test
+* http_inspect: tolerate trailing whitespace in the request line
+* inspector_manager: improve thread_init policy handling
+* ips_options: clean resources before parsing another flowbits
+* ips_options: make replace bound to the view it is applied to
+* js_norm: follow alias bindings through destructuring patterns
+* js_norm: recognize a script end tag with a trailing delimiter
+* main: reap commands after final housekeeping
+* memory: add cisco jemalloc shim support
+* mime: add check for needed amount of bytes
+* mitigator: fix compiler warnings
+* mms: enhance osi_pres_decode with length checks
+* mms: ignore syntax cppcheck error in unit tests
+* mms: limit ber processing length to cursor size
+* mms: verify remaining length during osi session check
+* mp_unix_transport: fix heap OOB write in get_channel_status
+* process: add experimental signal mitigation
+* profiling: improve accumulation
+* protocols: update code to build with OpenSSL 4.0
+* pub_sub: remove obsolete file
+* rate_filter: extend tunnel scoping to packet-backed events
+* rate_filter: fix session event policy, repeat setup and below-threshold logging
+* reputation: do not trust a flow on an auxiliary ip match
+* reputation: scope do-not-block to blocking and count the exemption
+* rna: populate conn event device_info field from endpoint deviceinfo stash
+* rna: update mac last_seen_time on ip packets
+* side_channel: truncate the text message to the received length
+* sip: fix re-INVITE dialog orphan leak
+* stream: bound user flushes and reset retained Atom state
+* stream_ip: enforce max_frags at every fragment node allocation
+* stream_ip: reset tracker accounting when the fraglist is purged
+* stream: support trace logging in non-TCP stream inspectors
+* stream_tcp: control automatic trims and bounded queue recovery
+* stream_tcp: rebase the scan cursor when an overlap trims a segment
+* tlv_pdu: add PDU pipeline in the splitter
+* trace: match the ip_proto constraint on icmp and ip flows except IPv6 frags
+* utils: classify js normalizer input bytes as unsigned
+
 2026-09-21: 3.13.1.0
 
 * appid: fix tns validation flow
