@@ -23,7 +23,10 @@
 
 #include "snort_ml_inspector.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cstdint>
+#include <limits>
 
 #include "detection/detection_engine.h"
 #include "log/messages.h"
@@ -40,6 +43,15 @@ using namespace std;
 
 THREAD_LOCAL SnortMLStats snort_ml_stats;
 THREAD_LOCAL ProfileStats snort_ml_prof;
+
+static inline size_t clamped_depth(int32_t cfg, int32_t actual)
+{
+    if (actual <= 0)
+        return 0;
+    if (cfg < 0)
+        return static_cast<size_t>(actual);
+    return std::min(static_cast<size_t>(cfg), static_cast<size_t>(actual));
+}
 
 //--------------------------------------------------------------------------
 // HTTP uri event handler
@@ -72,7 +84,9 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
 
     const SnortMLConfig& conf = inspector.get_config();
 
-    const size_t len = std::min((size_t)conf.uri_depth, (size_t)query_len);
+    const size_t len = clamped_depth(conf.uri_depth, query_len);
+    if (len == 0)
+        return;
 
     float output = 0;
     if (!engine.scan(query, len, output))
@@ -128,7 +142,9 @@ void HttpBodyHandler::handle(DataEvent& de, Flow*)
 
     const SnortMLConfig& conf = inspector.get_config();
 
-    const size_t len = std::min((size_t)conf.client_body_depth, (size_t)body_len);
+    const size_t len = clamped_depth(conf.client_body_depth, body_len);
+    if (len == 0)
+        return;
 
     float output = 0;
     if (!engine.scan(body, len, output))
@@ -180,7 +196,11 @@ void HttpFormHandler::handle(DataEvent& de, Flow*)
 
     const SnortMLConfig& conf = inspector.get_config();
 
-    const size_t len = std::min((size_t)conf.client_body_depth, data.length());
+    const int32_t form_len = static_cast<int32_t>(
+        std::min(data.length(), static_cast<size_t>(std::numeric_limits<int32_t>::max())));
+    const size_t len = clamped_depth(conf.client_body_depth, form_len);
+    if (len == 0)
+        return;
 
     float output = 0;
     if (!engine.scan(data.c_str(), len, output))
@@ -304,3 +324,4 @@ const BaseApi* nin_snort_ml[] =
     &snort_ml_api.base,
     nullptr
 };
+
