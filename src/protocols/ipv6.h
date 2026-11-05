@@ -29,6 +29,7 @@ namespace snort
 namespace ip
 {
 constexpr uint8_t IP6_HEADER_LEN = 40;
+constexpr uint8_t IP6_MAX_STR_LEN = 40; // 16 bytes in hexa = 32 + : delimiter every two bytes 7 + terminating 0 = 40
 constexpr uint32_t MIN_EXT_LEN = 8;
 constexpr uint8_t IP6_MULTICAST = 0xFF;  // first/most significant octet
 
