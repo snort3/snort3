@@ -125,7 +125,8 @@ enum TunnelFlags
     TUNNEL_GRE    = 0x40,
     TUNNEL_MPLS   = 0x80,
     TUNNEL_VXLAN  = 0x100,
-    TUNNEL_GENEVE = 0x200
+    TUNNEL_GENEVE = 0x200,
+    TUNNEL_ICMP   = 0x400
 };
 
 enum DumpConfigType
