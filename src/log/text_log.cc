@@ -31,6 +31,7 @@
 
 #include "text_log.h"
 
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 
@@ -79,11 +80,15 @@ static FILE* TextLog_Open(const char* name, bool is_critical=true)
     if ( !strcasecmp(name, "stdout") )
     {
 #ifdef USE_STDLOG
-        FILE* stdlog = fdopen(STDLOG_FILENO, "w");
-        return stdlog ? stdlog : stdout;
-#else
-        return stdout;
+        // Use fcntl to check if fd is actually open, fdopen on musl always succeeds
+        // even for invalid fds, unlike glibc which validates first.
+        if ( fcntl(STDLOG_FILENO, F_GETFD) != -1 )
+        {
+            FILE* stdlog = fdopen(STDLOG_FILENO, "w");
+            return stdlog ? stdlog : stdout;
+        }
 #endif
+        return stdout;
     }
 
     return open_log_file(name, is_critical);
