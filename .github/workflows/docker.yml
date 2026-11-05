@@ -1,0 +1,202 @@
+name: Docker Build, Test & Push
+
+# Per-platform pipeline (all platforms run in parallel):
+#   1. docker build  — unit tests run inside the Dockerfile (make check)
+#   2. functional tests (test-docker.sh sections A B C, T01-T36)
+#   3. Trivy scan (test-docker.sh section E, T38-T40)
+#   4. push to GHCR  — only reached if all of the above pass
+#
+# After all platforms pass:
+#   5. merge per-platform digests into a single multi-arch manifest
+#
+# Triggers:
+#   push / tag / workflow_dispatch  → build + test + push + manifest
+#   pull_request                    → build + test only (no push, no manifest)
+on:
+  push:
+    branches: [master, main]
+    tags:     ['3.*']
+    paths:
+      - Dockerfile
+      - scripts/**
+      - .github/workflows/docker.yml
+  pull_request:
+    branches: [master, main]
+    paths:
+      - Dockerfile
+      - scripts/**
+      - .github/workflows/docker.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  # Override the image name via the DOCKER_IMAGE repository variable.
+  IMAGE: ${{ vars.DOCKER_IMAGE || format('{0}/snort3', github.repository_owner) }}
+
+jobs:
+  build-test-push:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+
+    permissions:
+      contents:        read
+      packages:        write
+      security-events: write
+
+    strategy:
+      fail-fast: false  # a failure on one platform does not cancel others
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner:   ubuntu-latest
+            tag:      amd64
+
+          - platform: linux/arm64
+            runner:   ubuntu-24.04-arm
+            tag:      arm64
+
+          - platform: linux/ppc64le
+            runner:   ubuntu-latest
+            tag:      ppc64le
+
+          - platform: linux/arm/v7
+            runner:   ubuntu-latest
+            tag:      armv7
+
+          - platform: linux/386
+            runner:   ubuntu-latest
+            tag:      386
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: matrix.runner == 'ubuntu-latest' && matrix.platform != 'linux/amd64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 1: build and load into the local daemon for testing.
+      # Unit tests run inside the Dockerfile (make check). Build fails if they fail.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context:    .
+          platforms:  ${{ matrix.platform }}
+          load:       true
+          tags:       snort3:${{ matrix.tag }}
+          cache-from: type=gha,scope=build-${{ matrix.tag }}
+          cache-to:   type=gha,mode=max,scope=build-${{ matrix.tag }}
+
+      # Step 2: functional tests against the locally loaded image.
+      # Covers image metadata, binary/library presence, config validation,
+      # pcap replay, alert rule firing, and volume permissions (T01-T36).
+      - name: Functional tests
+        run: |
+          bash scripts/test-docker.sh \
+            --platform ${{ matrix.platform }} \
+            --image    snort3:${{ matrix.tag }} \
+            --sections "A B C" \
+            --skip-build \
+            --skip-trivy
+
+      # Step 3: Trivy vulnerability and secret scan (T38-T40).
+      # Fails if any CRITICAL or HIGH CVE or embedded secret is found.
+      - name: Trivy scan
+        run: |
+          bash scripts/test-docker.sh \
+            --platform ${{ matrix.platform }} \
+            --image    snort3:${{ matrix.tag }} \
+            --sections "E" \
+            --skip-build
+
+      # Step 4: push to GHCR — only reached if build, tests, and Trivy all passed.
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        id: push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context:    .
+          platforms:  ${{ matrix.platform }}
+          push:       true
+          tags:       ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ matrix.tag }}
+          cache-from: type=gha,scope=build-${{ matrix.tag }}
+
+      - name: Save digest
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.push.outputs.digest }}" > /tmp/digests/${{ matrix.tag }}.txt
+
+      - name: Upload digest artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name:              digest-${{ matrix.tag }}
+          path:              /tmp/digests/${{ matrix.tag }}.txt
+          if-no-files-found: error
+          retention-days:    1
+
+  # Merge all per-platform images into a single multi-arch manifest.
+  # Only runs after every platform job above has passed.
+  manifest:
+    name: Merge multi-arch manifest
+    runs-on: ubuntu-latest
+    needs: build-test-push
+    if: github.event_name != 'pull_request'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download all digests
+        uses: actions/download-artifact@v4
+        with:
+          pattern:        digest-*
+          merge-multiple: true
+          path:           /tmp/digests
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE }}"
+
+          SOURCES=""
+          for f in /tmp/digests/*.txt; do
+            digest="$(cat "$f")"
+            SOURCES="$SOURCES ${IMAGE}@${digest}"
+          done
+
+          docker buildx imagetools create \
+            --tag "${IMAGE}:${GITHUB_REF_NAME}" \
+            --tag "${IMAGE}:latest" \
+            $SOURCES
+
+      - name: Inspect manifest
+        run: docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest
