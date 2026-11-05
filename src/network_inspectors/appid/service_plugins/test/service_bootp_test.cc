@@ -131,6 +131,203 @@ TEST(bootp_parsing_tests, dhcp_reply_multi_option_then_truncated)
     CHECK_EQUAL(APPID_NOMATCH, ret);
 }
 
+TEST_GROUP(dhcp_option_overload_helper_tests) { };
+
+TEST(dhcp_option_overload_helper_tests, parse_option_area_router_extracted)
+{
+    uint8_t area[] = { 0x03, 0x04, 0x0A, 0x64, 0x01, 0x02, 0xFF };
+    int option53 = 0;
+    uint32_t subnet = 0, router = 0, leaseTime = 0;
+
+    bool result = parse_dhcp_options_area(area, sizeof(area), option53, subnet, router, leaseTime);
+
+    CHECK_EQUAL(true, result);
+    uint32_t expected_router;
+    uint8_t ip[] = { 0x0A, 0x64, 0x01, 0x02 };
+    memcpy(&expected_router, ip, 4);
+    CHECK_EQUAL(expected_router, router);
+    CHECK_EQUAL(0, option53);
+    CHECK_EQUAL(0u, subnet);
+    CHECK_EQUAL(0u, leaseTime);
+}
+
+TEST(dhcp_option_overload_helper_tests, parse_option_area_dhcpack_type_extracted)
+{
+    uint8_t area[] = { 0x35, 0x01, 0x05, 0xFF };
+    int option53 = 0;
+    uint32_t subnet = 0, router = 0, leaseTime = 0;
+
+    bool result = parse_dhcp_options_area(area, sizeof(area), option53, subnet, router, leaseTime);
+
+    CHECK_EQUAL(true, result);
+    CHECK_EQUAL(1, option53);
+}
+
+TEST(dhcp_option_overload_helper_tests, parse_option_area_pad_bytes_skipped)
+{
+    uint8_t area[] = { 0x00, 0x00, 0x03, 0x04, 0xC0, 0xA8, 0x01, 0x01, 0xFF };
+    int option53 = 0;
+    uint32_t subnet = 0, router = 0, leaseTime = 0;
+
+    bool result = parse_dhcp_options_area(area, sizeof(area), option53, subnet, router, leaseTime);
+
+    CHECK_EQUAL(true, result);
+    uint32_t expected_router;
+    uint8_t ip[] = { 0xC0, 0xA8, 0x01, 0x01 };
+    memcpy(&expected_router, ip, 4);
+    CHECK_EQUAL(expected_router, router);
+}
+
+TEST(dhcp_option_overload_helper_tests, parse_option_area_truncated_returns_false)
+{
+    uint8_t area[] = { 0x03 };
+    int option53 = 0;
+    uint32_t subnet = 0, router = 0, leaseTime = 0;
+
+    bool result = parse_dhcp_options_area(area, sizeof(area), option53, subnet, router, leaseTime);
+
+    CHECK_EQUAL(false, result);
+}
+
+TEST(dhcp_option_overload_helper_tests, parse_option_area_truncated_value_returns_false)
+{
+    uint8_t area[] = { 0x03, 0x04, 0xC0, 0xA8 };
+    int option53 = 0;
+    uint32_t subnet = 0, router = 0, leaseTime = 0;
+
+    bool result = parse_dhcp_options_area(area, sizeof(area), option53, subnet, router, leaseTime);
+
+    CHECK_EQUAL(false, result);
+}
+
+TEST(dhcp_option_overload_helper_tests, parse_option_area_no_end_marker)
+{
+    uint8_t area[] = { 0x03, 0x04, 0xC0, 0xA8, 0x01, 0x01 };
+    int option53 = 0;
+    uint32_t subnet = 0, router = 0, leaseTime = 0;
+
+    bool result = parse_dhcp_options_area(area, sizeof(area), option53, subnet, router, leaseTime);
+
+    CHECK_EQUAL(false, result);
+}
+
+TEST_GROUP(dhcp_overload_packet_tests) { };
+
+TEST(dhcp_overload_packet_tests, dhcp_reply_option52_sname_overloaded_accepted)
+{
+    uint8_t std_opts[] = {
+        0x35, 0x01, 0x05,
+        0x34, 0x01, 0x02,
+        0xFF
+    };
+
+    uint8_t pkt[sizeof(ServiceBOOTPHeader) + 4 + sizeof(std_opts)];
+    build_bootp_header(pkt, 0x02);
+
+    ServiceBOOTPHeader* bh = reinterpret_cast<ServiceBOOTPHeader*>(pkt);
+    bh->sname[0] = 0x03;
+    bh->sname[1] = 0x04;
+    bh->sname[2] = 0x0A;  
+    bh->sname[3] = 0x64;
+    bh->sname[4] = 0x01;  
+    bh->sname[5] = 0x02;
+    bh->sname[6] = 0xFF;
+
+    add_magic_cookie(pkt + sizeof(ServiceBOOTPHeader));
+    memcpy(pkt + sizeof(ServiceBOOTPHeader) + 4, std_opts, sizeof(std_opts));
+
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(pkt, sizeof(pkt), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
+
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_SUCCESS, ret);
+}
+
+TEST(dhcp_overload_packet_tests, dhcp_reply_option52_file_overloaded_accepted)
+{
+    uint8_t std_opts[] = {
+        0x35, 0x01, 0x05,
+        0x34, 0x01, 0x01,
+        0xFF
+    };
+
+    uint8_t pkt[sizeof(ServiceBOOTPHeader) + 4 + sizeof(std_opts)];
+    build_bootp_header(pkt, 0x02);
+
+    ServiceBOOTPHeader* bh = reinterpret_cast<ServiceBOOTPHeader*>(pkt);
+    bh->file[0] = 0x03;
+    bh->file[1] = 0x04;
+    bh->file[2] = 0x0A;  bh->file[3] = 0x64;
+    bh->file[4] = 0x01;  bh->file[5] = 0x03;
+    bh->file[6] = 0xFF;
+
+    add_magic_cookie(pkt + sizeof(ServiceBOOTPHeader));
+    memcpy(pkt + sizeof(ServiceBOOTPHeader) + 4, std_opts, sizeof(std_opts));
+
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(pkt, sizeof(pkt), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
+
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_SUCCESS, ret);
+}
+
+TEST(dhcp_overload_packet_tests, dhcp_reply_option52_both_overloaded_accepted)
+{
+    uint8_t std_opts[] = {
+        0x35, 0x01, 0x05,
+        0x34, 0x01, 0x03,
+        0xFF
+    };
+
+    uint8_t pkt[sizeof(ServiceBOOTPHeader) + 4 + sizeof(std_opts)];
+    build_bootp_header(pkt, 0x02);
+
+    ServiceBOOTPHeader* bh = reinterpret_cast<ServiceBOOTPHeader*>(pkt);
+    // Router in sname
+    bh->sname[0] = 0x03; bh->sname[1] = 0x04;
+    bh->sname[2] = 0x0A; bh->sname[3] = 0x64;
+    bh->sname[4] = 0x01; bh->sname[5] = 0x02;
+    bh->sname[6] = 0xFF;
+    // Subnet mask in file
+    bh->file[0] = 0x01; bh->file[1] = 0x04;
+    bh->file[2] = 0xFF; bh->file[3] = 0xFF;
+    bh->file[4] = 0xFF; bh->file[5] = 0x00;
+    bh->file[6] = 0xFF;
+
+    add_magic_cookie(pkt + sizeof(ServiceBOOTPHeader));
+    memcpy(pkt + sizeof(ServiceBOOTPHeader) + 4, std_opts, sizeof(std_opts));
+
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(pkt, sizeof(pkt), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
+
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_SUCCESS, ret);
+}
+
+TEST(dhcp_overload_packet_tests, dhcp_reply_invalid_overload_value_ignored)
+{
+    uint8_t std_opts[] = {
+        0x35, 0x01, 0x05,
+        0x34, 0x01, 0x04,
+        0xFF
+    };
+
+    uint8_t pkt[sizeof(ServiceBOOTPHeader) + 4 + sizeof(std_opts)];
+    build_bootp_header(pkt, 0x02);
+    add_magic_cookie(pkt + sizeof(ServiceBOOTPHeader));
+    memcpy(pkt + sizeof(ServiceBOOTPHeader) + 4, std_opts, sizeof(std_opts));
+
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(pkt, sizeof(pkt), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
+
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_SUCCESS, ret);
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
