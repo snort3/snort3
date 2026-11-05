@@ -70,4 +70,32 @@ if (PKG_CONFIG_EXECUTABLE AND ENABLE_STATIC_DAQ)
         list(SORT DAQ_STATIC_MODULES)
         set(DAQ_STATIC_MODULES ${DAQ_STATIC_MODULES} CACHE INTERNAL "Static DAQ modules")
     endif()
+
+    # On Linux toolchains that default to PIE (Ubuntu 22.04+, recent Debian/Fedora),
+    # static DAQ module archives built without -fPIC fail to link into the snort
+    # executable with cryptic 'R_X86_64_32S ... can not be used when making a PIE
+    # object' errors. Probe with a trial link and surface a clear remediation.
+    if (DAQ_STATIC_MODULE_LIBS AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
+        AND NOT DEFINED DAQ_STATIC_PIE_OK)
+        list(GET DAQ_STATIC_MODULE_LIBS 0 _daq_pie_probe_lib)
+        set(_daq_pie_probe_src "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/daq_pie_probe.c")
+        file(WRITE "${_daq_pie_probe_src}" "int main(void) { return 0; }\n")
+        try_compile(DAQ_STATIC_PIE_OK
+            "${CMAKE_BINARY_DIR}"
+            SOURCES "${_daq_pie_probe_src}"
+            LINK_LIBRARIES "-Wl,--whole-archive" "${_daq_pie_probe_lib}" "-Wl,--no-whole-archive"
+            OUTPUT_VARIABLE _daq_pie_probe_output
+        )
+        if (NOT DAQ_STATIC_PIE_OK AND
+            _daq_pie_probe_output MATCHES "can not be used when making a PIE object")
+            message(FATAL_ERROR
+                "The static DAQ module archive '${_daq_pie_probe_lib}' was built "
+                "without position-independent code, but this toolchain produces "
+                "PIE executables by default. Rebuild libdaq with PIC, e.g.:\n"
+                "    ./configure --with-pic CFLAGS=-fPIC\n"
+                "    make && sudo make install\n"
+                "Or reconfigure snort with --disable-static-daq to use dynamic "
+                "DAQ modules instead.")
+        endif()
+    endif()
 endif()
