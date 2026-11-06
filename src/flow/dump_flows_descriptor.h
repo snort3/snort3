@@ -348,9 +348,11 @@ struct DumpFlowsBinaryDescriptor
     uint64_t peak_flow_mem = 0;  // Flow::get_peak_mem_usage() for the current logical session
 };
 
-// Size is ABI-dependent: 144 bytes on 64-bit, 132 on 32-bit. This assert is a
-// tripwire so a layout change can't slip through unnoticed.
-static_assert(sizeof(DumpFlowsBinaryDescriptor) == (sizeof(void*) == 8 ? 144 : 132),
+// Size is ABI-dependent: 144 bytes on 64-bit, 136 on 32-bit ABIs that align
+// uint64_t to 8 (ARM, MIPS, PPC) and 132 on those that align it to 4 (i386).
+// This assert is a tripwire so a layout change can't slip through unnoticed.
+static_assert(sizeof(DumpFlowsBinaryDescriptor) ==
+    (sizeof(void*) == 8 ? 144 : (alignof(uint64_t) == 8 ? 136 : 132)),
     "binary flow record format may have changed; ensure all consumers are updated");
 
 class DumpFlowsDescriptor
