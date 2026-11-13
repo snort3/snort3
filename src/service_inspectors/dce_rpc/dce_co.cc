@@ -1422,7 +1422,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
     const uint8_t* frag_ptr, uint16_t frag_len)
 {
     const DceRpcCoAuthVerifier* auth_hdr;
-    uint16_t auth_len = DceRpcCoAuthLen(co_hdr);
+    uint32_t auth_len = DceRpcCoAuthLen(co_hdr);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
 
     if (auth_len == 0)

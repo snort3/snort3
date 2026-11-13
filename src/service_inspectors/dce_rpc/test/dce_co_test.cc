@@ -64,6 +64,25 @@ void make_auth3_pdu(uint8_t* data, uint32_t call_id)
     hdr->call_id = DceRpcHtonl(&call_id, DCERPC_BO_FLAG__LITTLE_ENDIAN);
 }
 
+void make_response_pdu(uint8_t* data, uint16_t auth_length)
+{
+    auto* hdr = reinterpret_cast<DceRpcCoHdr*>(data);
+    const uint16_t frag_length = co_hdr_len + sizeof(DceRpcCoResponse);
+    const uint32_t call_id = 1;
+
+    hdr->pversion.major = DCERPC_PROTO_MAJOR_VERS__5;
+    hdr->pversion.minor = DCERPC_PROTO_MINOR_VERS__0;
+    hdr->ptype = DCERPC_PDU_TYPE__RESPONSE;
+    hdr->pfc_flags = DCERPC_CO_PFC_FLAGS__FIRST_FRAG | DCERPC_CO_PFC_FLAGS__LAST_FRAG;
+    hdr->packed_drep[0] = DCE2_LITTLE_ENDIAN;
+    hdr->packed_drep[1] = 0;
+    hdr->packed_drep[2] = 0;
+    hdr->packed_drep[3] = 0;
+    hdr->frag_length = DceRpcHtons(&frag_length, DCERPC_BO_FLAG__LITTLE_ENDIAN);
+    hdr->auth_length = DceRpcHtons(&auth_length, DCERPC_BO_FLAG__LITTLE_ENDIAN);
+    hdr->call_id = DceRpcHtonl(&call_id, DCERPC_BO_FLAG__LITTLE_ENDIAN);
+}
+
 void reset_packet(const uint8_t* data, uint16_t dsize)
 {
     test_endianness.reset();
@@ -270,6 +289,38 @@ TEST_CASE("DCE CO detects complete packed PDUs with PDU-sized packet view", "[dc
     REQUIRE(detect_sizes.size() == pdu_count); // LCOV_EXCL_BR_LINE
     for (auto dsize : detect_sizes)
         CHECK(dsize == co_hdr_len); // LCOV_EXCL_BR_LINE
+
+    cleanup_packet();
+}
+
+TEST_CASE("DCE CO rejects an auth length that wraps with the verifier size", "[dce_co]")
+{
+    // The PDU carries no auth trailer; the zeroed bytes after it stand in for
+    // whatever follows the PDU in the packet.
+    constexpr uint16_t frag_length = co_hdr_len + sizeof(DceRpcCoResponse);
+    std::array<uint8_t, frag_length + sizeof(DceRpcCoAuthVerifier)> data = {};
+    make_response_pdu(data.data(), 0xfff8);
+
+    dce2TcpProtoConf config = {};
+    config.common.common.disable_defrag = true;
+    config.common.common.max_frag_len = DCE2_SENTINEL;
+
+    DCE2_SsnData sd = {};
+    sd.trans = DCE2_TRANS_TYPE__TCP;
+    sd.server_policy = DCE2_POLICY__WINXP;
+    sd.client_policy = DCE2_POLICY__WINXP;
+    sd.config = &config;
+
+    DCE2_CoTracker cot;
+    DCE2_CoInitTracker(&cot);
+    reset_packet(data.data(), frag_length);
+    test_packet.packet_flags = PKT_FROM_SERVER;
+    const auto events = dce2_tcp_stats.events;
+
+    DCE2_CoProcess(&sd, &cot, data.data(), frag_length);
+
+    CHECK(dce2_tcp_stats.events == events + 1); // LCOV_EXCL_BR_LINE
+    CHECK(test_endianness.hdr_byte_order == DCE2_SENTINEL); // LCOV_EXCL_BR_LINE
 
     cleanup_packet();
 }
