@@ -197,6 +197,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_SRC_IPV6:
 
+            // invalid length
+            if( field_length != 16 )
+                return false;
+
             // Invalid source IP address provided
             if ( record.initiator_ip.set(data, AF_INET6) != SFIP_SUCCESS )
                 return false;
@@ -227,6 +231,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             break;
 
         case NETFLOW_DST_IPV6:
+
+            // invalid length
+            if( field_length != 16 )
+                return false;
 
             // Invalid destination IP address
             if ( record.responder_ip.set(data, AF_INET6) != SFIP_SUCCESS )
