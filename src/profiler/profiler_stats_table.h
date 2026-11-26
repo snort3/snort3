@@ -22,6 +22,7 @@
 #define PROFILER_STATS_TABLE_H
 
 #include <iostream>
+#include <locale>
 #include <vector>
 
 class StatsTable
@@ -91,6 +92,7 @@ private:
 
     const Field* fields;
     std::ostream& os;
+    std::locale saved_loc;
 
     const Field* cur;
 };

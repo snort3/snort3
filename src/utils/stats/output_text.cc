@@ -27,6 +27,7 @@
 
 #include "control/control.h"
 #include "log/log_stats.h"
+#include "log/num_format.h"
 #include "main/snort_config.h"
 #include "memory/memory_cap.h"
 
@@ -79,6 +80,18 @@ static std::string value_as_text(const Value& value)
     return {};
 }
 
+// numeric data cells get digit grouping; the first column is a label
+static std::string cell_text(const Value& value)
+{
+    if ( const auto* v = std::get_if<int64_t>(&value) )
+        return format_signed(*v);
+
+    if ( const auto* v = std::get_if<uint64_t>(&value) )
+        return format_count(*v);
+
+    return value_as_text(value);
+}
+
 static std::string first_column_text(const Value& value)
 {
     std::string text = value_as_text(value);
@@ -101,7 +114,7 @@ static void append_table_line(std::ostringstream& line, const std::vector<Value>
         if ( i > 1 )
             line << ' ';
 
-        line << std::setw(10) << std::left << value_as_text(values[i]);
+        line << std::setw(10) << std::left << cell_text(values[i]);
     }
 
     line.flags(flags);

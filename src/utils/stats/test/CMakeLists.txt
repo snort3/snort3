@@ -10,6 +10,7 @@ add_catch_test( stats_output_text_test
     SOURCES
         stats_output_text_test.cc
         ../utils.cc
+        ../../../log/num_format.cc
 )
 
 add_catch_test( response_buf_test

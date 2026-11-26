@@ -33,6 +33,7 @@
 #include "hash/xhash.h"
 #include "log/log_stats.h"
 #include "log/messages.h"
+#include "log/num_format.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "managers/ips_manager.h"
@@ -725,6 +726,12 @@ void parse_rule_init()
 void parse_rule_term()
 { }
 
+static void log_port_row(const char* name, unsigned tcp, unsigned udp, unsigned icmp, unsigned ip)
+{
+    LogMessage("%8s%8s%8s%8s%8s\n", name, format_count(tcp).c_str(), format_count(udp).c_str(),
+        format_count(icmp).c_str(), format_count(ip).c_str());
+}
+
 void parse_rule_print(unsigned fb_total, unsigned fb_unchk, unsigned fb_unset)
 {
     if ( !rule_count and !skip_count )
@@ -755,22 +762,18 @@ void parse_rule_print(unsigned fb_total, unsigned fb_unchk, unsigned fb_unset)
     LogMessage("%8s%8s%8s%8s%8s\n", " ", "tcp", "udp", "icmp", "ip");
 
     if ( tcpCnt.any || udpCnt.any || icmpCnt.any || ipCnt.any )
-        LogMessage("%8s%8u%8u%8u%8u\n", "any",
-            tcpCnt.any, udpCnt.any, icmpCnt.any, ipCnt.any);
+        log_port_row("any", tcpCnt.any, udpCnt.any, icmpCnt.any, ipCnt.any);
 
     if ( tcpCnt.src || udpCnt.src || icmpCnt.src || ipCnt.src )
-        LogMessage("%8s%8u%8u%8u%8u\n", "src",
-            tcpCnt.src, udpCnt.src, icmpCnt.src, ipCnt.src);
+        log_port_row("src", tcpCnt.src, udpCnt.src, icmpCnt.src, ipCnt.src);
 
     if ( tcpCnt.dst || udpCnt.dst || icmpCnt.dst || ipCnt.dst )
-        LogMessage("%8s%8u%8u%8u%8u\n", "dst",
-            tcpCnt.dst, udpCnt.dst, icmpCnt.dst, ipCnt.dst);
+        log_port_row("dst", tcpCnt.dst, udpCnt.dst, icmpCnt.dst, ipCnt.dst);
 
     if ( tcpCnt.both || udpCnt.both || icmpCnt.both || ipCnt.both )
-        LogMessage("%8s%8u%8u%8u%8u\n", "both",
-            tcpCnt.both, udpCnt.both, icmpCnt.both, ipCnt.both);
+        log_port_row("both", tcpCnt.both, udpCnt.both, icmpCnt.both, ipCnt.both);
 
-    LogMessage("%8s%8u%8u%8u%8u\n", "total", tcp, udp, icmp, ip);
+    log_port_row("total", tcp, udp, icmp, ip);
 }
 
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)

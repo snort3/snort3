@@ -41,6 +41,7 @@
 #include "hash/xhash.h"
 #include "log/log_stats.h"
 #include "log/messages.h"
+#include "log/num_format.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
@@ -1391,13 +1392,14 @@ static void fp_print_service_rules(SnortConfig* sc, GHash* to_srv, GHash* to_cli
         unsigned nc = clist ? clist->count : 0;
         unsigned ns = slist ? slist->count : 0;
 
-        LogMessage("%25.25s: %8u%8u\n", svc, nc, ns);
+        LogMessage("%25.25s: %8s%8s\n", svc, format_count(nc).c_str(), format_count(ns).c_str());
 
         ctot += nc;
         stot += ns;
     }
     if ( ctot or stot )
-        LogMessage("%25.25s: %8u%8u\n", "total", ctot, stot);
+        LogMessage("%25.25s: %8s%8s\n", "total", format_count(ctot).c_str(),
+            format_count(stot).c_str());
 }
 
 static void fp_print_service_rules_by_proto(SnortConfig* sc)

@@ -25,6 +25,7 @@
 #include "control/control.h"
 
 #include "messages.h"
+#include "num_format.h"
 
 //using namespace snort;
 
@@ -92,7 +93,7 @@ void snort::LogCount(const char* s, uint64_t c, FILE* fh)
 {
     if ( c )
     {
-        LogfRespond(s_ctrlcon, fh, "%25.25s: " STDu64 "\n", s, c);
+        LogfRespond(s_ctrlcon, fh, "%25.25s: %s\n", s, format_count(c).c_str());
     }
 }
 
@@ -100,7 +101,10 @@ void snort::LogStat(const char* s, uint64_t n, uint64_t tot, FILE* fh)
 {
     if ( n )
     {
-        LogfRespond(s_ctrlcon, fh, "%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
+        char pct[32];
+        snprintf(pct, sizeof(pct), "%7.3f", CalcPct(n, tot));
+        localize_decimal(pct);
+        LogfRespond(s_ctrlcon, fh, "%25.25s: %-12s\t(%s%%)\n", s, format_count(n).c_str(), pct);
     }
 }
 
@@ -108,7 +112,10 @@ void snort::LogStat(const char* s, double d, FILE* fh)
 {
     if ( d )
     {
-        LogfRespond(s_ctrlcon, fh, "%25.25s: %g\n", s, d);
+        char val[32];
+        snprintf(val, sizeof(val), "%g", d);
+        localize_decimal(val);
+        LogfRespond(s_ctrlcon, fh, "%25.25s: %s\n", s, val);
     }
 }
 

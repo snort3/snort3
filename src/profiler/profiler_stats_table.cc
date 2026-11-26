@@ -29,6 +29,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "log/num_format.h"
+
 static constexpr unsigned WIDTH = 50;
 static constexpr char ENDL = '\n';
 
@@ -37,11 +39,14 @@ const StatsTable::Sep StatsTable::SEP { '-' };
 const StatsTable::Row StatsTable::ROW { };
 
 StatsTable::StatsTable(const Field* fields, std::ostream& os) :
-    fields(fields), os(os), cur(nullptr)
+    fields(fields), os(os), saved_loc(os.imbue(snort::count_locale())), cur(nullptr)
 { assert(fields); }
 
 StatsTable::~StatsTable()
-{ finish(); }
+{
+    finish();
+    os.imbue(saved_loc);
+}
 
 void StatsTable::header(char c)
 {

@@ -73,9 +73,9 @@ static void print_single_entry(ControlConn* ctrlcon, const rule_stats::View& v, 
 
         table << n; // #
 
-        table << v.sig_info.gid;
-        table << v.sig_info.sid;
-        table << v.sig_info.rev;
+        table << std::to_string(v.sig_info.gid);
+        table << std::to_string(v.sig_info.sid);
+        table << std::to_string(v.sig_info.rev);
 
         table << v.checks();
         table << v.matches();
