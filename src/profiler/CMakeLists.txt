@@ -52,4 +52,5 @@ add_catch_test( profiler_stats_table_test
     NO_TEST_SOURCE
     SOURCES
         profiler_stats_table.cc
+        ../log/num_format.cc
 )

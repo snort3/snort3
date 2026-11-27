@@ -49,6 +49,7 @@
 #include "latency/latency_module.h"
 #include "log/batched_logger.h"
 #include "log/messages.h"
+#include "log/num_format.h"
 #include "lua/lua.h"
 #include "main/snort_module.h"
 #include "managers/action_manager.h"
@@ -821,6 +822,9 @@ static const Parameter output_params[] =
     { "tagged_packet_limit", Parameter::PT_INT, "0:max32", "256",
       "maximum number of packets tagged for non-packet metrics" },
 
+    { "thousands_separator", Parameter::PT_ENUM, "none | comma | period", "none",
+      "group digits of counts in text output; period also makes the decimal point a comma" },
+
     { "verbose", Parameter::PT_BOOL, nullptr, "false",
       "be verbose (same as -v)" },
 
@@ -927,6 +931,12 @@ bool OutputModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("tagged_packet_limit") )
         sc->tagged_packet_limit = v.get_uint32();
+
+    else if ( v.is("thousands_separator") )
+    {
+        static const char seps[] = { '\0', ',', '.' };
+        set_thousands_separator(seps[v.get_uint8()]);
+    }
 
     else if ( v.is("verbose") )
     {

@@ -37,6 +37,7 @@
 #include "framework/module.h"
 #include "log/log_stats.h"
 #include "log/messages.h"
+#include "log/num_format.h"
 #include "memory/memory_module.h"
 #include "main/process.h"
 #include "main/snort_config.h"
@@ -114,8 +115,9 @@ static void timing_stats()
 
     LogMessage("%25.25s: %02d:%02d:%02d\n", "runtime", hrs, mins, secs);
 
-    LogMessage("%25.25s: %lu.%06lu\n", "seconds",
-        (unsigned long)difftime.tv_sec, (unsigned long)difftime.tv_usec);
+    LogMessage("%25.25s: %s%c%06lu\n", "seconds",
+        format_count((uint64_t)difftime.tv_sec).c_str(), get_decimal_point(),
+        (unsigned long)difftime.tv_usec);
 
     Module* daq = PluginManager::get_module("daq");
     assert(daq);
@@ -126,10 +128,10 @@ static void timing_stats()
     double total_secs = tmp + difftime.tv_usec / USECS_PER_SEC;
 
     if ( uint64_t pps = (uint64_t)llround(num_pkts / total_secs) )
-        LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
+        LogMessage("%25.25s: %s\n", "pkts/sec", format_count(pps).c_str());
 
     if ( uint64_t mbps = (uint64_t)llround(8 * num_byts / total_secs / 1e6) )
-        LogMessage("%25.25s: " STDu64 "\n", "Mbits/sec", mbps);
+        LogMessage("%25.25s: %s\n", "Mbits/sec", format_count(mbps).c_str());
 }
 
 //-------------------------------------------------------------------------
